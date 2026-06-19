@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1118"/>
+      <stop offset="100%" stop-color="#0d1f2d"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- AND-gate-style D shape -->
+  <path d="M 14 16 H 30 A 16 16 0 0 1 30 48 H 14 Z"
+        fill="none" stroke="url(#ring)" stroke-width="3.4" stroke-linejoin="round"/>
+  <!-- inputs -->
+  <line x1="6" y1="24" x2="14" y2="24" stroke="url(#ring)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="6" y1="40" x2="14" y2="40" stroke="url(#ring)" stroke-width="3" stroke-linecap="round"/>
+  <!-- output with glow -->
+  <line x1="46" y1="32" x2="58" y2="32" stroke="#22d3ee" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="58" cy="32" r="2.6" fill="#22d3ee"/>
+  <!-- spark dot -->
+  <circle cx="34" cy="32" r="2" fill="#facc15"/>
+</svg>

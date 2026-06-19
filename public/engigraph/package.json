@@ -1,0 +1,45 @@
+{
+  "name": "@workspace/engigraph",
+  "version": "1.0.0",
+  "description": "EngiGraph Pro - Professional Engineering Graphics Tool",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "tauri": "tauri",
+    "build:web": "tsc",
+    "watch:web": "tsc -w",
+    "build:electron": "electron-builder build --windows",
+    "build:tauri": "tauri build"
+  },
+  "keywords": [
+    "engineering",
+    "cad",
+    "graphics",
+    "mechatronics"
+  ],
+  "author": "Siyabonga B Phakathi",
+  "license": "ISC",
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3",
+    "astral-regex": "^2.0.0",
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3",
+    "typescript": "^6.0.3"
+  },
+  "build": {
+    "appId": "com.engigraph.pro",
+    "productName": "EngiGraph Pro",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "portable",
+      "icon": "EngiGraphLogo.png"
+    }
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0"
+  }
+}

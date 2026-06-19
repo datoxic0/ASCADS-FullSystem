@@ -1,0 +1,2072 @@
+import React, { useState, useRef, useEffect } from "react";
+import { 
+  BoardConfig, 
+  ProgramLanguageConfig, 
+  WorkspaceFile, 
+  SimulationState, 
+  TerminalLog, 
+  CIMWorkpiece,
+  RobotJoint,
+  CIMSortingStats
+} from "./types";
+import { parseGcodeLine, solveInverseKinematics, calculateForwardKinematics } from "./kinematics";
+import ResizableModal from "./ResizableModal";
+import { 
+  FolderOpen, 
+  Play, 
+  Terminal, 
+  Cpu, 
+  RefreshCw, 
+  Download, 
+  Upload, 
+  Plus, 
+  Trash2, 
+  FileCode, 
+  Info,
+  Wrench,
+  CheckCircle,
+  AlertTriangle,
+  X,
+  HelpCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Pause,
+  Minimize2
+} from "lucide-react";
+import { useHardwareBus } from "../../lib/hardware-bus";
+
+interface RobotWorkspaceIDEProps {
+  activeBoard: BoardConfig;
+  setActiveBoard: (b: BoardConfig) => void;
+  activeLanguage: ProgramLanguageConfig;
+  setActiveLanguage: (l: ProgramLanguageConfig) => void;
+  files: WorkspaceFile[];
+  setFiles: React.Dispatch<React.SetStateAction<WorkspaceFile[]>>;
+  activeFileIndex: number;
+  setActiveFileIndex: (idx: number) => void;
+  simulationState: SimulationState;
+  setSimulationState: React.Dispatch<React.SetStateAction<SimulationState>>;
+  joints: RobotJoint[];
+  setJoints: React.Dispatch<React.SetStateAction<RobotJoint[]>>;
+  workpieces: CIMWorkpiece[];
+  setWorkpieces: React.Dispatch<React.SetStateAction<CIMWorkpiece[]>>;
+  logs: TerminalLog[];
+  setLogs: React.Dispatch<React.SetStateAction<TerminalLog[]>>;
+  onFileChange: (content: string) => void;
+  sortingStats: CIMSortingStats;
+  setSortingStats: React.Dispatch<React.SetStateAction<CIMSortingStats>>;
+  feedMode: "random" | "red" | "green" | "blue" | "yellow";
+  robotType: "articulated" | "scara" | "cartesian";
+  conveyorSpeed: number;
+  obstacleHeight: number;
+  sensorPositionX: number;
+  onCollapse?: () => void;
+}
+
+export default function RobotWorkspaceIDE({
+  activeBoard,
+  setActiveBoard,
+  activeLanguage,
+  setActiveLanguage,
+  files,
+  setFiles,
+  activeFileIndex,
+  setActiveFileIndex,
+  simulationState,
+  setSimulationState,
+  joints,
+  setJoints,
+  workpieces,
+  setWorkpieces,
+  logs,
+  setLogs,
+  onFileChange,
+  sortingStats,
+  setSortingStats,
+  feedMode,
+  robotType,
+  conveyorSpeed,
+  obstacleHeight,
+  sensorPositionX,
+  onCollapse
+}: RobotWorkspaceIDEProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const terminalBottomRef = useRef<HTMLDivElement>(null);
+  const idleTicksRef = useRef<number>(0);
+  
+  const workpiecesRef = useRef(workpieces);
+  const sensorPositionXRef = useRef(sensorPositionX);
+  const jointsRef = useRef(joints);
+  const waitingOnSensorRef = useRef(false);
+  const simulationStateRef = useRef(simulationState);
+
+  // Synchronously update refs during render to avoid stale closure lags and state updates/effect delays
+  workpiecesRef.current = workpieces;
+  sensorPositionXRef.current = sensorPositionX;
+  jointsRef.current = joints;
+  simulationStateRef.current = simulationState;
+  
+  const [newFileName, setNewFileName] = useState("");
+  const [showAddFile, setShowAddFile] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [interpreterIntervalId, setInterpreterIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const interpreterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [simulationSpeed, setSimulationSpeed] = useState<number>(1000); // Step interval in milliseconds
+
+  // Dynamic dashboard resizable panel widths
+  const [explorerWidth, setExplorerWidth] = useState<number>(192); // default 192px
+  const [terminalHeight, setTerminalHeight] = useState<number>(160); // default 160px
+  const [isTerminalCollapsed, setIsTerminalCollapsed] = useState<boolean>(false);
+
+  const isResizingExplorerRef = useRef<boolean>(false);
+  const isResizingTerminalRef = useRef<boolean>(false);
+
+  const startResizeExplorer = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingExplorerRef.current = true;
+    document.addEventListener("mousemove", handleResizeExplorer);
+    document.addEventListener("mouseup", stopResizeExplorer);
+  };
+
+  const handleResizeExplorer = (e: MouseEvent) => {
+    if (!isResizingExplorerRef.current) return;
+    const ideCard = document.getElementById("workspace-ide-card");
+    if (!ideCard) return;
+    const rect = ideCard.getBoundingClientRect();
+    let newWidth = e.clientX - rect.left;
+    newWidth = Math.max(120, Math.min(380, newWidth));
+    setExplorerWidth(newWidth);
+  };
+
+  const stopResizeExplorer = () => {
+    isResizingExplorerRef.current = false;
+    document.removeEventListener("mousemove", handleResizeExplorer);
+    document.removeEventListener("mouseup", stopResizeExplorer);
+  };
+
+  const startResizeTerminal = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingTerminalRef.current = true;
+    document.addEventListener("mousemove", handleResizeTerminal);
+    document.addEventListener("mouseup", stopResizeTerminal);
+  };
+
+  const handleResizeTerminal = (e: MouseEvent) => {
+    if (!isResizingTerminalRef.current) return;
+    const ideCard = document.getElementById("workspace-ide-card");
+    if (!ideCard) return;
+    const rect = ideCard.getBoundingClientRect();
+    let newHeight = rect.bottom - e.clientY;
+    newHeight = Math.max(80, Math.min(350, newHeight));
+    setTerminalHeight(newHeight);
+  };
+
+  const stopResizeTerminal = () => {
+    isResizingTerminalRef.current = false;
+    document.removeEventListener("mousemove", handleResizeTerminal);
+    document.removeEventListener("mouseup", stopResizeTerminal);
+  };
+
+  const lineIdxRef = useRef<number>(0);
+  const variableMapRef = useRef<Record<string, number>>({});
+  const loopStartIndexRef = useRef<number>(-1);
+  const loopCountRef = useRef<number>(0);
+  const maxLoopsRef = useRef<number>(9999);
+  const activeDelayTicksRef = useRef<number>(0);
+  const isSteppingRef = useRef<boolean>(false);
+  const compileTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const uploadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  const activeFile = files[activeFileIndex] || { name: "untitled", content: "", language: activeLanguage.id };
+
+  // Scroll terminal logs automatically to the bottom on update
+  useEffect(() => {
+    terminalBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  // Append new color-coded log entries to terminal console
+  const addLog = (type: "info" | "success" | "warn" | "error", text: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setLogs((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(),
+        type,
+        text,
+        timestamp
+      }
+    ]);
+  };
+
+  // Motion Planner: Transition joints smoothly across frames over the step duration
+  const animateJoints = (fromJoints: RobotJoint[], toJoints: RobotJoint[], msDuration: number) => {
+    if (msDuration <= 50) {
+      jointsRef.current = toJoints;
+      setJoints(toJoints);
+      return;
+    }
+
+    const startTime = performance.now();
+    
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / msDuration);
+      
+      // Easing calculation for organic robotic deceleration profiles
+      const t = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      
+      const interpolated = fromJoints.map(fj => {
+        const tj = toJoints.find(j => j.id === fj.id);
+        if (!tj) return fj;
+        const diff = tj.angle - fj.angle;
+        return {
+          ...fj,
+          angle: fj.angle + diff * t
+        };
+      });
+
+      jointsRef.current = interpolated;
+      setJoints(interpolated);
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(step);
+      } else {
+        animationFrameRef.current = null;
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(step);
+  };
+
+  // Hardware Bus Integration
+  useEffect(() => {
+    // Sync robot sensors to global bus
+    const interval = setInterval(() => {
+      const currentWorkpieces = workpiecesRef.current;
+      const currentSensorX = sensorPositionXRef.current;
+      const scannedWp = currentWorkpieces.find(wp => 
+        wp.positionX >= currentSensorX - 35 && 
+        wp.positionX <= currentSensorX + 35 && 
+        (wp.status === "approaching" || wp.status === "picked")
+      ) || currentWorkpieces.find(wp => wp.status === "approaching" || wp.status === "picked");
+
+      const rSensors: Record<string, number> = {
+        "AI1": scannedWp ? (scannedWp.color === "red" ? 240 : (scannedWp.color === "yellow" ? 230 : 15)) : 10,
+        "AI2": scannedWp ? (scannedWp.color === "green" ? 240 : (scannedWp.color === "yellow" ? 220 : 15)) : 10,
+        "AI3": scannedWp ? (scannedWp.color === "blue" ? 240 : 15) : 10,
+        "AI4": scannedWp ? 1 : 0
+      };
+
+      useHardwareBus.getState().setRobotSensors(rSensors);
+      localStorage.setItem('ascads_bridge_robot_plc', 'active');
+
+      // React to PLC outputs
+      const plc = useHardwareBus.getState().plcOut;
+      if (plc["R_BELT_FWD"]) {
+        setSimulationState(s => ({ ...s, conveyorRunning: true }));
+      } else if (plc["R_BELT_STOP"]) {
+        setSimulationState(s => ({ ...s, conveyorRunning: false }));
+      }
+
+      if (plc["R_J1_FWD"] || plc["R_J1_REV"] || plc["R_J2_FWD"] || plc["R_J2_REV"] || plc["R_J3_FWD"] || plc["R_J3_REV"]) {
+         setJoints(prev => prev.map(j => {
+            let change = 0;
+            if (j.id === "base" && plc["R_J1_FWD"]) change = 1;
+            if (j.id === "base" && plc["R_J1_REV"]) change = -1;
+            if (j.id === "shoulder" && plc["R_J2_FWD"]) change = 1;
+            if (j.id === "shoulder" && plc["R_J2_REV"]) change = -1;
+            if (j.id === "elbow" && plc["R_J3_FWD"]) change = 1;
+            if (j.id === "elbow" && plc["R_J3_REV"]) change = -1;
+            
+            if (change !== 0) {
+               return { ...j, angle: Math.max(j.minAngle, Math.min(j.angle + change * 2, j.maxAngle)) };
+            }
+            return j;
+         }));
+      }
+
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Create a brand new workspace code file
+  const handleCreateFile = () => {
+    if (!newFileName.trim()) return;
+    
+    // Auto translate filename details
+    const ext = activeLanguage.extension;
+    const nameWithExt = newFileName.toLowerCase().endsWith(ext) 
+      ? newFileName 
+      : `${newFileName}${ext}`;
+
+    const newFileObj: WorkspaceFile = {
+      name: nameWithExt,
+      language: activeLanguage.id,
+      content: `// New script file for ${activeBoard.name}\n\nvoid setup() {\n  \n}\n\nvoid loop() {\n  \n}`,
+      isCustom: true
+    };
+
+    setFiles((prev) => [...prev, newFileObj]);
+    setActiveFileIndex(files.length);
+    setNewFileName("");
+    setShowAddFile(false);
+    addLog("success", `File created: ${nameWithExt}`);
+  };
+
+  // Delete a workspace file safely
+  const handleDeleteFile = (idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (files.length <= 1) {
+      addLog("error", "Cannot delete last remaining workspace file.");
+      return;
+    }
+    const targetFileName = files[idx].name;
+    setFiles((prev) => prev.filter((_, i) => i !== idx));
+    setActiveFileIndex(0);
+    addLog("warn", `Deleted workspace file: ${targetFileName}`);
+  };
+
+  // Download code to local client as `.ino` / `.py` / `.gcode` file
+  const handleDownloadCode = () => {
+    const blob = new Blob([activeFile.content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = activeFile.name;
+    link.click();
+    URL.revokeObjectURL(url);
+    addLog("success", `Downloaded file bundle: ${activeFile.name}`);
+  };
+
+  // Upload local client source script into target workspace
+  const handleUploadCode = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string || "";
+      const isGcode = file.name.endsWith(".gcode");
+      const isPython = file.name.endsWith(".py");
+      
+      const newFileObj: WorkspaceFile = {
+        name: file.name,
+        content,
+        language: isGcode ? "gcode" : isPython ? "python" : "arduino",
+        isCustom: true
+      };
+
+      setFiles((prev) => [...prev, newFileObj]);
+      setActiveFileIndex(files.length);
+      addLog("success", `Imported external script: ${file.name}`);
+    };
+    reader.readAsText(file);
+  };
+
+  // Compile & Upload simulation sequence triggers
+  const handleCompileAndRun = () => {
+    // Prevent double clicking compilation sequences and overlapping timers
+    if (simulationState.status === "compiling" || simulationState.status === "uploading") {
+      return;
+    }
+
+    if (simulationState.isRunning || simulationState.status === "paused") {
+      stopSimulation();
+    }
+
+    // Cancel any existing compile/upload timeouts
+    if (compileTimeoutRef.current) clearTimeout(compileTimeoutRef.current);
+    if (uploadTimeoutRef.current) clearTimeout(uploadTimeoutRef.current);
+
+    setSimulationState((prev) => ({ ...prev, status: "compiling" }));
+    addLog("info", `Starting compile pipeline for Board[${activeBoard.id.toUpperCase()}] using toolchain...`);
+
+    // Reset statistics on building fresh firmware routines
+    setSortingStats({
+      scannedRed: 0,
+      scannedGreen: 0,
+      scannedBlue: 0,
+      scannedYellow: 0,
+      correctRed: 0,
+      correctGreen: 0,
+      correctBlue: 0,
+      correctYellow: 0,
+      incorrect: 0,
+      dropped: 0
+    });
+
+    const firstColor = feedMode === "random"
+      ? (["red", "green", "blue", "yellow"] as const)[Math.floor(Math.random() * 4)]
+      : feedMode;
+
+    // Clean up workpieces to start simulation clean
+    setWorkpieces([
+      { id: `wp-${Date.now()}`, color: firstColor, positionX: -20, status: "approaching" }
+    ]);
+
+    compileTimeoutRef.current = setTimeout(() => {
+      addLog("success", "Code validation parsed successfully. Built binary sizes: 142 KB (6.7% capacity).");
+      setSimulationState((prev) => ({ ...prev, status: "uploading" }));
+      addLog("info", `Initializing serial boundary flash over USB port: COM22 (operating at 115200 bps)...`);
+
+      uploadTimeoutRef.current = setTimeout(() => {
+        addLog("success", "Flashing completed. System reset performed. Firmware loaded.");
+        setSimulationState((prev) => ({
+          ...prev,
+          status: "running",
+          isRunning: true,
+          isCompiled: true,
+          currentLine: 1,
+          conveyorRunning: activeFile.language === "gcode" // Auto-start conveyor if running GCODE
+        }));
+        addLog("info", "Executing main thread firmware loop... [SYS_ONLINE]");
+
+        if (activeFile.language === "gcode") {
+          startGcodeInterpreter();
+        } else {
+          // General generic board animation blinker logs
+          if (interpreterIntervalRef.current) {
+            clearInterval(interpreterIntervalRef.current);
+          }
+          const intervalId = setInterval(() => {
+            const pinState = Math.random() > 0.5 ? "HIGH" : "LOW";
+            addLog("info", `[Firmware Loop] Pin D13 voltage set to -> [${pinState}]`);
+          }, 3000) as any;
+          interpreterIntervalRef.current = intervalId;
+          setInterpreterIntervalId(intervalId);
+        }
+      }, 1500);
+    }, 1200);
+  };
+
+  // Real-time Interpreter & physics synchronizer for G-Code scripts!
+  const startGcodeInterpreter = (resumeFromPause = false) => {
+    const codeLines = activeFile.content.split("\n");
+    let lineIdx = resumeFromPause ? lineIdxRef.current : 0;
+    if (!resumeFromPause) {
+      waitingOnSensorRef.current = false;
+    }
+
+    // Default base coordinates
+    const baseX = 300;
+    const baseY = 230;
+
+    // Helper to resolve current end-effector position based on active robot design kinematics
+    const getEffectorPos = (jointsList: RobotJoint[]) => {
+      const sJoint = jointsList.find(j => j.id === "shoulder");
+      const eJoint = jointsList.find(j => j.id === "elbow");
+      const wJoint = jointsList.find(j => j.id === "wrist");
+
+      if (robotType === "cartesian") {
+        const railY = 110;
+        const sAngle = sJoint?.angle ?? 0;
+        const eAngle = eJoint?.angle ?? 0;
+        const carriageX = baseX + sAngle * 1.45;
+        const plungeHeight = 80 + ((eAngle + 120) / 240) * 110;
+        const plungeY = railY + plungeHeight;
+        return { x: carriageX, y: plungeY + 12 };
+      } else if (robotType === "scara") {
+        const postHeight = 110;
+        const p0 = { x: baseX, y: baseY - postHeight };
+        const l1 = sJoint?.length ?? 110;
+        const l2 = eJoint?.length ?? 100;
+        const sAngle = sJoint?.angle ?? 0;
+        const eAngle = eJoint?.angle ?? 0;
+        const wAngle = wJoint?.angle ?? 0;
+        const rad1 = (sAngle * Math.PI) / 180;
+        const p1 = {
+          x: p0.x + l1 * Math.cos(rad1),
+          y: p0.y + l1 * Math.sin(rad1)
+        };
+        const rad2 = rad1 + (eAngle * Math.PI) / 180;
+        const p2 = {
+          x: p1.x + l2 * Math.cos(rad2),
+          y: p1.y + l2 * Math.sin(rad2)
+        };
+        const slide = 25 + ((wAngle + 120) / 240) * 110;
+        return { x: p2.x, y: p2.y + slide };
+      } else {
+        const pts = calculateForwardKinematics(baseX, baseY, jointsList);
+        return pts[pts.length - 1];
+      }
+    };
+
+    // Dynamic Variables & Loops Dictionary local to this closure run
+    const variableMap: Record<string, number> = resumeFromPause ? variableMapRef.current : {
+      "#102": Math.round((sensorPositionX - baseX) * 1.5 * 10) / 10
+    };
+    let loopStartIndex = resumeFromPause ? loopStartIndexRef.current : -1;
+    let loopCount = resumeFromPause ? loopCountRef.current : 0;
+    let maxLoops = resumeFromPause ? maxLoopsRef.current : 9999;
+    let activeDelayTicks = resumeFromPause ? activeDelayTicksRef.current : 0;
+    const currentSpeed = simulationSpeed; // Cache current delay value in closure
+
+    const intervalId = setInterval(() => {
+      // Synchronize latest execution parameters/pointers for debugging panels
+      lineIdxRef.current = lineIdx;
+      variableMapRef.current = variableMap;
+      loopStartIndexRef.current = loopStartIndex;
+      loopCountRef.current = loopCount;
+      maxLoopsRef.current = maxLoops;
+      activeDelayTicksRef.current = activeDelayTicks;
+
+      // If we are currently in a dwell (G04), decrement ticks and return/stall execution
+      if (activeDelayTicks > 0) {
+        activeDelayTicks--;
+        activeDelayTicksRef.current = activeDelayTicks;
+        return;
+      }
+
+      let executeNextInSameTick = true;
+      while (executeNextInSameTick) {
+        if (lineIdx >= codeLines.length) {
+          addLog("success", "CIM assembly sequence fully completed. Simulation sequence reset.");
+          stopSimulation();
+          return;
+        }
+
+        const activeText = codeLines[lineIdx];
+        const trimmedText = activeText.trim();
+        
+        setSimulationState((prev) => ({ ...prev, currentLine: lineIdx + 1 }));
+
+        // 1. Skip completely empty lines instantly
+        if (!trimmedText) {
+          lineIdx++;
+          continue;
+        }
+
+        // 2. Parenthetical comments instantly
+        if (trimmedText.startsWith("(")) {
+          const commentContent = trimmedText.replace(/^\(/, "").replace(/\)$/, "").trim();
+          addLog("info", `( ${commentContent} )`);
+          lineIdx++;
+          continue;
+        }
+
+        // 3. Command comments prefixing with ; or is a pure comment instantly
+        if (trimmedText.startsWith(";")) {
+          const commentContent = trimmedText.replace(/^;/, "").trim();
+          addLog("info", `; ${commentContent}`);
+          lineIdx++;
+          continue;
+        }
+
+        // 4. Variables Definition mapping like #100 = 3000 instantly
+        if (trimmedText.startsWith("#") && trimmedText.includes("=")) {
+          const parts = trimmedText.split("=");
+          const varName = parts[0].trim();
+          const varVal = parts[1].split(";")[0].trim().toUpperCase();
+          
+          let numVal = parseFloat(varVal);
+
+          // DYNAMIC PLC REGISTER SENSOR RESOLVER
+          if (isNaN(numVal)) {
+            const currentWorkpieces = workpiecesRef.current;
+            const currentSensorX = sensorPositionXRef.current;
+            const scannedWp = currentWorkpieces.find(wp => 
+              wp.positionX >= currentSensorX - 35 && 
+              wp.positionX <= currentSensorX + 35 && 
+              (wp.status === "approaching" || wp.status === "picked")
+            ) || currentWorkpieces.find(wp => wp.status === "approaching" || wp.status === "picked");
+            
+            if (varVal === "AI1") {
+              // Red sensor value
+              numVal = scannedWp ? (scannedWp.color === "red" ? 240 : (scannedWp.color === "yellow" ? 230 : 15)) : 10;
+            } else if (varVal === "AI2") {
+              // Green sensor value
+              numVal = scannedWp ? (scannedWp.color === "green" ? 240 : (scannedWp.color === "yellow" ? 220 : 15)) : 10;
+            } else if (varVal === "AI3") {
+              // Blue sensor value
+              numVal = scannedWp ? (scannedWp.color === "blue" ? 240 : 15) : 10;
+            } else if (varVal === "AI4") {
+              // Proximity presence index (1 if part present at conveyor pick area, 0 otherwise)
+              numVal = scannedWp ? 1 : 0;
+            } else {
+              // If it's a math expression or reference to other variables (like #150 + 20)
+              let resolvedExpr = varVal;
+              for (const [key, value] of Object.entries(variableMap)) {
+                resolvedExpr = resolvedExpr.replace(new RegExp(key.replace("#", "\\#"), "g"), value.toString());
+              }
+              try {
+                // Safely evaluate simple math expressions
+                const sanitizedExpr = resolvedExpr.replace(/[^0-9\+\-\*\/\(\)\. ]/g, "");
+                numVal = parseFloat(new Function(`return (${sanitizedExpr})`)());
+              } catch (e) {
+                numVal = 0;
+              }
+            }
+          }
+
+          if (varName && !isNaN(numVal)) {
+            variableMap[varName] = numVal;
+            addLog("info", `[Variables] Setting Variable ${varName} = ${numVal} (Source: ${varVal})`);
+          }
+          lineIdx++;
+          continue;
+        }
+
+        // 5. Repeating loops like O100 REPEAT [9999] instantly
+        if (trimmedText.toUpperCase().includes("REPEAT")) {
+          loopStartIndex = lineIdx;
+          loopCount = 0;
+          const repeatMatch = trimmedText.match(/REPEAT\s*\[?(\d+)\]?/i);
+          maxLoops = repeatMatch ? parseInt(repeatMatch[1]) : 9999;
+          addLog("info", `[Loop Control] Initiating production sequence loop up to ${maxLoops} cycles...`);
+          lineIdx++;
+          continue;
+        }
+
+        // 6. Ending loops like O100 ENDREPEAT instantly
+        if (trimmedText.toUpperCase().includes("ENDREPEAT")) {
+          loopCount++;
+          if (loopCount < maxLoops) {
+            lineIdx = loopStartIndex + 1; // repeat from inside loop
+            addLog("info", `[Loop Control] Production cycle ${loopCount} complete. Seamlessly cycling back to start...`);
+            continue;
+          } else {
+            addLog("success", `[Loop Control] Production sequence fully satisfied after ${loopCount} continuous runs.`);
+            lineIdx++;
+            continue;
+          }
+        }
+
+        // 7. Dynamic PLC/CNC Setup Filters & O-Labels (Command Layer Filter)
+        const labelClean = trimmedText.split(";")[0].split("(")[0].trim().toUpperCase();
+        if (/^O\d+$/i.test(labelClean)) {
+          addLog("info", `[Routine Marker] Flow marker label ${labelClean} registered successfully.`);
+          lineIdx++;
+          continue;
+        }
+
+        // 8. Branch conditionals or jump blocks: IF / GOTO
+        if (trimmedText.toUpperCase().startsWith("IF ") || trimmedText.toUpperCase().startsWith("IF[") || trimmedText.toUpperCase().startsWith("GOTO ")) {
+          const gotoMatch = trimmedText.toUpperCase().match(/GOTO\s*(O\d+)/i);
+          const targetLabel = gotoMatch ? gotoMatch[1] : null;
+
+          let conditionMet = true;
+          if (trimmedText.toUpperCase().startsWith("IF")) {
+            const condMatch = trimmedText.match(/\[([^\]]+)\]/);
+            if (condMatch) {
+              const condExpr = condMatch[1].toUpperCase(); // e.g. "#203 <= 0"
+              let resolvedCond = condExpr;
+              for (const [key, value] of Object.entries(variableMap)) {
+                resolvedCond = resolvedCond.replace(new RegExp(key.replace("#", "\\#"), "g"), value.toString());
+              }
+              // Replace logical operators
+              resolvedCond = resolvedCond.replace(/AND/gi, "&&").replace(/OR/gi, "||");
+              try {
+                const cleanExpr = resolvedCond.replace(/==/g, "===").replace(/<=/g, "<=").replace(/>=/g, ">=").replace(/!=/g, "!==");
+                conditionMet = !!(new Function(`return (${cleanExpr})`)());
+              } catch (e) {
+                conditionMet = true; // nominal fallback
+              }
+            }
+          }
+
+          if (conditionMet && targetLabel) {
+            const labelIdxTarget = codeLines.findIndex(line => {
+              const t = line.trim().toUpperCase().split(";")[0].split("(")[0].trim();
+              return t === targetLabel;
+            });
+            if (labelIdxTarget !== -1) {
+              addLog("info", `[Logic Branch] Jump condition met. Diverting execution flow dynamically to ${targetLabel} (Line ${labelIdxTarget + 1}).`);
+              lineIdx = labelIdxTarget;
+              continue;
+            } else {
+              addLog("error", `[Logic Error] Branch label ${targetLabel} not found in current program space.`);
+            }
+          }
+
+          addLog("info", `[Logic Branch] Conditional evaluation false or target resolved. Carrying on execution sequence...`);
+          lineIdx++;
+          continue;
+        }
+
+        // Resolve variables inside G-code parameters e.g. F[#101]
+        let resolvedText = activeText;
+        for (const [key, value] of Object.entries(variableMap)) {
+          resolvedText = resolvedText.replace(new RegExp(`\\[?${key}\\]?`, "g"), value.toString());
+        }
+
+        const parsed = parseGcodeLine(resolvedText);
+        if (parsed) {
+          if (parsed.command === "COMMENT") {
+            if (parsed.comment) {
+               addLog("info", `; ${parsed.comment}`);
+            }
+            lineIdx++;
+            continue;
+          } else {
+            // Dynamic execution logs
+            addLog("success", `[LINE ${lineIdx + 1}] Executing: ${parsed.command} ${JSON.stringify(parsed.params)}`);
+
+            let stepShouldPauseTick = false;
+
+            // Process known instructions
+            switch (parsed.command) {
+              case "G00":
+              case "G01": {
+                // Coordinated joints & planar kinematics solver
+                const hasCoords = parsed.params.X !== undefined || parsed.params.Y !== undefined || parsed.params.Z !== undefined;
+                const hasA = parsed.params.A !== undefined;
+                const hasB = parsed.params.B !== undefined;
+
+                // Read joints state relative to jointsRef.current to avoid stale references
+                const startJoints = jointsRef.current.map(j => ({ ...j }));
+                let nextJoints = jointsRef.current.map(j => ({ ...j }));
+
+                // 1. Update Base joint (Waist) from B parameter (simulated swivel)
+                if (hasB) {
+                  const valB = parsed.params.B ?? 0;
+                  nextJoints = nextJoints.map(j => j.id === "base" ? { ...j, angle: Math.max(j.minAngle, Math.min(valB, j.maxAngle)) } : j);
+                }
+
+                // 2. Update Wrist Pitch joint from A parameter
+                if (hasA) {
+                  const valA = parsed.params.A ?? 0;
+                  nextJoints = nextJoints.map(j => j.id === "wrist" ? { ...j, angle: Math.max(j.minAngle, Math.min(valA, j.maxAngle)) } : j);
+                }
+
+                // 3. Resolve planar tool coordinates X, Y, Z
+                if (hasCoords) {
+                  const mmScale = 1.5;
+
+                  // Retrieve current real-world coordinates from previous joints list to preserve state
+                  const currentEffector = getEffectorPos(startJoints);
+                  let currentX_mm = (currentEffector.x - baseX) * mmScale;
+                  let currentZ_mm = (baseY - currentEffector.y) * mmScale;
+                  if (isNaN(currentX_mm) || !isFinite(currentX_mm)) currentX_mm = 0;
+                  if (isNaN(currentZ_mm) || !isFinite(currentZ_mm)) currentZ_mm = 0;
+
+                  const rawX = parsed.params.X !== undefined ? parsed.params.X : currentX_mm;
+                  const rawZ = parsed.params.Z !== undefined ? parsed.params.Z : (parsed.params.Y !== undefined ? parsed.params.Y : currentZ_mm);
+                  
+                  const pixelsX = baseX + rawX / mmScale;
+                  const pixelsY = baseY - rawZ / mmScale;
+
+                  if (robotType === "cartesian") {
+                    let carriageX = pixelsX;
+                    if (carriageX < 70) carriageX = 70;
+                    if (carriageX > 530) carriageX = 530;
+                    const targetJ1Angle = (carriageX - baseX) / 1.45;
+
+                    const railY = 110;
+                    let targetPlungeY = pixelsY - 12;
+                    if (targetPlungeY < railY + 80) targetPlungeY = railY + 80;
+                    if (targetPlungeY > railY + 190) targetPlungeY = railY + 190;
+
+                    const targetPlungeHeight = targetPlungeY - railY;
+                    const targetJ2Angle = ((targetPlungeHeight - 80) / 110) * 240 - 120;
+
+                    nextJoints = nextJoints.map((j) => {
+                      if (j.id === "shoulder") return { ...j, angle: Math.round(targetJ1Angle) };
+                      if (j.id === "elbow") return { ...j, angle: Math.round(targetJ2Angle) };
+                      return j;
+                    });
+                  } else if (robotType === "scara") {
+                    const postHeight = 110;
+                    const originX = baseX;
+                    const originY = baseY - postHeight; // (300, 180)
+
+                    const l1 = nextJoints.find(j => j.id === "shoulder")?.length ?? 110;
+                    const l2 = nextJoints.find(j => j.id === "elbow")?.length ?? 100;
+                    const totalMaxReach = l1 + l2;
+
+                    let tx = pixelsX - originX;
+                    let ty = pixelsY - originY - 35; // adjust for wrist plunge guiding
+                    const dist = Math.hypot(tx, ty);
+
+                    if (dist > totalMaxReach) {
+                      tx *= (totalMaxReach / dist) * 0.98;
+                      ty *= (totalMaxReach / dist) * 0.98;
+                    }
+
+                    // Analytical SCARA planar forearm solver
+                    const denom = 2 * l1 * l2;
+                    const cosAngle2 = denom === 0 ? 0 : Math.max(-1, Math.min(1, (tx * tx + ty * ty - l1 * l1 - l2 * l2) / denom));
+                    const sinAngle2 = Math.sqrt(Math.max(0, 1 - cosAngle2 * cosAngle2));
+                    const angle2Rad = Math.atan2(sinAngle2, cosAngle2);
+
+                    const k1 = l1 + l2 * cosAngle2;
+                    const k2 = l2 * sinAngle2;
+                    const angle1Rad = Math.atan2(ty, tx) - Math.atan2(k2, k1);
+
+                    const a1Deg = (angle1Rad * 180) / Math.PI;
+                    const a2Deg = (angle2Rad * 180) / Math.PI;
+
+                    const currentPlungeY = pixelsY - (originY + l1 * Math.sin(angle1Rad) + l2 * Math.sin(angle1Rad + angle2Rad));
+                    const targetJ3Angle = ((currentPlungeY - 25) / 110) * 240 - 120;
+
+                    nextJoints = nextJoints.map((j) => {
+                      if (j.id === "shoulder") {
+                        const bonded = Math.max(j.minAngle, Math.min(a1Deg, j.maxAngle));
+                        return { ...j, angle: Math.round(bonded * 10) / 10 };
+                      }
+                      if (j.id === "elbow") {
+                        const bonded = Math.max(j.minAngle, Math.min(a2Deg, j.maxAngle));
+                        return { ...j, angle: Math.round(bonded * 10) / 10 };
+                      }
+                      if (j.id === "wrist" && !hasA) {
+                        const bonded = Math.max(j.minAngle, Math.min(targetJ3Angle, j.maxAngle));
+                        return { ...j, angle: Math.round(bonded * 10) / 10 };
+                      }
+                      return j;
+                    });
+                  } else {
+                    // Standard Articulated
+                    const clickX = pixelsX;
+                    const clickY = pixelsY;
+                    const distToClick = Math.hypot(clickX - baseX, clickY - baseY);
+                    const totalMaxReach = nextJoints.slice(1).reduce((sum, j) => sum + j.length, 0);
+
+                    let targetX = clickX;
+                    let targetY = clickY;
+
+                    if (distToClick > totalMaxReach) {
+                      const ratio = totalMaxReach / distToClick;
+                      targetX = baseX + (clickX - baseX) * ratio * 0.98;
+                      targetY = baseY + (clickY - baseY) * ratio * 0.98;
+                    }
+
+                    nextJoints = solveInverseKinematics(baseX, baseY, nextJoints, { x: targetX, y: targetY });
+                  }
+                }
+
+                // Safeguard angles to avoid NaN propagation
+                nextJoints = nextJoints.map(j => {
+                  if (isNaN(j.angle) || !isFinite(j.angle)) {
+                    // Fall back smoothly to its start angle to preserve visual integrity
+                    const match = startJoints.find(sj => sj.id === j.id);
+                    return { ...j, angle: match ? match.angle : 0 };
+                  }
+                  return j;
+                });
+
+                // Motion Planner: Convert direct jumps into smooth staged kinematics
+                animateJoints(startJoints, nextJoints, simulationSpeed * 0.95);
+                stepShouldPauseTick = true; // Wait for next tick so the physics/UI has a cycle to render and animate
+                break;
+              }
+              case "G17":
+              case "G18":
+              case "G19": {
+                addLog("info", `[Modal Filter] Plane Selection command (${parsed.command}) accepted and bypassed.`);
+                break;
+              }
+              case "G20":
+              case "G21": {
+                addLog("info", `[Modal Filter] Units Mode command (${parsed.command}) set to ${parsed.command === "G21" ? "METRIC (mm)" : "INCHES (in)"}.`);
+                break;
+              }
+              case "G90":
+              case "G91": {
+                addLog("info", `[Modal Filter] Positioning Mode command (${parsed.command}) set to ${parsed.command === "G90" ? "ABSOLUTE" : "INCREMENTAL"}.`);
+                break;
+              }
+              case "G92": {
+                addLog("info", `[Modal Filter] Coordinate System Preset Offset command (G92) processed successfully.`);
+                break;
+              }
+              case "M08": {
+                addLog("info", `[Auxiliary] M08: Pneumatic suction line secondary compressor auxiliary active.`);
+                break;
+              }
+              case "M03": {
+                // Toggle conveyor relay (S parameter: S1 is start, S0 is halt)
+                const statusVal = parsed.params.S === 1;
+                setSimulationState((prev) => ({ ...prev, conveyorRunning: statusVal }));
+                addLog("warn", `[Relay Out] Conveyor Motor feedback is reset to State => [${statusVal ? "ACTIVE" : "HALTED"}]`);
+                break;
+              }
+              case "M04": {
+                // Breakbeam optical photo-detector state checks
+                addLog("info", "[Sensor Trip] Beam break laser status verified.");
+                break;
+              }
+              case "M66": {
+                // REAL-TIME DIGITAL HARDWARE INTERLOCK SENSOR POLLING!
+                const currentWorkpieces = workpiecesRef.current;
+                const currentSensorX = sensorPositionXRef.current;
+                const sensorActive = currentWorkpieces.some(wp => 
+                  wp.positionX >= currentSensorX - 15 && 
+                  wp.positionX <= currentSensorX + 15 && 
+                  wp.status === "approaching"
+                );
+                
+                if (!sensorActive) {
+                  if (!waitingOnSensorRef.current) {
+                    addLog("info", `[M66 SENSOR INTERLOCK] Pausing routine. Polling Input #1 (IRSENS @ ${currentSensorX}mm) to go HIGH...`);
+                    waitingOnSensorRef.current = true;
+                  }
+                  // Pause loop and wait for next tick to poll again
+                  executeNextInSameTick = false;
+                  return;
+                } else {
+                  addLog("success", `[M66 SENSOR INTERLOCK] Hardware flag met! Laser Photo-Detector detected incoming part.`);
+                  waitingOnSensorRef.current = false;
+                }
+                break;
+              }
+              case "M05": {
+                // Solenoid magnetic vacuum effector state toggles (P1 holds, P0 releases)
+                const commandGripped = parsed.params.P === 1;
+                const isDryRun = !!simulationStateRef.current.dryRunMode;
+                const hasGripped = commandGripped && !isDryRun;
+
+                if (commandGripped && isDryRun) {
+                  addLog("warn", "[DRY RUN Interlock] Suction solenoid activated, but physical suction state is BYPASSED because DRY RUN MODE is ACTIVE.");
+                }
+
+                setSimulationState((prev) => ({ ...prev, hasBlock: hasGripped }));
+
+                // Dynamic color scanning calibration: update variableMap for sorting bin X coordinates (#104)
+                if (hasGripped) {
+                  const sensorX = sensorPositionXRef.current;
+                  const grippedWp = workpiecesRef.current.find(wp => 
+                    wp.status === "approaching" && 
+                    wp.positionX >= sensorX - 15 && 
+                    wp.positionX <= sensorX + 15
+                  );
+
+                  if (grippedWp) {
+                    let targetX = 315; // default fallback reject (FAULTY REJECT SLOT)
+                    if (grippedWp.color === "red") targetX = 255;
+                    else if (grippedWp.color === "green") targetX = 195;
+                    else if (grippedWp.color === "blue") targetX = 135;
+                    else if (grippedWp.color === "yellow") targetX = 315;
+                    
+                    variableMap["#104"] = targetX;
+                    addLog("info", `[Sensor Color Calibration] Auto-computed dynamic sorting coordinate for [color=${grippedWp.color.toUpperCase()}]: [#104 = ${targetX}mm]`);
+                  }
+                }
+                
+                // Forward kinematics calculation to locate dropping/holding coordinates based on actual joints
+                const endEffectorPoint = getEffectorPos(jointsRef.current);
+                const dropX = endEffectorPoint.x;
+                const dropY = endEffectorPoint.y;
+
+                let grabbedAny = false;
+                setWorkpieces((prev) => {
+                  const updated = prev.map((wp) => {
+                    if (wp.status === "approaching" && hasGripped) {
+                      // Grab if workpiece X matches actual gripper X (within 24px) 
+                      // and gripper is sufficiently low (near conveyor bed level)
+                      const xDiff = Math.abs(wp.positionX - dropX);
+                      
+                      // Sensor-Corrected Pickup: Compensation extends normal tolerance to 38px
+                      let isNearGripper = false;
+                      let appliedCorrection = false;
+                      
+                      if (xDiff <= 24 && dropY >= 235) {
+                        isNearGripper = true;
+                      } else if (xDiff <= 38 && dropY >= 230) {
+                        isNearGripper = true;
+                        appliedCorrection = true;
+                      }
+
+                      if (isNearGripper) {
+                        if (appliedCorrection) {
+                          addLog("success", `[Sensor-Corrected Pickup] Active offset correction applied (error = ${Math.round(wp.positionX - dropX)}px). Snap-aligning suction vacuum cup dynamically to workpiece center.`);
+                        } else {
+                          addLog("warn", `[Actuator] Pneumatic suction solenoid: ENGAGED [${wp.color.toUpperCase()} securely grasped at X=${Math.round(wp.positionX)}px]`);
+                        }
+                        grabbedAny = true;
+                        return { ...wp, status: "picked" as const };
+                      }
+                    }
+                    if (wp.status === "picked" && !hasGripped) {
+                      addLog("warn", `[Actuator] Pneumatic suction solenoid: DE-ENERGIZED [Releasing workpiece at Drop-X=${Math.round(dropX)}px]`);
+                      
+                      let targetStatus: "placed" | "rejected" | "dropped" = "dropped";
+                      let isCorrect = false;
+                      let trayName = "Ground Workspace";
+
+                      // Determine landing slots bases:
+                      // Blue Slot: Center X = 390 (370-410)
+                      // Green Slot: Center X = 430 (410-450)
+                      // Red Slot: Center X = 470 (450-490)
+                      // Reject Slot: Center X = 510 (490-535)
+                      if (dropX >= 450 && dropX <= 490) {
+                        trayName = "RED SORTING BIN";
+                        if (wp.color === "red") {
+                          isCorrect = true;
+                          targetStatus = "placed";
+                        } else {
+                          targetStatus = "rejected";
+                        }
+                      } else if (dropX >= 410 && dropX < 450) {
+                        trayName = "GREEN SORTING BIN";
+                        if (wp.color === "green") {
+                          isCorrect = true;
+                          targetStatus = "placed";
+                        } else {
+                          targetStatus = "rejected";
+                        }
+                      } else if (dropX >= 370 && dropX < 410) {
+                        trayName = "BLUE SORTING BIN";
+                        if (wp.color === "blue") {
+                          isCorrect = true;
+                          targetStatus = "placed";
+                        } else {
+                          targetStatus = "rejected";
+                        }
+                      } else if (dropX > 490 && dropX <= 545) {
+                        trayName = "FAULTY REJECT SLOT";
+                        if (wp.color === "yellow") {
+                          isCorrect = true;
+                          targetStatus = "rejected";
+                        } else {
+                          targetStatus = "placed"; // improper placement
+                        }
+                      }
+
+                      // Increment and report stats securely
+                      if (targetStatus === "dropped") {
+                        addLog("error", `[Mechanical Error] Suction release failed to hit bins! Material crashed to floor at X=${Math.round(dropX)}.`);
+                        setSortingStats(s => ({ ...s, dropped: s.dropped + 1 }));
+                      } else if (isCorrect) {
+                        addLog("success", `[PLC Sorter] VERIFIED! Color ${wp.color.toUpperCase()} correctly deposited in ${trayName}.`);
+                        setSortingStats(s => {
+                          const clone = { ...s };
+                          if (wp.color === "red") clone.correctRed += 1;
+                          if (wp.color === "green") clone.correctGreen += 1;
+                          if (wp.color === "blue") clone.correctBlue += 1;
+                          if (wp.color === "yellow") clone.correctYellow += 1;
+                          return clone;
+                        });
+                      } else {
+                        addLog("error", `[PLC Operational Conflict] SORT MISTAKE! Color ${wp.color.toUpperCase()} workpiece misaligned into ${trayName}!`);
+                        setSortingStats(s => ({ ...s, incorrect: s.incorrect + 1 }));
+                      }
+
+                      return { ...wp, status: targetStatus, positionX: dropX };
+                    }
+                    return wp;
+                  });
+
+                  if (hasGripped && !grabbedAny) {
+                    const approachingWps = prev.filter(wp => wp.status === "approaching");
+                    if (approachingWps.length > 0) {
+                      const closest = approachingWps.reduce((prevWp, currWp) => 
+                        Math.abs(currWp.positionX - dropX) < Math.abs(prevWp.positionX - dropX) ? currWp : prevWp
+                      );
+                      const xDiff = Math.abs(closest.positionX - dropX);
+                      addLog("warn", `[Actuator Warning] Solenoid activated but missed workpiece! Closest part at X=${Math.round(closest.positionX)}px. Gripper: X=${Math.round(dropX)}px (diff=${Math.round(xDiff)}px, limit 24px), Y=${Math.round(dropY)}px (limit Y>=235px).`);
+                    } else {
+                      addLog("info", `[Actuator] Solenoid activated but no approaching parts on conveyor.`);
+                    }
+                  }
+
+                  return updated;
+                });
+                break;
+              }
+              case "M09": {
+                // Complete cycle alert sound strobe
+                addLog("success", "[SYSTEM] Pulse completion strobe alert successfully.");
+                break;
+              }
+              case "M30": {
+                addLog("success", "M30 Program end execution. Resetting controller home state.");
+                stopSimulation();
+                return;
+              }
+              case "G04": {
+                // Hold/dwell delay action parameter
+                const ms = parsed.params.P || 1000;
+                const ticks = Math.max(1, Math.round(ms / currentSpeed));
+                activeDelayTicks = ticks;
+                addLog("info", `[Dwell] Delaying action execution loop for ${ms}ms (~${ticks} steps).`);
+                stepShouldPauseTick = true;
+                break;
+              }
+              default:
+                addLog("warn", `Command not mapped locally: ${parsed.command}`);
+            }
+
+            lineIdx++;
+            if (isSteppingRef.current) {
+              isSteppingRef.current = false;
+              lineIdxRef.current = lineIdx;
+              pauseSimulation();
+              executeNextInSameTick = false;
+            } else if (stepShouldPauseTick) {
+              executeNextInSameTick = false;
+            }
+          }
+        } else {
+          // Skip unparsed/invalid statements instantly
+          lineIdx++;
+        }
+      } // end while loop
+
+      lineIdxRef.current = lineIdx;
+    }, currentSpeed) as any;
+
+    interpreterIntervalRef.current = intervalId;
+    setInterpreterIntervalId(intervalId);
+  };
+
+  const pauseSimulation = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (interpreterIntervalRef.current) {
+      clearInterval(interpreterIntervalRef.current);
+      interpreterIntervalRef.current = null;
+    }
+    setInterpreterIntervalId(null);
+    setSimulationState((prev) => ({
+      ...prev,
+      status: "paused"
+    }));
+    addLog("warn", "Execution PAUSED. Interactive controller debugger activated.");
+  };
+
+  const resumeSimulation = () => {
+    setSimulationState((prev) => ({
+      ...prev,
+      status: "running"
+    }));
+    addLog("success", "Resuming industrial routine sequencer loop.");
+    startGcodeInterpreter(true);
+  };
+
+  const stepSimulationLine = () => {
+    if (!simulationState.isCompiled) {
+      addLog("error", "[Debugger Error] Compiler must be build & flashed before single stepping.");
+      return;
+    }
+    addLog("info", `[Step Tracing] Executing line ${lineIdxRef.current + 1}...`);
+    isSteppingRef.current = true;
+    startGcodeInterpreter(true);
+  };
+
+  const stopSimulation = () => {
+    // Clear any out-of-order build timers
+    if (compileTimeoutRef.current) {
+      clearTimeout(compileTimeoutRef.current);
+      compileTimeoutRef.current = null;
+    }
+    if (uploadTimeoutRef.current) {
+      clearTimeout(uploadTimeoutRef.current);
+      uploadTimeoutRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (interpreterIntervalRef.current) {
+      clearInterval(interpreterIntervalRef.current);
+      interpreterIntervalRef.current = null;
+    }
+    setInterpreterIntervalId(null);
+
+    setSimulationState((prev) => ({
+      ...prev,
+      isRunning: false,
+      status: "idle",
+      conveyorRunning: false,
+      hasBlock: false
+    }));
+    lineIdxRef.current = 0;
+    activeDelayTicksRef.current = 0;
+    waitingOnSensorRef.current = false;
+    addLog("warn", "Firmware diagnostic loop halted by active supervisor.");
+  };
+
+  // Active Safety Watchdog - Emergency Collision Shutdown
+  useEffect(() => {
+    if (simulationState.status === "error") {
+      if (interpreterIntervalRef.current) {
+        clearInterval(interpreterIntervalRef.current);
+        interpreterIntervalRef.current = null;
+      }
+      setInterpreterIntervalId(null);
+      addLog("error", "[EMERGENCY COLLISION TRIPPED] Robotic arm breach detected at safety containment shield! Hardware safety interlock activated.");
+    }
+  }, [simulationState.status]);
+
+  // Clean-up loop on unmount
+  useEffect(() => {
+    return () => {
+      if (interpreterIntervalRef.current) {
+        clearInterval(interpreterIntervalRef.current);
+        interpreterIntervalRef.current = null;
+      }
+      if (compileTimeoutRef.current) clearTimeout(compileTimeoutRef.current);
+      if (uploadTimeoutRef.current) clearTimeout(uploadTimeoutRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, []);
+
+  // Global Keyboard Shortcuts for Simulation Interpolator
+  const simulationStateStatus = simulationState.status;
+  const simulationStateIsCompiled = simulationState.isCompiled;
+
+  useEffect(() => {
+    const handleSimulationKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isTyping = activeEl && (
+        activeEl.tagName === "INPUT" ||
+        activeEl.tagName === "TEXTAREA" ||
+        activeEl.hasAttribute("contenteditable") ||
+        activeEl.classList.contains("cm-content") ||
+        activeEl.closest(".cm-editor") || 
+        activeEl.tagName === "SELECT"
+      );
+      if (isTyping) return;
+
+      const key = e.key.toLowerCase();
+
+      // Spacebar: Play/Pause/Resume simulation
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (simulationStateIsCompiled) {
+          if (simulationStateStatus === "running") {
+            pauseSimulation();
+          } else {
+            resumeSimulation();
+          }
+        } else {
+          handleCompileAndRun();
+        }
+        return;
+      }
+
+      // Escape: Emergency Halt / Force Stop
+      if (e.key === "Escape") {
+        e.preventDefault();
+        stopSimulation();
+        if (setLogs) {
+          setLogs([
+            {
+              id: `force-stop-reset-shortcut-${Date.now()}`,
+              type: "error",
+              text: "[SYSTEM RESET] EMERGENCY HOTKEY TRIGGERED (Esc)! Joint interpolations suspended, PLC registers cleared.",
+              timestamp: new Date().toLocaleTimeString()
+            }
+          ]);
+        }
+        return;
+      }
+
+      // 's' key: Single step next instruction
+      if (key === "s" && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        if (simulationStateStatus === "paused" || simulationStateStatus === "idle") {
+          e.preventDefault();
+          stepSimulationLine();
+        }
+        return;
+      }
+
+      // 'f8' key: Flash Program & Run / Compile & Upload
+      if (e.key === "F8") {
+        e.preventDefault();
+        handleCompileAndRun();
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", handleSimulationKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleSimulationKeyDown);
+    };
+  }, [simulationStateStatus, simulationStateIsCompiled]);
+
+  // Conveyor horizontal belt offset flow animation
+  useEffect(() => {
+    if (!simulationState.conveyorRunning) return;
+
+    const tick = setInterval(() => {
+      let shouldHaltConveyor = false;
+
+      setWorkpieces((prev) => {
+        let triggerScanStats = false;
+        let scannedColor: "red" | "green" | "blue" | "yellow" = "red";
+
+        const mapped = prev.map((wp) => {
+          if (wp.status === "approaching") {
+            const step = 2 * conveyorSpeed;
+            let nextX = wp.positionX + step;
+            
+            // Log photo-detector color scanning interrupt once it crosses customizable sensorPositionX threshold
+            if (wp.positionX < sensorPositionX && nextX >= sensorPositionX) {
+              triggerScanStats = true;
+              scannedColor = wp.color;
+
+              if (waitingOnSensorRef.current) {
+                shouldHaltConveyor = true;
+                nextX = sensorPositionX; // Align perfectly under the suction gripper tip
+              }
+            } else if (wp.positionX >= sensorPositionX) {
+              // Lock workpiece perfectly at the sensor ONLY ifactively stalled awaiting photo-detector interlock
+              if (waitingOnSensorRef.current) {
+                shouldHaltConveyor = true;
+                nextX = sensorPositionX;
+              }
+            }
+
+            // Loop back workpiece if it passes workspace boundary bounds
+            if (nextX > 580) {
+              const nextColor = feedMode === "random"
+                ? (["red", "green", "blue", "yellow"] as const)[Math.floor(Math.random() * 4)]
+                : feedMode;
+              return { ...wp, positionX: -20, status: "approaching" as const, color: nextColor };
+            }
+            return { ...wp, positionX: nextX };
+          }
+          return wp;
+        });
+
+        if (triggerScanStats) {
+          addLog("info", `[Sensor RGB] PHOTO-ELECTRIC INTERRUPT AT ${sensorPositionX}mm! COLOR DETECTED => [${scannedColor.toUpperCase()}]`);
+          setSortingStats((s) => {
+            const next = { ...s };
+            if (scannedColor === "red") next.scannedRed += 1;
+            if (scannedColor === "green") next.scannedGreen += 1;
+            if (scannedColor === "blue") next.scannedBlue += 1;
+            if (scannedColor === "yellow") next.scannedYellow += 1;
+            return next;
+          });
+        }
+
+        // Automatic stream feeder: if no active workpiece is approaching or picked, spawn another after some delay
+        const activeCount = mapped.filter(wp => wp.status === "approaching" || wp.status === "picked").length;
+        if (activeCount === 0) {
+          idleTicksRef.current += 1;
+          const requiredIdleDelay = Math.max(10, Math.round(40 / conveyorSpeed));
+          if (idleTicksRef.current >= requiredIdleDelay) { // Responsive spawn timing based on conveyorSpeed
+            idleTicksRef.current = 0;
+            const spawnedColor = feedMode === "random"
+              ? (["red", "green", "blue", "yellow"] as const)[Math.floor(Math.random() * 4)]
+              : feedMode;
+            const newId = `wp-${Date.now()}`;
+            addLog("info", `[Feeder Feed] Spawning raw material workpiece onto belt: [color=${spawnedColor.toUpperCase()}]`);
+            return [
+              ...mapped,
+              { id: newId, color: spawnedColor, positionX: -20, status: "approaching" }
+            ];
+          }
+        } else {
+          idleTicksRef.current = 0;
+        }
+
+        // Clip workpiece list length to guarantee SVG performance limits
+        if (mapped.length > 15) {
+          return mapped.slice(mapped.length - 15);
+        }
+
+        return mapped;
+      });
+
+      if (shouldHaltConveyor) {
+        setSimulationState((prev) => ({ ...prev, conveyorRunning: false }));
+      } else {
+        setSimulationState((prev) => {
+          const nextPos = (prev.blockPosition + 1.5 * conveyorSpeed) % 100;
+          return { ...prev, blockPosition: nextPos };
+        });
+      }
+    }, 50);
+
+    return () => clearInterval(tick);
+  }, [simulationState.conveyorRunning, feedMode, conveyorSpeed, sensorPositionX, setWorkpieces, setSortingStats, setSimulationState]);
+
+  return (
+    <div id="workspace-ide-card" className="h-full flex flex-col bg-[#1a1a1e] border border-white/5 rounded overflow-hidden shadow-2xl">
+      
+      {/* Top IDE Toolbar */}
+      <div className="flex items-center justify-between px-3.5 py-2 bg-[#141417] border-b border-white/5 shrink-0">
+        <div className="flex items-center space-x-3.5">
+          {/* Collapse/Expand Sidebar button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1 hover:bg-[#1e1e23] hover:text-white rounded text-slate-300 font-mono text-[10px] flex items-center space-x-1 cursor-pointer transition-colors"
+            title={sidebarOpen ? "Hide File Explorer" : "Show File Explorer"}
+          >
+            {sidebarOpen ? <ChevronLeft className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+            <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-wide text-slate-200">EXPLORER</span>
+          </button>
+          
+          <div className="flex items-center">
+            <FolderOpen className="w-4 h-4 text-blue-400" />
+          </div>
+
+          {onCollapse && (
+            <button
+              onClick={onCollapse}
+              className="p-1 hover:bg-[#1e1e23] text-purple-400 hover:text-white rounded font-mono text-[10px] flex items-center space-x-1.5 cursor-pointer transition-all"
+              title="Minimize and Hide Code Workspace to maximize simulation visuals"
+              id="hide-workspace-btn"
+            >
+              <Minimize2 className="w-4 h-4 text-purple-400 shrink-0" />
+              <span className="hidden sm:inline-block text-[10px] font-black uppercase text-purple-400 tracking-wider">HIDE DECK</span>
+            </button>
+          )}
+        </div>
+        
+        {/* Play/Stop & Reference Triggers */}
+        <div className="flex items-center gap-1.5 shrink-0 select-none">
+          {/* Reference Modal button as a clean circular-feel question mark square button */}
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="h-7 w-7 bg-[#0d0d0f] hover:bg-[#1a1a24] border border-white/5 hover:border-white/10 rounded-md flex items-center justify-center cursor-pointer transition-all shrink-0 text-blue-400 hover:text-blue-300"
+            title="Open G-Code Command Reference Guide"
+            aria-label="Open G-Code Reference Manual"
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+
+          {/* Simulation Speed Dropdown Selector */}
+          <div className="flex items-center bg-[#0d0d0f] border border-white/5 hover:border-white/10 rounded-md px-1.5 h-7 select-none shrink-0 transition-all">
+            <select
+              value={simulationSpeed}
+              onChange={(e) => setSimulationSpeed(Number(e.target.value))}
+              disabled={simulationState.isRunning}
+              className="bg-transparent text-slate-200 font-mono text-[9px] font-bold focus:outline-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-55 py-0.5"
+              title="Execution step speed interval"
+              aria-label="Simulation speed factor"
+            >
+              <option value="2000" className="bg-[#141417] text-slate-200">0.5x</option>
+              <option value="1500" className="bg-[#141417] text-slate-200">0.75x</option>
+              <option value="1000" className="bg-[#141417] text-slate-200">1.0x (Calibrated)</option>
+              <option value="500" className="bg-[#141417] text-slate-200">2.0x (Fast)</option>
+              <option value="250" className="bg-[#141417] text-slate-200">4.0x (Turbo)</option>
+            </select>
+          </div>
+
+          {/* UNIFIED INTERACTIVE SIMULATION CONTROL SUITE */}
+          <div className="flex bg-[#0b0b0d] border border-white/10 rounded-md p-0.5 gap-0.5 items-center shrink-0">
+            {/* 1. FLASH PROGRAM & RUN */}
+            <button
+              onClick={handleCompileAndRun}
+              title={
+                (simulationState.isRunning || simulationState.status === "paused")
+                  ? "Stop current G-Code line interpolation sequence (Key: F8)"
+                  : "Compile and run G-Code onto virtual PLC register array (Key: F8)"
+              }
+              aria-label={
+                (simulationState.isRunning || simulationState.status === "paused")
+                  ? "Stop Simulation"
+                  : "Flash G-Code Program"
+              }
+              className={`flex items-center justify-center w-7 h-7 text-[8px] font-extrabold rounded cursor-pointer border transition-all duration-300 shadow-sm shrink-0 ${
+                (simulationState.isRunning || simulationState.status === "paused")
+                  ? "bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/25"
+                  : "bg-blue-600 hover:bg-blue-500 text-white border-blue-700 shadow"
+              }`}
+            >
+              {(simulationState.isRunning || simulationState.status === "paused") ? (
+                <>
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                  <span className="sr-only">STOP</span>
+                </>
+              ) : (
+                <>
+                  <Cpu className="w-3.5 h-3.5 text-blue-200 animate-pulse shrink-0" />
+                  <span className="sr-only">FLASH [F8]</span>
+                </>
+              )}
+            </button>
+
+            {/* 2. PLAY / PAUSE / RESUME */}
+            <button
+              onClick={() => {
+                if (!simulationState.isCompiled) {
+                  handleCompileAndRun();
+                } else if (simulationState.status === "running") {
+                  pauseSimulation();
+                } else {
+                  resumeSimulation();
+                }
+              }}
+              title="Pause or Resume G-Code execution sequence step-through (Key: Spacebar)"
+              aria-label="Pause or Resume G-Code Simulation"
+              className={`flex items-center justify-center w-7 h-7 text-[8px] font-extrabold rounded cursor-pointer border transition-all duration-300 shadow-sm shrink-0 ${
+                !simulationState.isCompiled 
+                  ? "bg-[#18181b]/50 text-slate-500 border-white/5 hover:bg-[#18181b]/80 hover:text-slate-350"
+                  : simulationState.status === "running"
+                  ? "bg-amber-600/10 text-amber-400 border-amber-600/30 hover:bg-amber-600/20"
+                  : "bg-emerald-600/10 text-emerald-400 border-emerald-600/30 hover:bg-emerald-600/20"
+              }`}
+            >
+              {!simulationState.isCompiled ? (
+                <>
+                  <Play className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <span className="sr-only">RUN [SP]</span>
+                </>
+              ) : simulationState.status === "running" ? (
+                <>
+                  <Pause className="w-3.5 h-3.5 text-amber-400 fill-current shrink-0" />
+                  <span className="sr-only">PAUSE</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5 text-emerald-400 fill-current shrink-0" />
+                  <span className="sr-only">RESUME</span>
+                </>
+              )}
+            </button>
+
+            {/* 3. STEP NEXT INSTRUCTION */}
+            <button
+              onClick={stepSimulationLine}
+              disabled={!simulationState.isCompiled || (simulationState.status !== "paused" && simulationState.status !== "idle")}
+              title="Advantage step to the next line of instruction (Key: S)"
+              aria-label="Execute single G-Code line instruction"
+              className={`flex items-center justify-center w-7 h-7 text-[8px] font-extrabold rounded border transition-all duration-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-25 shrink-0 ${
+                simulationState.isCompiled && (simulationState.status === "paused" || simulationState.status === "idle")
+                  ? "bg-sky-600/10 text-sky-400 border-sky-500/25 hover:bg-sky-600/20"
+                  : "bg-[#141417]/80 text-slate-600 border-white/5"
+              }`}
+            >
+              <ChevronRight className="w-4 h-4 text-sky-400 shrink-0" />
+              <span className="sr-only">STEP [S]</span>
+            </button>
+
+            {/* 4. EMERGENCY FORCE STOP */}
+            <button
+              onClick={() => {
+                stopSimulation();
+                if (setLogs) {
+                  setLogs([
+                    {
+                      id: "force-stop-reset",
+                      type: "error",
+                      text: "[SYSTEM RESET] EMERGENCY HARDWARE KILL TRIGGERED! All joint interpolations suspended, pneumatic vacuum system discharged, PLC registers cleared.",
+                      timestamp: new Date().toLocaleTimeString()
+                    }
+                  ]);
+                }
+              }}
+              title="Immediate Hardware Emergency Kill (Key: Esc)"
+              aria-label="Emergency Stop"
+              className="flex items-center justify-center w-7 h-7 text-[8px] font-black rounded cursor-pointer border border-[#f43f5e] bg-red-950/40 text-outline-rose hover:bg-rose-700 hover:text-white transition-all duration-300 shadow animate-pulse hover:animate-none shrink-0"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span className="sr-only">STOP [ESC]</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main IDE grid layout */}
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row border-b border-white/5 md:overflow-hidden">
+        
+        {/* Workspace Explorer column (Left sidebar) - Collapsible */}
+        {sidebarOpen && (
+          <div 
+            style={{ width: `${explorerWidth}px` }} 
+            className="w-full bg-[#141417] p-2.5 border-r border-[#1e1e23] flex flex-col overflow-y-auto shrink-0 animate-in slide-in-from-left duration-150"
+          >
+            <div className="flex items-center justify-between text-[9px] font-mono text-slate-500 font-bold tracking-wider uppercase mb-2 pb-1 border-b border-[#1e1e23] select-none">
+              <span>Explorer</span>
+              <button
+                onClick={() => {
+                  setNewFileName("");
+                  setShowAddFile(true);
+                }}
+                className="hover:text-white transition-colors bg-[#0d0d0f] hover:bg-[#1a1a20] rounded p-0.5 border border-white/5 cursor-pointer"
+                title="Add New File"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
+
+            {/* List of files in active directory */}
+            <div className="space-y-0.5 flex-1 select-none">
+              {files.map((file, idx) => {
+                const isActive = idx === activeFileIndex;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setActiveFileIndex(idx);
+                      setActiveLanguage(
+                        file.language === "gcode" ? { id: "gcode", name: "CIM G-Code", extension: ".gcode", syntaxCategory: "gcode" } :
+                        file.language === "python" ? { id: "python", name: "MicroPython", extension: ".py", syntaxCategory: "python" } :
+                        { id: "arduino", name: "Arduino Dialect (C++)", extension: ".ino", syntaxCategory: "arduino" }
+                      );
+                    }}
+                    className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer font-mono text-[11px] transition-colors ${
+                      isActive ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "text-slate-400 hover:text-slate-205 hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-1.5 truncate">
+                      <FileCode className={`w-3.5 h-3.5 ${isActive ? "text-blue-400" : "text-slate-550"}`} />
+                      <span className="truncate text-[11px]">{file.name}</span>
+                    </div>
+                    {file.isCustom && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteFile(idx, e);
+                        }}
+                        className="text-slate-600 hover:text-rose-450 p-0.5 transition-colors cursor-pointer"
+                        title="Remove File"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Active board hardware specs block */}
+            <div className="bg-[#0d0d0f] border border-white/5 rounded p-2 mt-3 space-y-1.5">
+              <div className="flex items-center space-x-1 px-0.5">
+                <Cpu className="w-3 h-3 text-blue-400" />
+                <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">SYSTEM UNIT</span>
+              </div>
+              <div className="space-y-0.5 text-[9px] font-mono text-slate-500">
+                <div className="flex justify-between">
+                  <span>MCU:</span>
+                  <span className="text-slate-300 font-semibold truncate max-w-[80px] text-right" title={activeBoard.name}>{activeBoard.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Core:</span>
+                  <span className="text-slate-300 truncate max-w-[80px] text-right" title={activeBoard.processor}>{activeBoard.processor}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SRAM/ROM:</span>
+                  <span className="text-slate-300">{activeBoard.ramSize} / {activeBoard.romSize}</span>
+                </div>
+                <div className="flex justify-between text-blue-500 font-bold">
+                  <span>State:</span>
+                  <span className="font-semibold text-emerald-450 shadow-[0_0_8px_rgba(34,197,94,0.3)]">COM22_OK</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Dynamic vertical resizer handle for explorer */}
+        {sidebarOpen && (
+          <div
+            onMouseDown={startResizeExplorer}
+            className="hidden md:block w-1 hover:w-1.5 bg-transparent hover:bg-blue-600/30 border-r border-[#1e1e23] cursor-col-resize shrink-0 transition-all relative group z-10"
+            title="Drag to resize file explorer sidebar"
+          >
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-white/5 group-hover:bg-blue-500/50 transition-colors pointer-events-none" />
+          </div>
+        )}
+
+        {/* Text Code Editor Panel with custom dynamic scroll view */}
+        <div className="flex-1 flex flex-col bg-[#1e1e23] min-w-0 md:overflow-hidden">
+          
+          {/* HORIZONTAL FILE TABS BAR -- AMAZING FOR MOBILE & FAST ACCESS */}
+          <div className="flex border-b border-[#1e1e23] bg-[#141417] overflow-x-auto scrollbar-none select-none shrink-0">
+            {files.map((file, idx) => {
+              const isActive = idx === activeFileIndex;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setActiveFileIndex(idx);
+                    setActiveLanguage(
+                      file.language === "gcode" ? { id: "gcode", name: "CIM G-Code", extension: ".gcode", syntaxCategory: "gcode" } :
+                      file.language === "python" ? { id: "python", name: "MicroPython", extension: ".py", syntaxCategory: "python" } :
+                      { id: "arduino", name: "Arduino Dialect (C++)", extension: ".ino", syntaxCategory: "arduino" }
+                    );
+                  }}
+                  className={`flex items-center space-x-1 px-3.5 py-2 border-r border-[#1e1e23] font-mono text-[11px] leading-none shrink-0 transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-[#1e1e23] text-blue-400 font-bold border-t-2 border-t-blue-500"
+                      : "text-slate-500 hover:text-slate-350 hover:bg-[#121215]/80"
+                  }`}
+                >
+                  <FileCode className={`w-3.5 h-3.5 ${isActive ? "text-blue-400" : "text-slate-500"}`} />
+                  <span>{file.name}</span>
+                  {file.isCustom && (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteFile(idx, e);
+                      }}
+                      className="ml-1 text-slate-500 hover:text-rose-400 hover:bg-white/5 rounded-full p-0.5 cursor-pointer"
+                      title="Delete script"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            
+            <button
+              onClick={() => {
+                setNewFileName("");
+                setShowAddFile(true);
+              }}
+              className="px-2.5 text-slate-500 hover:text-white flex items-center justify-center hover:bg-white/5 transition-colors cursor-pointer"
+              title="Create new script file"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          {/* Editor Header controls */}
+          <div className="flex items-center justify-between px-2.5 py-1.5 bg-[#141417] border-b border-white/5 shrink-0">
+            <span className="font-mono text-[9px] text-slate-500 font-semibold tracking-wider uppercase">
+              main_code // {activeFile.name}
+            </span>
+            <div className="flex items-center space-x-1.5">
+              <button
+                onClick={handleDownloadCode}
+                title="Download current file"
+                className="px-2 py-0.5 bg-[#0d0d0f] border border-white/5 rounded text-[9px] font-mono text-slate-400 hover:text-white inline-flex items-center space-x-1 cursor-pointer transition-colors"
+              >
+                <Download className="w-3 h-3" />
+                <span>Export</span>
+              </button>
+              
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                title="Import local project"
+                className="px-2 py-0.5 bg-[#0d0d0f] border border-white/5 rounded text-[9px] font-mono text-slate-400 hover:text-white inline-flex items-center space-x-1 cursor-pointer transition-colors"
+              >
+                <Upload className="w-3 h-3" />
+                <span>Import</span>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleUploadCode}
+                accept=".ino,.py,.cpp,.gcode,.txt"
+                className="hidden"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 flex overflow-hidden font-mono text-xs relative">
+            {/* Visual Editor line-numbers gutter */}
+            <div className="bg-[#141417] px-2 py-4 border-r border-[#1e1e23] text-right text-slate-600 select-none space-y-0.5 leading-5 w-8 text-[10px] items-stretch">
+              {activeFile.content.split("\n").map((_, lineIdx) => {
+                const isActive = (simulationState.isRunning || simulationState.status === "paused") && simulationState.currentLine === lineIdx + 1;
+                const highlightClass = isActive
+                  ? (simulationState.status === "paused" ? "text-amber-400 font-bold" : "text-blue-400 font-bold")
+                  : "";
+                return (
+                  <div
+                    key={lineIdx}
+                    className={`transition-colors ${highlightClass}`}
+                  >
+                    {lineIdx + 1}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Main Interactive text editor input */}
+            <div className="flex-1 h-full relative">
+              <textarea
+                value={activeFile.content}
+                onChange={(e) => onFileChange(e.target.value)}
+                className="w-full h-full bg-[#1e1e23] text-slate-200 p-3 leading-5 font-mono focus:outline-none resize-none overflow-y-auto selection:bg-blue-500/20 text-[12px] lg:text-[13px]"
+                style={{ tabSize: 2 }}
+                placeholder="// Enter code here..."
+              />
+
+              {/* Line spotlight highlights for active execution coordinates */}
+              {(simulationState.isRunning || simulationState.status === "paused") && activeFile.language === "gcode" && (
+                <div 
+                  className={`absolute left-0 right-0 h-5 border-l-2 pointer-events-none transition-all duration-300 max-w-full ${
+                    simulationState.status === "paused" 
+                      ? "bg-amber-500/10 border-amber-500" 
+                      : "bg-blue-500/10 border-blue-500"
+                  }`}
+                  style={{ 
+                    top: `${13 + (simulationState.currentLine - 1) * 20}px` 
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Compiler logs Console & Output (Bottom bar) */}
+      <div 
+        style={{ height: isTerminalCollapsed ? "32px" : `${terminalHeight}px` }} 
+        className="bg-[#141417] border-t border-white/5 flex flex-col shrink-0 relative transition-transform duration-200"
+      >
+        {/* Dynamic horizontal resizer handle for terminal */}
+        {!isTerminalCollapsed && (
+          <div
+            onMouseDown={startResizeTerminal}
+            className="h-1 hover:h-1.5 bg-transparent hover:bg-blue-600/30 cursor-row-resize absolute -top-[2px] left-0 right-0 z-10 transition-all group"
+            title="Drag to resize console logs terminal"
+          >
+            <div className="h-0.5 w-full bg-white/5 group-hover:bg-blue-500/50 transition-colors pointer-events-none" />
+          </div>
+        )}
+        <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#141417] border-b border-white/5 select-none">
+          <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-500 font-bold uppercase tracking-wider">
+            <Terminal className="w-3.5 h-3.5 text-slate-500 animate-pulse" />
+            <span>Serial Flash Terminal Output</span>
+            {isTerminalCollapsed && (
+              <span className="text-[8.5px] text-slate-600 font-normal lowercase normal-case">
+                ({logs.length} signals minimized)
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-3.5">
+            {!isTerminalCollapsed && (
+              <button
+                onClick={() => setLogs([])}
+                className="text-[9px] font-mono text-slate-600 hover:text-slate-300 uppercase transition-colors"
+              >
+                Clear
+              </button>
+            )}
+            <button
+              onClick={() => setIsTerminalCollapsed(!isTerminalCollapsed)}
+              className="text-[9px] font-mono text-slate-400 hover:text-white uppercase transition-colors flex items-center space-x-1"
+              title={isTerminalCollapsed ? "Expand Terminal Logs" : "Collapse Terminal Logs"}
+            >
+              {isTerminalCollapsed ? (
+                <>
+                  <span>Expand</span>
+                  <ChevronUp className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  <span>Retract</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+        
+        {/* Terminal logs listing */}
+        {!isTerminalCollapsed && (
+          <div className="flex-1 overflow-y-auto p-3 font-mono text-[10px] lg:text-[11px] space-y-1 leading-snug select-text">
+            {logs.length === 0 ? (
+              <div className="text-slate-600 italic">No console telemetry signals. Compile or flash code to begin parsing...</div>
+            ) : (
+              logs.map((log) => (
+                <div key={log.id} className="flex items-start space-x-2">
+                  <span className="text-slate-600 flex-shrink-0 select-none">[{log.timestamp}]</span>
+                  <span className={`flex-1 ${
+                    log.type === "success" ? "text-[#22c55e] font-semibold" :
+                    log.type === "warn" ? "text-amber-400" :
+                    log.type === "error" ? "text-rose-400 font-bold" :
+                    "text-slate-350"
+                  }`}>
+                    {log.text}
+                  </span>
+                </div>
+              ))
+            )}
+            <div ref={terminalBottomRef} />
+          </div>
+        )}
+      </div>
+
+      {/* 5. Centered Modal Dialogs */}
+
+      {/* File Creation Centered Dialog Modal */}
+      <ResizableModal
+        isOpen={showAddFile}
+        onClose={() => setShowAddFile(false)}
+        title="Create Workspace Script"
+        icon={<FileCode className="w-4 h-4 text-blue-500" />}
+        defaultWidth={380}
+        defaultHeight={240}
+        minWidth={280}
+        minHeight={200}
+      >
+        <div className="space-y-4 font-mono text-xs text-slate-300">
+          <div className="space-y-3">
+            <label className="block text-[10px] uppercase font-bold text-slate-400">Script Name:</label>
+            <input
+              type="text"
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              placeholder="e.g. pick_and_place"
+              className="w-full bg-[#0d0d0f] border border-white/10 text-slate-200 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-500 transition-colors"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreateFile();
+              }}
+            />
+            <p className="text-[10px] text-slate-500 leading-relaxed">
+              Will auto-apply the extension <span className="text-blue-400 font-semibold">{activeLanguage.extension}</span> matching the active language context ({activeLanguage.name}).
+            </p>
+          </div>
+          
+          <div className="flex justify-end space-x-2 pt-3 border-t border-white/5">
+            <button
+              onClick={() => setShowAddFile(false)}
+              className="px-3 py-1.5 bg-[#0d0d0f] border border-white/5 hover:bg-[#141417] rounded text-xs text-slate-400 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateFile}
+              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs text-white font-bold shadow-lg cursor-pointer transition-colors"
+            >
+              Create File
+            </button>
+          </div>
+        </div>
+      </ResizableModal>
+
+      {/* Help Reference Center Centered Dialog Modal */}
+      <ResizableModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        title="VoltLogic Pro - Industrial CIM Engineering Manual"
+        icon={<HelpCircle className="w-4 h-4 text-blue-400" />}
+        defaultWidth={760}
+        defaultHeight={580}
+        minWidth={400}
+        minHeight={340}
+      >
+        <div className="space-y-4 text-xs leading-relaxed font-mono text-slate-350 pr-1 max-h-[480px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+          
+          {/* Section 1: Decoupled Cognitive Architecture */}
+          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+            <div className="text-blue-400 font-bold text-[10px] uppercase tracking-wider">1. Decoupled 3-Layer Cognitive Architecture</div>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              To guarantee consistent latency and jitter-free motion paths, the controller firmware decouples execution into three sequential, non-blocking layers:
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-slate-400 text-[10.5px] mt-1.5">
+              <li><span className="text-slate-205 font-bold">Sensing Layer:</span> Constantly queries breakbeam sensors, encoder registers (<code className="text-teal-400">#122</code>-<code className="text-teal-400">#151</code>), and color scans.</li>
+              <li><span className="text-slate-205 font-bold">Decision Layer:</span> Matches parts to destination bins, processes error states, and updates state vectors.</li>
+              <li><span className="text-slate-205 font-bold">Motion Profiler:</span> Translates goals into step pulses using kinematics solvers, maintaining smooth paths.</li>
+            </ul>
+          </div>
+
+          {/* Section 2: Kinematic Classes */}
+          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+            <div className="text-emerald-400 font-bold text-[10px] uppercase tracking-wider">2. System Kinematics & Coordinate Planes</div>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              The controller compiles high-level coordinates into actuator joint-space configuration targets depending on the selected hardware class:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+              <div className="bg-black/35 p-2 rounded border border-white/5">
+                <span className="text-slate-200 font-bold text-[9.5px]">Articulated 4-DOF:</span>
+                <p className="text-slate-500 text-[9px] mt-1">Multi-planar revolute joints. Translates spherical coordinates into J1/J2/J3 absolute angles.</p>
+              </div>
+              <div className="bg-black/35 p-2 rounded border border-white/5">
+                <span className="text-slate-200 font-bold text-[9.5px]">Planar SCARA:</span>
+                <p className="text-slate-500 text-[9px] mt-1">High-response horizontal pick. Revolute J1/J2 sweep on parallel planes with a linear J3 quill plunger.</p>
+              </div>
+              <div className="bg-black/35 p-2 rounded border border-white/5">
+                <span className="text-slate-200 font-bold text-[9.5px]">Cartesian Gantry:</span>
+                <p className="text-slate-500 text-[9px] mt-1">Overhead linear rails. Orthogonal X/Y axis sliders matched with a vertical physical quill.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Calibration Registers */}
+          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+            <div className="text-amber-400 font-bold text-[10px] uppercase tracking-wider">3. Teach Calibration & Volatile Parameter Registers</div>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              Robot target landing coordinates and safety heights are soft-referenced to volatile macro variables. Change these via active UI Sliders under the 
+              <span className="text-white"> "Factory Simulator"</span> tab or programmatically in scripts without rewriting kinematics logic:
+            </p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 bg-black/45 p-2 rounded mt-2 text-[9.5px] font-mono leading-relaxed border border-white/5">
+              <div><span className="text-amber-400">#122 / #123</span>: Conveyor Pick Pt (X/Y)</div>
+              <div><span className="text-amber-400">#130 / #131</span>: Red Sort Box Target</div>
+              <div><span className="text-amber-400">#132 / #133</span>: Green Sort Box Target</div>
+              <div><span className="text-amber-400">#134 / #135</span>: Blue Sort Box Target</div>
+              <div><span className="text-amber-400">#136 / #137</span>: Yellow Sort Box Target</div>
+              <div><span className="text-amber-400">#150 / #151</span>: Reject / Fault Storage Slot</div>
+              <div><span className="text-amber-400">#105</span>: Transition Safe Height (Z)</div>
+              <div><span className="text-amber-400">#107</span>: Drop-Off Landing Alt (Z)</div>
+            </div>
+          </div>
+
+          {/* Section 4: Motion Profiling */}
+          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+            <div className="text-teal-400 font-bold text-[10px] uppercase tracking-wider">4. Motion Profiling & Acceleration Control</div>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              Actuators do not perform instantaneous step jumps. Paths are computed using a motion profile:
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-slate-400 text-[10px] mt-1">
+              <li><span className="text-slate-205 font-bold">Inter-Joint Interpolation:</span> Damped step movements are solved dynamically via real-time damping coefficients inside the workspace physics solver.</li>
+              <li><span className="text-slate-205 font-bold">Feedrate Limits:</span> The G-code parameter <code className="text-teal-400 font-bold">F[value]</code> defines peak speeds; deceleration curves are generated as targets near extreme limits.</li>
+            </ul>
+          </div>
+
+          {/* Section 5: Interlocking & Safeties */}
+          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+            <div className="text-rose-400 font-bold text-[10px] uppercase tracking-wider">5. System Safeties & Interlocking</div>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              Industrial cells are guided by interlocking triggers to prevent physical collisions:
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-slate-400 text-[10px] mt-1">
+              <li><span className="text-slate-210 font-bold">Dry-Run Simulation:</span> Activating dry-run disables vacuum/gripper actuators, running virtual motions so coordinates and collisions can be detected safely.</li>
+              <li><span className="text-slate-210 font-bold">Breakbeam Interlock (<code className="text-teal-450 uppercase">M66</code>):</span> Halts routine progression until a physical part registers, avoiding empty pickups.</li>
+              <li><span className="text-slate-210 font-bold">Containment Safety Barrier:</span> Setting the obstacle height maps a physical intrusion boundary. Paths must climb over <code className="text-teal-400">#105</code> to clear the hazard.</li>
+            </ul>
+          </div>
+
+          {/* Section 6: Syntax Guide */}
+          <div>
+            <div className="text-blue-400 font-bold border-b border-white/5 pb-1 mb-2 uppercase text-[10px] tracking-wider">6. Controller Instruction Cheat Sheet</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] leading-normal">
+              <div className="space-y-1.5 bg-black/20 p-2 rounded border border-white/5">
+                <div className="text-slate-200 font-bold text-[9px] uppercase tracking-wider">Standard G-Codes</div>
+                <div>
+                  <code className="text-emerald-400 font-bold">G00 X.. Y.. Z..</code>
+                  <p className="text-slate-400 text-[9.5px]">Rapid move at max rate.</p>
+                </div>
+                <div>
+                  <code className="text-emerald-400 font-bold">G01 X.. Y.. Z.. F[rate]</code>
+                  <p className="text-slate-400 text-[9.5px]">Linear feedrate coordinated motion.</p>
+                </div>
+                <div>
+                  <code className="text-emerald-400 font-bold">G90 / G21</code>
+                  <p className="text-slate-400 text-[9.5px]">Absolute coordinate mode / Metric units (mm).</p>
+                </div>
+              </div>
+              
+              <div className="space-y-1.5 bg-black/20 p-2 rounded border border-white/5">
+                <div className="text-slate-200 font-bold text-[9px] uppercase tracking-wider">Standard M-Codes</div>
+                <div>
+                  <code className="text-blue-400 font-bold">M03 S1 / S0</code>
+                  <p className="text-slate-400 text-[9.5px]">Conveyor Belt Run / Halt.</p>
+                </div>
+                <div>
+                  <code className="text-blue-400 font-bold">M05 P1 / P0</code>
+                  <p className="text-slate-400 text-[9.5px]">Actuator Tool Grab / Release.</p>
+                </div>
+                <div>
+                  <code className="text-blue-400 font-bold">M66 P1 L3 Q5</code>
+                  <p className="text-slate-400 text-[9.5px]">Sensor breakpoint sync interlock hook.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-3 border-t border-white/5">
+            <button
+              onClick={() => setShowHelpModal(false)}
+              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs text-white font-bold transition-colors cursor-pointer"
+            >
+              Understand & Close
+            </button>
+          </div>
+        </div>
+      </ResizableModal>
+    </div>
+  );
+}
+
+
