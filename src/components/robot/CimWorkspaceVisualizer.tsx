@@ -1020,6 +1020,7 @@ export default function CimWorkspaceVisualizer({
               </div>
            </div>
         ) : (
+        <>
         <svg
           id="simulation-svg-viewport"
           ref={svgRef}
@@ -2271,6 +2272,8 @@ export default function CimWorkspaceVisualizer({
         <div className="absolute bottom-2.5 right-2.5 text-[8px] font-mono text-slate-500 bg-[#1a1a1e]/90 px-1.5 py-0.5 rounded border border-[#1e1e23] pointer-events-none hidden sm:block">
           Drag blue crosshair to solve inverse kinematics!
         </div>
+        </>
+        )}
       </div>
 
       {/* 2. Scrollable Tab Panel Area (Relocated to the Right Control Panel) */}
