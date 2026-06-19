@@ -45,7 +45,7 @@ import Robot3DCanvas from "./Robot3DCanvas";
 interface CADObject {
   id: string;
   name: string;
-  type: "robot_arm" | "conveyor" | "pallet" | "camera" | "sensor" | "amr" | "barrier" | "machine_tool" | "human";
+  type: "robot_arm" | "conveyor" | "pallet" | "camera" | "sensor" | "amr" | "barrier" | "machine_tool" | "human" | "furniture" | "office_fixture" | "appliance" | "dock";
   x: number;
   y: number;
   rotation: number;
@@ -124,18 +124,45 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
   ]);
 
   // --- 4. CAD Drag and Drop states ---
-  const [cadObjects, setCadObjects] = useState<CADObject[]>([
-    { id: "cad-1", name: "Articulated KR-60", type: "robot_arm", x: 180, y: 150, rotation: 45, width: 44, height: 44, status: "active" },
-    { id: "cad-2", name: "Spawning Conveyor", type: "conveyor", x: 80, y: 260, rotation: 0, width: 280, height: 26, status: "active" },
-    { id: "cad-3", name: "Unload Pallet B3", type: "pallet", x: 380, y: 140, rotation: 90, width: 50, height: 50, status: "idle" },
-    { id: "cad-4", name: "LiDAR Guard Scanner", type: "sensor", x: 280, y: 80, rotation: 120, width: 22, height: 22, status: "active" },
-    { id: "cad-5", name: "Smart AMR Transport", type: "amr", x: 320, y: 240, rotation: -30, width: 36, height: 24, status: "idle" },
-    { id: "cad-6", name: "Safety Panel Left", type: "barrier", x: 40, y: 100, rotation: 90, width: 10, height: 120, status: "idle" },
-    { id: "cad-7", name: "Operator Dave", type: "human", x: 110, y: 70, rotation: 180, width: 15, height: 15, status: "idle" },
-  ]);
+  const [cadObjects, setCadObjects] = useState<CADObject[]>([]);
   const [selectedCADId, setSelectedCADId] = useState<string | null>("cad-1");
   const [cadProjection, setCadProjection] = useState<"top" | "front" | "side" | "perspective">("top");
   const [snapToGrid, setSnapToGrid] = useState(true);
+
+  // Initialize CAD layout based on environment category
+  useEffect(() => {
+    const category = robotDesign?.category || "industrial";
+    
+    if (category === "domestic") {
+      setCadObjects([
+        { id: "cad-1", name: "Domestic Arm Core", type: "robot_arm", x: 180, y: 150, rotation: 45, width: 44, height: 44, status: "active" },
+        { id: "cad-2", name: "Sofa", type: "furniture", x: 80, y: 260, rotation: 0, width: 140, height: 60, status: "idle" },
+        { id: "cad-3", name: "Coffee Table", type: "furniture", x: 380, y: 140, rotation: 90, width: 60, height: 40, status: "idle" },
+        { id: "cad-4", name: "Smart TV", type: "appliance", x: 40, y: 100, rotation: 90, width: 10, height: 100, status: "idle" },
+        { id: "cad-5", name: "Roomba Dock", type: "dock", x: 320, y: 240, rotation: -30, width: 30, height: 20, status: "idle" },
+        { id: "cad-6", name: "Pet Cat", type: "human", x: 110, y: 70, rotation: 180, width: 15, height: 15, status: "idle" },
+      ]);
+    } else if (category === "corporate") {
+      setCadObjects([
+        { id: "cad-1", name: "Office Arm Core", type: "robot_arm", x: 180, y: 150, rotation: 45, width: 44, height: 44, status: "active" },
+        { id: "cad-2", name: "Cubicle Desk", type: "office_fixture", x: 80, y: 260, rotation: 0, width: 120, height: 50, status: "idle" },
+        { id: "cad-3", name: "Water Cooler", type: "appliance", x: 380, y: 140, rotation: 90, width: 30, height: 30, status: "idle" },
+        { id: "cad-4", name: "Filing Cabinet", type: "office_fixture", x: 40, y: 100, rotation: 90, width: 40, height: 20, status: "idle" },
+        { id: "cad-5", name: "Charging Hub", type: "dock", x: 320, y: 240, rotation: -30, width: 30, height: 20, status: "idle" },
+        { id: "cad-6", name: "Staff Member", type: "human", x: 110, y: 70, rotation: 180, width: 15, height: 15, status: "idle" },
+      ]);
+    } else {
+      setCadObjects([
+        { id: "cad-1", name: "Articulated KR-60", type: "robot_arm", x: 180, y: 150, rotation: 45, width: 44, height: 44, status: "active" },
+        { id: "cad-2", name: "Spawning Conveyor", type: "conveyor", x: 80, y: 260, rotation: 0, width: 280, height: 26, status: "active" },
+        { id: "cad-3", name: "Unload Pallet B3", type: "pallet", x: 380, y: 140, rotation: 90, width: 50, height: 50, status: "idle" },
+        { id: "cad-4", name: "LiDAR Guard Scanner", type: "sensor", x: 280, y: 80, rotation: 120, width: 22, height: 22, status: "active" },
+        { id: "cad-5", name: "Smart AMR Transport", type: "amr", x: 320, y: 240, rotation: -30, width: 36, height: 24, status: "idle" },
+        { id: "cad-6", name: "Safety Panel Left", type: "barrier", x: 40, y: 100, rotation: 90, width: 10, height: 120, status: "idle" },
+        { id: "cad-7", name: "Operator Dave", type: "human", x: 110, y: 70, rotation: 180, width: 15, height: 15, status: "idle" },
+      ]);
+    }
+  }, [robotDesign?.category]);
 
   // --- 5. Robot Builder Custom Arms states ---
   const [customJoints, setCustomJoints] = useState<CustomJoint[]>([
@@ -185,9 +212,9 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
   const [currentCourse, setCurrentCourse] = useState("industrial_robot_engineer");
   const [labs, setLabs] = useState([
     { id: "lab-1", title: "Kinematic Workspace Mapping", status: "completed", reward: "IK Expert Badge" },
-    { id: "lab-2", title: "PLC Ladder Logic Assembly", status: "in_progress", reward: "Controls Engineer Certification" },
-    { id: "lab-3", title: "Failsafe Vision Interlock Calibration", status: "locked", reward: "Safety Systems Designer" },
-    { id: "lab-4", title: "OEE Predictive Maintenance Setup", status: "locked", reward: "Analytics Specialist" },
+    { id: "lab-2", title: "PLC Ladder Logic Assembly", status: "completed", reward: "Controls Engineer Certification" },
+    { id: "lab-3", title: "Failsafe Context-Aware Vision Calibration", status: "in_progress", reward: "AI Vision Systems Designer" },
+    { id: "lab-4", title: "Domestic vs Industrial Object Classification", status: "locked", reward: "Environment Integration Architect" },
   ]);
 
   // Synchronize latest cadObjects and plcInputs via refs to prevent stale closure loops
@@ -273,7 +300,11 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
       amr: "Mobile AMR Unit",
       barrier: "Hazard Guard Fence",
       machine_tool: "CNC Machine Enclosure",
-      human: "Aux Technician"
+      human: "Aux Technician",
+      furniture: "Office Furniture",
+      office_fixture: "Office Fixture",
+      appliance: "Home Appliance",
+      dock: "Charging Dock"
     };
 
     const newObj: CADObject = {
@@ -1671,8 +1702,8 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
           {activeTab === "learning-academy" && (
             <div className="space-y-4">
               <div className="space-y-1">
-                <h3 className="text-[10px] text-teal-400 uppercase font-bold tracking-wider font-extrabold">Dual Certification & Guided Labs</h3>
-                <p className="text-[8.5px] text-slate-500">Complete missions to activate production credentials and earn developer badges.</p>
+                <h3 className="text-[10px] text-teal-400 uppercase font-bold tracking-wider font-extrabold">Context-Aware Certification & Guided Labs</h3>
+                <p className="text-[8.5px] text-slate-500">Complete AI Vision mapping and strict category sorting missions to earn environment-specific developer badges.</p>
               </div>
 
               <div className="bg-[#15151b] border border-white/5 rounded-xl p-3.5 space-y-3">
@@ -1912,6 +1943,25 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                                   <circle cx="0" cy="0" r="4.5" fill="#fbcfe8" />
                                   <path d="M -6,4 Q 0,-3 6,4" fill="none" stroke="#fbcfe8" strokeWidth="1.5" />
                                 </g>
+                              )}
+
+                              {obj.type === "furniture" && (
+                                <rect x={-obj.width/2} y={-obj.height/2} width={obj.width} height={obj.height} fill="#9ca3af" stroke="#4b5563" strokeWidth="2" rx="8" />
+                              )}
+
+                              {obj.type === "office_fixture" && (
+                                <rect x={-obj.width/2} y={-obj.height/2} width={obj.width} height={obj.height} fill="#cbd5e1" stroke="#94a3b8" strokeWidth="1" />
+                              )}
+
+                              {obj.type === "appliance" && (
+                                <g>
+                                  <rect x={-obj.width/2} y={-obj.height/2} width={obj.width} height={obj.height} fill="#334155" stroke="#1e293b" strokeWidth="1.5" rx="2" />
+                                  <circle cx="0" cy="0" r="4" fill="#38bdf8" />
+                                </g>
+                              )}
+
+                              {obj.type === "dock" && (
+                                <polygon points={`-${obj.width/2},${obj.height/2} ${obj.width/2},${obj.height/2} ${obj.width/3},-${obj.height/2} -${obj.width/3},-${obj.height/2}`} fill="#111827" stroke="#fbbf24" strokeWidth="1.5" />
                               )}
 
                               {/* Label text */}

@@ -485,7 +485,9 @@ export function LadderCanvas({
       );
     }
 
-    if (node.type.startsWith('timer') || node.type.startsWith('counter') || node.type === 'reset' || node.type.startsWith('compare') || node.type.startsWith('math')) {
+    const isAdvanced = node.type === 'pid-controller' || node.type === 'scale-param' || node.type === 'limit-test' || node.type === 'alarm-block';
+    
+    if (node.type.startsWith('timer') || node.type.startsWith('counter') || node.type === 'reset' || node.type.startsWith('compare') || node.type.startsWith('math') || isAdvanced) {
        const accum = state.simulation.values[`${node.address}_ACC`] || 0;
        const dnVal = state.simulation.values[`${node.address}_DN`];
        
@@ -505,6 +507,13 @@ export function LadderCanvas({
        else if (node.type === 'math-mul') label = 'MUL';
        else if (node.type === 'math-div') label = 'DIV';
        else if (node.type === 'math-mov') label = 'MOV';
+       else if (node.type === 'math-sin') label = 'SIN';
+       else if (node.type === 'math-cos') label = 'COS';
+       else if (node.type === 'math-tan') label = 'TAN';
+       else if (node.type === 'pid-controller') label = 'PID';
+       else if (node.type === 'scale-param') label = 'SCP';
+       else if (node.type === 'limit-test') label = 'LIM';
+       else if (node.type === 'alarm-block') label = 'ALM';
 
        const isCompare = node.type.startsWith('compare');
        const isMath = node.type.startsWith('math');
@@ -564,6 +573,45 @@ export function LadderCanvas({
                     <text x={bX + bW - 8} y={bY + 34} textAnchor="end" fontSize={5} fill="#f1f5f9" className="font-mono font-bold">
                       {node.params?.dest || node.address}
                     </text>
+                  </>
+                )}
+              </>
+            )}
+
+            {isAdvanced && node.type === 'pid-controller' && (
+              <>
+                <text x={bX + 8} y={bY + 18} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">SP:</text>
+                <text x={bX + bW - 8} y={bY + 18} textAnchor="end" fontSize={4.5} fill="#f1f5f9" className="font-mono">{node.params?.sp || 0}</text>
+                <text x={bX + 8} y={bY + 24} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">PV:</text>
+                <text x={bX + bW - 8} y={bY + 24} textAnchor="end" fontSize={4.5} fill="#f1f5f9" className="font-mono">{node.params?.pv || 0}</text>
+                <text x={bX + 8} y={bY + 30} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">CV:</text>
+                <text x={bX + bW - 8} y={bY + 30} textAnchor="end" fontSize={4.5} fill="#10b981" className="font-mono font-bold">{node.params?.cv || node.address}</text>
+              </>
+            )}
+
+            {isAdvanced && node.type === 'scale-param' && (
+              <>
+                <text x={bX + 8} y={bY + 16} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">In(A):</text>
+                <text x={bX + bW - 8} y={bY + 16} textAnchor="end" fontSize={4.5} fill="#f1f5f9" className="font-mono">{node.params?.sourceA || 0}</text>
+                <text x={bX + 8} y={bY + 22} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">InMax:</text>
+                <text x={bX + bW - 8} y={bY + 22} textAnchor="end" fontSize={4.5} fill="#f1f5f9" className="font-mono">{node.params?.inMax || 0}</text>
+                <text x={bX + 8} y={bY + 28} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">OutMax:</text>
+                <text x={bX + bW - 8} y={bY + 28} textAnchor="end" fontSize={4.5} fill="#f1f5f9" className="font-mono">{node.params?.outMax || 0}</text>
+                <text x={bX + 8} y={bY + 34} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">Dest:</text>
+                <text x={bX + bW - 8} y={bY + 34} textAnchor="end" fontSize={4.5} fill="#10b981" className="font-mono">{node.params?.dest || node.address}</text>
+              </>
+            )}
+
+            {isAdvanced && (node.type === 'limit-test' || node.type === 'alarm-block') && (
+              <>
+                <text x={bX + 8} y={bY + 18} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">Test:</text>
+                <text x={bX + bW - 8} y={bY + 18} textAnchor="end" fontSize={4.5} fill="#f1f5f9" className="font-mono font-bold">{node.params?.testVal || 0}</text>
+                <text x={bX + 8} y={bY + 26} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">High:</text>
+                <text x={bX + bW - 8} y={bY + 26} textAnchor="end" fontSize={4.5} fill="#f1f5f9" className="font-mono">{node.params?.highLimit || 0}</text>
+                {node.type === 'limit-test' && (
+                  <>
+                    <text x={bX + 8} y={bY + 34} textAnchor="start" fontSize={4.5} fill="currentColor" opacity={0.6} className="font-mono">Low:</text>
+                    <text x={bX + bW - 8} y={bY + 34} textAnchor="end" fontSize={4.5} fill="#f1f5f9" className="font-mono">{node.params?.lowLimit || 0}</text>
                   </>
                 )}
               </>

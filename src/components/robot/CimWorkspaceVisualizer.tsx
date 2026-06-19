@@ -39,6 +39,9 @@ import {
   RefreshCw,
   Cpu,
   Sparkles,
+  Maximize2,
+  Minimize2,
+  Terminal as TerminalIcon
 } from "lucide-react";
 import { askAI } from "../../lib/ai";
 import Robot3DCanvas from "./Robot3DCanvas";
@@ -70,6 +73,7 @@ interface CimWorkspaceVisualizerProps {
   envObjects?: any[];
   activeFile?: WorkspaceFile;
   onFileChange?: (content: string) => void;
+  logs?: TerminalLog[];
   setLogs?: React.Dispatch<React.SetStateAction<TerminalLog[]>>;
   onCollapse?: () => void;
 }
@@ -97,10 +101,13 @@ export default function CimWorkspaceVisualizer({
   envObjects = [],
   activeFile,
   onFileChange,
+  logs,
   setLogs,
   onCollapse,
 }: CimWorkspaceVisualizerProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(true);
   const [isDraggingTarget, setIsDraggingTarget] = useState(false);
   const [viewMode, setViewMode] = useState<"2D" | "3D">("3D"); // Default to 3D for WOW factor
   const [showGrid, setShowGrid] = useState(true);
@@ -879,7 +886,7 @@ export default function CimWorkspaceVisualizer({
   return (
     <div
       id="cim-visualizer-card"
-      className="bg-[#1a1a1e] border border-white/5 rounded overflow-hidden flex flex-col h-full shadow-2xl"
+      className={`bg-[#1a1a1e] border border-white/5 rounded overflow-hidden flex flex-col h-full shadow-2xl transition-all duration-300 ${isFullscreen ? "fixed inset-0 z-[100] w-screen h-screen rounded-none" : ""}`}
     >
       {/* Title block & Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 md:px-4 py-2 bg-[#141417] border-b border-white/5 shrink-0 gap-2">
@@ -997,25 +1004,64 @@ export default function CimWorkspaceVisualizer({
             >
               <HelpCircle className="w-3.5 h-3.5" />
             </button>
-            {onCollapse && (
+            <button
+              onClick={() => setShowTerminal(!showTerminal)}
+              title="Toggle Terminal HUD"
+              className={`p-1 rounded transition-colors mr-1 cursor-pointer ${showTerminal ? "text-blue-400 bg-[#0d0d0f]" : "text-slate-600 hover:text-slate-300"}`}
+            >
+              <TerminalIcon className="w-3.5 h-3.5" />
+            </button>
+            {onCollapse && !isFullscreen && (
               <button
                 onClick={onCollapse}
                 title="Collapse Visualizer Panel"
-                className="p-1 rounded transition-colors text-slate-600 hover:text-rose-400 cursor-pointer"
+                className="p-1 rounded transition-colors text-slate-600 hover:text-rose-400 cursor-pointer mr-1"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
             )}
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              title="Toggle Fullscreen"
+              className="p-1 rounded transition-colors text-slate-600 hover:text-white cursor-pointer ml-1"
+            >
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            </button>
           </div>
         </div>
       </div>
 
       {/* Primary Simulation Workspace (Always visible, responsive scaling consuming remaining space) */}
       <div className="relative flex-1 w-full min-h-[250px] sm:min-h-[300px] md:min-h-[380px] bg-[#0d0d0f] flex flex-col items-center justify-center p-1.5 group select-none border-b border-white/5">
+        {showTerminal && logs && (
+          <div className="absolute top-4 right-4 w-80 max-h-[40%] bg-black/80 backdrop-blur-sm border border-white/10 rounded overflow-hidden flex flex-col z-20 shadow-2xl">
+            <div className="flex items-center space-x-2 px-3 py-1.5 bg-white/5 border-b border-white/5 shrink-0">
+              <TerminalIcon className="w-3 h-3 text-blue-400" />
+              <span className="font-mono text-[9px] font-bold text-slate-300 tracking-wider">EXECUTION LOGS</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
+              {logs.length === 0 && (
+                <div className="text-slate-500 font-mono text-[9px] italic">No execution logs yet.</div>
+              )}
+              {[...logs].reverse().map((log) => (
+                <div key={log.id} className="text-[10px] font-mono leading-relaxed bg-white/5 px-2 py-1.5 rounded">
+                  <span className="text-slate-500 mr-2 text-[8px]">{log.timestamp}</span>
+                  <span className={`${
+                    log.type === "error" ? "text-rose-400" :
+                    log.type === "warn" ? "text-amber-400" :
+                    log.type === "success" ? "text-emerald-400" : "text-blue-200"
+                  }`}>
+                    {log.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {viewMode === "3D" ? (
            <div className="w-full h-full bg-[#0a0a0c] rounded">
               <Robot3DCanvas joints={displayJoints} robotDesign={robotDesign} workpieces={workpieces} />
-              <div className="absolute top-4 left-4 bg-black/60 text-[10px] text-white/50 px-2 py-1 rounded font-mono border border-white/5 pointer-events-none">
+              <div className="absolute top-4 left-4 bg-black/60 text-[10px] text-white/50 px-2 py-1 rounded font-mono border border-white/5 pointer-events-none z-10">
                  LIVING DIGITAL TWIN RENDERING ENGINE (3D MODE)
               </div>
            </div>
@@ -1310,7 +1356,8 @@ export default function CimWorkspaceVisualizer({
           )}
 
           {/* Workpieces moving on conveyor */}
-          {workpieces.map((wp) => {
+
+              {workpieces.map((wp) => {
             // Draw moving workpiece box
             // If status is "picked", bind coordinates to endEffector tip!
             const size = 16;

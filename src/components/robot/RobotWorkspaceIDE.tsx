@@ -1105,15 +1105,7 @@ export default function RobotWorkspaceIDE({
                 stopSimulation();
                 return;
               }
-              case "G04": {
-                // Hold/dwell delay action parameter
-                const ms = parsed.params.P || 1000;
-                const ticks = Math.max(1, Math.round(ms / currentSpeed));
-                activeDelayTicks = ticks;
-                addLog("info", `[Dwell] Delaying action execution loop for ${ms}ms (~${ticks} steps).`);
-                stepShouldPauseTick = true;
-                break;
-              }
+
               default:
                 addLog("warn", `Command not mapped locally: ${parsed.command}`);
             }

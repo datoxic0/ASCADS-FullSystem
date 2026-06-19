@@ -25,6 +25,13 @@ export type NodeType =
   | 'math-mul'
   | 'math-div'
   | 'math-mov'
+  | 'math-sin'
+  | 'math-cos'
+  | 'math-tan'
+  | 'pid-controller'
+  | 'scale-param'
+  | 'limit-test'
+  | 'alarm-block'
   | 'branch-start'
   | 'branch-end'
   | 'wire-vertical'
@@ -46,6 +53,26 @@ export interface LadderNode {
     sourceA?: string | number;
     sourceB?: string | number;
     dest?: string;
+    // Limit Test (LIM)
+    lowLimit?: string | number;
+    highLimit?: string | number;
+    testVal?: string | number;
+    // Scale with Parameters (SCP)
+    inMin?: string | number;
+    inMax?: string | number;
+    outMin?: string | number;
+    outMax?: string | number;
+    // PID Controller
+    kp?: number;
+    ki?: number;
+    kd?: number;
+    sp?: string | number;
+    pv?: string | number;
+    cv?: string;
+    // Internal state caching
+    lastError?: number;
+    integral?: number;
+    lastTime?: number;
   };
   deviceProfile?: {
     deviceType: 'none' | 'motor' | 'piston' | 'valve' | 'light' | 'siren' | 'heater';

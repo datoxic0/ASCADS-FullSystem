@@ -104,6 +104,8 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
       conducts = true; // pass through input power to allow visual continuity/cascading
     } else if (type.startsWith('compare-') || type.startsWith('math-') || type === 'reset') {
       conducts = true; // pass through input power to allow visual continuity/cascading
+    } else if (type === 'pid-controller' || type === 'scale-param' || type === 'limit-test' || type === 'alarm-block') {
+      conducts = true; // pass through
     } else {
       conducts = true;
     }
@@ -138,7 +140,11 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
     n.type === 'counter-down' ||
     n.type === 'reset' ||
     n.type.startsWith('compare') ||
-    n.type.startsWith('math')
+    n.type.startsWith('math') ||
+    n.type === 'pid-controller' ||
+    n.type === 'scale-param' ||
+    n.type === 'limit-test' ||
+    n.type === 'alarm-block'
   );
   outputs.sort((a, b) => {
     const rungA = getRungIndex(a);
@@ -278,8 +284,90 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
         else if (output.type === 'math-mul') result = a * b;
         else if (output.type === 'math-div') result = b !== 0 ? a / b : 0;
         else if (output.type === 'math-mov') result = a;
+        else if (output.type === 'math-sin') result = Math.sin(a * (Math.PI / 180)); // Assume deg input
+        else if (output.type === 'math-cos') result = Math.cos(a * (Math.PI / 180));
+        else if (output.type === 'math-tan') result = Math.tan(a * (Math.PI / 180));
         
         values[dest] = result;
+      }
+    } else if (output.type === 'scale-param') {
+      if (isPathEnergized) {
+        const inputVal = getValue(output.params?.sourceA);
+        const inMin = getValue(output.params?.inMin);
+        const inMax = getValue(output.params?.inMax);
+        const outMin = getValue(output.params?.outMin);
+        const outMax = getValue(output.params?.outMax);
+        const dest = output.params?.dest || output.address;
+        
+        // Linear scaling: y = mx + c
+        if (inMax !== inMin) {
+          const scaled = outMin + ((inputVal - inMin) / (inMax - inMin)) * (outMax - outMin);
+          values[dest] = scaled;
+        } else {
+          values[dest] = outMin;
+        }
+      }
+    } else if (output.type === 'limit-test') {
+      const testVal = getValue(output.params?.testVal);
+      const lowLimit = getValue(output.params?.lowLimit);
+      const highLimit = getValue(output.params?.highLimit);
+      
+      let inLimit = false;
+      if (lowLimit <= highLimit) {
+        inLimit = testVal >= lowLimit && testVal <= highLimit;
+      } else {
+        // Circular/wrapping limit (e.g., angle 350 to 10)
+        inLimit = testVal >= lowLimit || testVal <= highLimit;
+      }
+      
+      values[output.address] = isPathEnergized && inLimit;
+    } else if (output.type === 'alarm-block') {
+      const testVal = getValue(output.params?.testVal);
+      const highLimit = getValue(output.params?.highLimit);
+      
+      // Basic high alarm
+      const alarmTriggered = testVal >= highLimit;
+      values[output.address] = isPathEnergized && alarmTriggered;
+    } else if (output.type === 'pid-controller') {
+      if (isPathEnergized) {
+        const kp = output.params?.kp || 0;
+        const ki = output.params?.ki || 0;
+        const kd = output.params?.kd || 0;
+        const sp = getValue(output.params?.sp);
+        const pv = getValue(output.params?.pv);
+        const cvDest = output.params?.cv || output.address;
+
+        const error = sp - pv;
+        
+        // Simplified PID for 100ms fixed scan cycle (0.1 sec)
+        const dt = 0.1; 
+        
+        const lastErrorKey = `${output.address}_lastErr`;
+        const integralKey = `${output.address}_integral`;
+        
+        const lastError = Number(values[lastErrorKey]) || 0;
+        let integral = Number(values[integralKey]) || 0;
+        
+        integral += error * dt;
+        const derivative = (error - lastError) / dt;
+        
+        let cv = (kp * error) + (ki * integral) + (kd * derivative);
+        
+        // Clamp CV between 0 and 100% (typical)
+        cv = Math.max(0, Math.min(100, cv));
+        
+        // Anti-windup
+        if (cv === 0 || cv === 100) {
+          integral -= error * dt;
+        }
+
+        values[lastErrorKey] = error;
+        values[integralKey] = integral;
+        values[cvDest] = cv;
+      } else {
+        // Reset integral on rung power loss
+        values[`${output.address}_integral`] = 0;
+        values[output.params?.cv || output.address] = 0;
       }
     }
   }

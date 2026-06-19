@@ -148,6 +148,26 @@ export default function RobotPage() {
   const [isCimModalOpen, setIsCimModalOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
 
+  const handleCompileScript = (code: string) => {
+    const currentFile = files[activeFileIndex];
+    if (currentFile) {
+      const separator = currentFile.content.endsWith("\\n") || currentFile.content === "" ? "" : "\\n";
+      const newContent = currentFile.content + separator + code + "\\n";
+      handleFileContentChange(newContent);
+      setLogs(prev => [...prev, {
+        id: Math.random().toString(),
+        type: "success",
+        text: `[Vision Compiler] Auto-generated collision-free path. Injecting ${code.split("\\n").length} lines of G-Code.`,
+        timestamp: new Date().toLocaleTimeString()
+      }]);
+      // Switch to visualizer tab and ensure IDE is open
+      setActiveMainTab("visualizer");
+      if (!windows.ide.isOpen) {
+        toggleWindow("ide");
+      }
+    }
+  };
+
   // Serial Console simulation terminal logs logger
   const [logs, setLogs] = useState<TerminalLog[]>([
     {
@@ -468,6 +488,7 @@ export default function RobotPage() {
                           envObjects={envObjects}
                           activeFile={files[activeFileIndex]}
                           onFileChange={handleFileContentChange}
+                          logs={logs}
                           setLogs={setLogs}
                           onCollapse={() => toggleWindow('visualizer')}
                         />
@@ -1001,7 +1022,11 @@ export default function RobotPage() {
 
             {selectedDesignTab === "vision-sandbox" && (
               <div className="animate-in fade-in duration-200">
-                <VisionSandbox robotDesign={robotDesign} setRobotDesign={setRobotDesign} />
+                <VisionSandbox 
+                  robotDesign={robotDesign} 
+                  setRobotDesign={setRobotDesign} 
+                  onCompileScript={handleCompileScript}
+                />
               </div>
             )}
 

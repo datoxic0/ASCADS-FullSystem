@@ -91,6 +91,19 @@ const INSTRUCTION_CATEGORIES = [
       { type: 'math-mul' as const, name: 'MUL', symbol: 'MUL', desc: 'Multiply Values' },
       { type: 'math-div' as const, name: 'DIV', symbol: 'DIV', desc: 'Divide Values' },
       { type: 'math-mov' as const, name: 'MOV', symbol: 'MOV', desc: 'Move Data' },
+      { type: 'math-sin' as const, name: 'SIN', symbol: 'SIN', desc: 'Sine (Degrees)' },
+      { type: 'math-cos' as const, name: 'COS', symbol: 'COS', desc: 'Cosine (Degrees)' },
+      { type: 'math-tan' as const, name: 'TAN', symbol: 'TAN', desc: 'Tangent (Degrees)' },
+    ]
+  },
+  {
+    id: 'advanced',
+    label: 'Advanced Control (PID/Scale)',
+    items: [
+      { type: 'pid-controller' as const, name: 'PID', symbol: 'PID', desc: 'Proportional Integral Derivative' },
+      { type: 'scale-param' as const, name: 'SCP', symbol: 'SCP', desc: 'Scale with Parameters' },
+      { type: 'limit-test' as const, name: 'LIM', symbol: 'LIM', desc: 'Limit Test' },
+      { type: 'alarm-block' as const, name: 'ALM', symbol: 'ALM', desc: 'Threshold Alarm' },
     ]
   }
 ];

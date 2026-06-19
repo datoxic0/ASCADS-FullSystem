@@ -13,7 +13,8 @@ import {
   Plus, 
   Activity,
   Play,
-  Square
+  Square,
+  Code2
 } from "lucide-react";
 
 interface SandboxItem {
@@ -29,9 +30,10 @@ interface SandboxItem {
 interface VisionSandboxProps {
   robotDesign: RobotDesignConfig;
   setRobotDesign: React.Dispatch<React.SetStateAction<RobotDesignConfig>>;
+  onCompileScript?: (code: string) => void;
 }
 
-export default function VisionSandbox({ robotDesign, setRobotDesign }: VisionSandboxProps) {
+export default function VisionSandbox({ robotDesign, setRobotDesign, onCompileScript }: VisionSandboxProps) {
   // SVG Workspace Floor Dimensions
   const canvasWidth = 500;
   const canvasHeight = 320;
@@ -56,6 +58,35 @@ export default function VisionSandbox({ robotDesign, setRobotDesign }: VisionSan
   const useAIVision = robotDesign.hasAIVisionModel ?? true;
   const scanRange = robotDesign.visionRange || 180;
   const fovAngle = robotDesign.visionAngle || 90;
+
+  // React to category changes to dynamically preset the sandbox environment!
+  useEffect(() => {
+    if (currentCategory === "domestic") {
+      setItems([
+        { id: "obs-1", name: "Sofa", type: "obstacle", x: 120, y: 100, radius: 12, label: "FURNITURE" },
+        { id: "obs-2", name: "Coffee Table", type: "obstacle", x: 340, y: 220, radius: 15, label: "FURNITURE" },
+        { id: "dock-1", name: "Roomba Dock", type: "charger", x: 440, y: 70, radius: 10, label: "HOME_BASE_DOCK" },
+        { id: "tar-1", name: "Dust Zone", type: "target", x: 180, y: 240, radius: 12, label: "CLEANING_ZONE" },
+        { id: "ped-1", name: "Pet/Child", type: "pedestrian", x: 280, y: 110, radius: 10, label: "HOUSEHOLD_MEMBER" },
+      ]);
+    } else if (currentCategory === "corporate") {
+      setItems([
+        { id: "obs-1", name: "Office Desk", type: "obstacle", x: 120, y: 100, radius: 12, label: "OFFICE_FIXTURE" },
+        { id: "obs-2", name: "Water Cooler", type: "obstacle", x: 340, y: 220, radius: 15, label: "OFFICE_FIXTURE" },
+        { id: "dock-1", name: "Charging Hub", type: "charger", x: 440, y: 70, radius: 10, label: "WALL_OUTLET_BASE" },
+        { id: "tar-1", name: "Mail Cart", type: "target", x: 180, y: 240, radius: 12, label: "DELIVERY_DESK" },
+        { id: "ped-1", name: "Staff Member", type: "pedestrian", x: 280, y: 110, radius: 10, label: "OFFICE_WORKER" },
+      ]);
+    } else {
+      setItems([
+        { id: "obs-1", name: "Steel Hazard Pillar", type: "obstacle", x: 120, y: 100, radius: 12, label: "OBSTACLE_WALL" },
+        { id: "obs-2", name: "Corridor Panel Wall", type: "obstacle", x: 340, y: 220, radius: 15, label: "HAZARD_PARTITION" },
+        { id: "dock-1", name: "Automatic Power Dock", type: "charger", x: 440, y: 70, radius: 10, label: "CHARGER_DOCK_ACV" },
+        { id: "tar-1", name: "Target Cargo Bin", type: "target", x: 180, y: 240, radius: 12, label: "DELIVERY_BIN_A" },
+        { id: "ped-1", name: "Human Guest pedestrian", type: "pedestrian", x: 280, y: 110, radius: 10, label: "HUMAN_PEDESTRIAN" },
+      ]);
+    }
+  }, [currentCategory]);
 
   const [headingAngle, setHeadingAngle] = useState(0); // Current look-at offset angle in degrees (-180 to 180)
 
@@ -159,6 +190,60 @@ export default function VisionSandbox({ robotDesign, setRobotDesign }: VisionSan
     }
   };
 
+  const handleCompileToIDE = () => {
+    if (!onCompileScript) return;
+    
+    // Generate a sequence of moves to hit all targets, avoiding obstacles
+    const targets = items.filter(it => it.type === "target");
+    if (targets.length === 0) {
+      alert("Please add at least one TARGET to compile a trajectory.");
+      return;
+    }
+
+    let gcode = "; --- AUTO-GENERATED VISION PATH ---\\n";
+    gcode += "; Safe initialization\\n";
+    gcode += "G00 X20 Z160 A0 B0 F4000\\n\\n";
+    
+    targets.forEach((target, i) => {
+      // Find nearest obstacle to target
+      const obstacles = items.filter(it => it.type === "obstacle" || it.type === "pedestrian");
+      const nearestObs = obstacles.reduce((closest, current) => {
+        const d1 = Math.hypot(closest.x - target.x, closest.y - target.y);
+        const d2 = Math.hypot(current.x - target.x, current.y - target.y);
+        return d1 < d2 ? closest : current;
+      }, obstacles[0]);
+
+      gcode += `; Navigate to Target ${i + 1} (${target.label})\\n`;
+      
+      // Basic collision avoidance heuristic: If obstacle is close, insert a waypoint
+      if (nearestObs) {
+        const distToObs = Math.hypot(nearestObs.x - target.x, nearestObs.y - target.y);
+        if (distToObs < 60) {
+          // Calculate an evasion waypoint
+          const dx = target.x - nearestObs.x;
+          const dy = target.y - nearestObs.y;
+          const angle = Math.atan2(dy, dx);
+          const evasionX = Math.round(nearestObs.x + Math.cos(angle) * 75);
+          const evasionY = Math.round(nearestObs.y + Math.sin(angle) * 75);
+          gcode += `; Avoiding ${nearestObs.label}\\n`;
+          gcode += `G01 X${evasionX} Z${evasionY} F3000\\n`;
+        }
+      }
+
+      // Approach Target
+      gcode += `G01 X${target.x} Z${target.y} F2000\\n`;
+      gcode += `M05 P1 ; Engage Suction\\n`;
+      gcode += `G04 P500 ; Stabilize\\n`;
+      gcode += `G01 X${target.x} Z${target.y + 40} F2000 ; Lift Cargo\\n\\n`;
+    });
+
+    gcode += "; --- RETURN TO HOME ---\\n";
+    gcode += "G00 X100 Z100 A0 B0 F5000\\n";
+    gcode += "M05 P0 ; Release Gripper\\n";
+
+    onCompileScript(gcode);
+  };
+
   // Add a new random item on the board
   const addNewItem = (type: "obstacle" | "target" | "pedestrian" | "charger") => {
     const rx = Math.round(50 + Math.random() * (canvasWidth - 100));
@@ -167,18 +252,49 @@ export default function VisionSandbox({ robotDesign, setRobotDesign }: VisionSan
     let label = "ENTITY";
     let name = "Artifact";
 
-    if (type === "obstacle") {
-      label = `OBSTACLE_${count}`;
-      name = `Structure Pillar B${count}`;
-    } else if (type === "target") {
-      label = `TARGET_RECEPTACLE_${count}`;
-      name = `Assembly Basket ${count}`;
-    } else if (type === "pedestrian") {
-      label = `OPERATOR_SYS_${count}`;
-      name = `Safety Zone Guest ${count}`;
+    if (currentCategory === "domestic") {
+      if (type === "obstacle") {
+        label = `FURNITURE_${count}`;
+        name = count % 2 === 0 ? `Sofa ${count}` : `Coffee Table ${count}`;
+      } else if (type === "target") {
+        label = `CLEANING_ZONE_${count}`;
+        name = `Spill / Dust Area ${count}`;
+      } else if (type === "pedestrian") {
+        label = `HOUSEHOLD_MEMBER_${count}`;
+        name = `Pet or Child ${count}`;
+      } else {
+        label = `HOME_BASE_DOCK_${count}`;
+        name = `Roomba Charging Dock`;
+      }
+    } else if (currentCategory === "corporate") {
+      if (type === "obstacle") {
+        label = `OFFICE_FIXTURE_${count}`;
+        name = `Cubicle Desk ${count}`;
+      } else if (type === "target") {
+        label = `DELIVERY_DESK_${count}`;
+        name = `Mail Dropoff Point ${count}`;
+      } else if (type === "pedestrian") {
+        label = `OFFICE_WORKER_${count}`;
+        name = `Staff Member ${count}`;
+      } else {
+        label = `WALL_OUTLET_BASE_${count}`;
+        name = `Corporate Charging Hub`;
+      }
     } else {
-      label = `DC_CHARGER_${count}`;
-      name = `AC Charging Rack ${count}`;
+      // Industrial
+      if (type === "obstacle") {
+        label = `OBSTACLE_${count}`;
+        name = `Structure Pillar B${count}`;
+      } else if (type === "target") {
+        label = `TARGET_RECEPTACLE_${count}`;
+        name = `Assembly Basket ${count}`;
+      } else if (type === "pedestrian") {
+        label = `OPERATOR_SYS_${count}`;
+        name = `Safety Zone Guest ${count}`;
+      } else {
+        label = `DC_CHARGER_${count}`;
+        name = `AC Charging Rack ${count}`;
+      }
     }
 
     setItems(prev => [...prev, {
@@ -324,6 +440,16 @@ export default function VisionSandbox({ robotDesign, setRobotDesign }: VisionSan
             >
               RESET BASE
             </button>
+            {onCompileScript && (
+              <button
+                onClick={handleCompileToIDE}
+                className="px-2 py-0.5 bg-emerald-900/40 border border-emerald-500/50 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/60 rounded cursor-pointer flex items-center gap-1 transition-colors"
+                title="Generate Collision-Free G-Code for this Sandbox environment"
+              >
+                <Code2 className="w-2.5 h-2.5" />
+                <span className="font-bold">COMPILE TO IDE</span>
+              </button>
+            )}
           </div>
         </div>
 

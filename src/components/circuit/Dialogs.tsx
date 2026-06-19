@@ -298,18 +298,13 @@ export function AboutDialog({
             <li>Saves locally; works fully offline as an installable PWA.</li>
           </ul>
 
-          <div className="text-[11px] text-muted-foreground/70 text-center pt-2 border-t border-border">
-            Built with React, Vite and TypeScript.
-            <br />
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 mt-1 hover:text-foreground"
-            >
-              <Github className="h-3 w-3" />
-              <Cpu className="h-3 w-3" />
-            </a>
+          <div className="text-[11px] text-muted-foreground/70 text-center pt-2 border-t border-border flex flex-wrap justify-center gap-x-2 gap-y-1">
+            <a href="https://www.bhambathablog.wordpress.com" target="_blank" rel="noreferrer" className="hover:text-foreground">Blog</a> |
+            <a href="https://www.facebook.com/C.Datoxic.P" target="_blank" rel="noreferrer" className="hover:text-foreground">Facebook</a> |
+            <a href="https://www.websim.com/@whisperinggalaxyd" target="_blank" rel="noreferrer" className="hover:text-foreground">WebSim</a> |
+            <a href="https://www.github.com/datoxic0" target="_blank" rel="noreferrer" className="hover:text-foreground">GitHub</a> |
+            <a href="https://discord.com/channels/datoxic0" target="_blank" rel="noreferrer" className="hover:text-foreground">Discord</a> |
+            <a href="https://x.com/Siya_B_Phakathi" target="_blank" rel="noreferrer" className="hover:text-foreground">X</a>
           </div>
         </div>
       </DialogContent>

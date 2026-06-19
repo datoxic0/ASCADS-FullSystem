@@ -123,6 +123,16 @@ function emitStatefulOutputs(
         }
         break;
       }
+      case "SHIFT8":
+      case "RAM8": {
+        const val = g.kind === "SHIFT8" ? (mem?.shift ?? 0) : (mem?.count ?? 0);
+        for (let i = 0; i < 8; i++) {
+          if (outs[i] === undefined) continue;
+          const bit = (val >> i) & 1;
+          pinValues.set(`${g.id}:${outs[i]}`, bit ? 1 : 0);
+        }
+        break;
+      }
     }
   }
 }
@@ -285,6 +295,60 @@ function applyStatefulUpdates(
         mem.count = next;
         memChanged = true;
       }
+    } else if (g.kind === "SHIFT8") {
+      const reset = sigAt(2);
+      const mem = ensureMem(g.id);
+      if (reset === 1) {
+        if (mem.shift !== 0) { mem.shift = 0; memChanged = true; }
+      } else {
+        const d = sigAt(0);
+        if (d === 0 || d === 1) {
+          const next = (((mem.shift ?? 0) << 1) | d) & 0xff;
+          if (mem.shift !== next) { mem.shift = next; memChanged = true; }
+        }
+      }
+    } else if (g.kind === "RAM8") {
+      // RAM8 inputs: D (0), A0 (1), A1 (2), A2 (3), WE (4), CLK (5)
+      const d = sigAt(0);
+      const a0 = sigAt(1); const a1 = sigAt(2); const a2 = sigAt(3);
+      const we = sigAt(4);
+      if (a0 !== "X" && a1 !== "X" && a2 !== "X") {
+        const addr = (a2 as number) * 4 + (a1 as number) * 2 + (a0 as number);
+        const mem = ensureMem(g.id);
+        if (!mem.ram) mem.ram = Array(8).fill(0);
+        if (we === 1 && (d === 0 || d === 1)) {
+          // write
+          if (mem.ram[addr] !== d) {
+            mem.ram[addr] = d;
+            // if we are reading the same addr, output changes next cycle
+          }
+        }
+        // synchronous read
+        if (mem.count !== mem.ram[addr]) {
+          mem.count = mem.ram[addr]; // use count as the output buffer
+          memChanged = true;
+        }
+      }
+    }
+  }
+
+  // Handle continuous cylinder states (not edge-triggered)
+  for (const g of gates) {
+    if (g.kind === "CYLINDER_SA") {
+      const p = pinValues.get(`${g.id}:0`) ?? 0;
+      const mem = ensureMem(g.id);
+      const ext = mem.extension ?? 0;
+      const next = p === 1 ? Math.min(1, ext + 0.1) : Math.max(0, ext - 0.1);
+      if (Math.abs(ext - next) > 0.01) { mem.extension = next; memChanged = true; }
+    } else if (g.kind === "CYLINDER_DA") {
+      const a = pinValues.get(`${g.id}:0`) ?? 0;
+      const b = pinValues.get(`${g.id}:1`) ?? 0;
+      const mem = ensureMem(g.id);
+      const ext = mem.extension ?? 0;
+      let next = ext;
+      if (a === 1 && b === 0) next = Math.min(1, ext + 0.1);
+      else if (b === 1 && a === 0) next = Math.max(0, ext - 0.1);
+      if (Math.abs(ext - next) > 0.01) { mem.extension = next; memChanged = true; }
     }
   }
 
@@ -298,6 +362,12 @@ function ensureStatefulInitial(gates: Gate[], state: SimState): void {
     if (state.memory.has(g.id)) continue;
     if (g.kind === "COUNTER4") {
       state.memory.set(g.id, { count: 0 });
+    } else if (g.kind === "SHIFT8") {
+      state.memory.set(g.id, { shift: 0 });
+    } else if (g.kind === "RAM8") {
+      state.memory.set(g.id, { ram: Array(8).fill(0), count: 0 });
+    } else if (g.kind === "CYLINDER_SA" || g.kind === "CYLINDER_DA") {
+      state.memory.set(g.id, { extension: 0 });
     } else {
       state.memory.set(g.id, { q: 0 });
     }

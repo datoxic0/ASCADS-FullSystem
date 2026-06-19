@@ -85,6 +85,27 @@ export const GATE_CATEGORIES: PaletteCategory[] = [
       { kind: "LABEL", name: "Label" },
     ],
   },
+  {
+    label: "Advanced Logic",
+    items: [
+      { kind: "SHIFT8", name: "8-bit Shift Reg" },
+      { kind: "DEC38", name: "3:8 Decoder" },
+      { kind: "ENC83", name: "8:3 Encoder" },
+      { kind: "ALU4", name: "4-bit ALU" },
+      { kind: "RAM8", name: "8-byte RAM" },
+    ],
+  },
+  {
+    label: "Fluidics & Mechanics",
+    items: [
+      { kind: "COMPRESSOR", name: "Compressor/Pump" },
+      { kind: "EXHAUST", name: "Exhaust/Tank" },
+      { kind: "VALVE_3_2", name: "3/2 Valve" },
+      { kind: "VALVE_5_2", name: "5/2 Valve" },
+      { kind: "CYLINDER_SA", name: "Single-Acting Cyl" },
+      { kind: "CYLINDER_DA", name: "Double-Acting Cyl" },
+    ],
+  },
 ];
 
 const VARIABLE_INPUT_KINDS: GateKind[] = [
@@ -105,14 +126,18 @@ const COMBINATIONAL_KINDS = new Set<GateKind>([
   "TRI",
   "MUX2", "MUX4", "DEMUX2", "DEC2",
   "HALFADDER", "FULLADDER",
+  "DEC38", "ENC83", "ALU4",
+  "VALVE_3_2", "VALVE_5_2"
 ]);
 
 const STATEFUL_KINDS = new Set<GateKind>([
   "SRLATCH", "DLATCH", "DFF", "JKFF", "TFF", "COUNTER4",
+  "SHIFT8", "RAM8", "CYLINDER_SA", "CYLINDER_DA"
 ]);
 
 const SOURCE_KINDS = new Set<GateKind>([
   "INPUT", "CLOCK", "CONST0", "CONST1", "PULLUP", "PULLDOWN", "BUTTON",
+  "COMPRESSOR"
 ]);
 
 export function isCombinational(kind: GateKind): boolean {
@@ -212,6 +237,17 @@ export function sizeOf(g: Pick<Gate, "kind" | "inputs">): { w: number; h: number
       return { w: 56, h: 56 };
     case "LABEL":
       return { w: 80, h: 28 };
+    case "SHIFT8": return { w: 70, h: 140 };
+    case "DEC38": return { w: 70, h: 140 };
+    case "ENC83": return { w: 70, h: 140 };
+    case "ALU4": return { w: 80, h: 150 };
+    case "RAM8": return { w: 90, h: 140 };
+    case "COMPRESSOR": return { w: 50, h: 50 };
+    case "EXHAUST": return { w: 50, h: 50 };
+    case "VALVE_3_2": return { w: 80, h: 60 };
+    case "VALVE_5_2": return { w: 100, h: 60 };
+    case "CYLINDER_SA": return { w: 120, h: 50 };
+    case "CYLINDER_DA": return { w: 120, h: 50 };
     default: {
       // Variable-input logic gates
       const n = Math.max(2, g.inputs);
@@ -412,6 +448,79 @@ export function pinsFor(g: Pick<Gate, "kind" | "inputs">): Pin[] {
     case "LABEL":
       return [];
 
+    /* Advanced Digital & Fluidics */
+    case "SHIFT8": {
+      return [
+        { x: 0, y: h * 0.2, type: "in", label: "D" },
+        { x: 0, y: h * 0.5, type: "in", label: "CLK", clock: true },
+        { x: 0, y: h * 0.8, type: "in", label: "CLR" },
+        ...distributeOutputs(8, h, 14).map((y, i) => ({ x: w, y, type: "out", label: `Q${i}` } as Pin)),
+      ];
+    }
+    case "DEC38": {
+      return [
+        { x: 0, y: h * 0.3, type: "in", label: "A0" },
+        { x: 0, y: h * 0.5, type: "in", label: "A1" },
+        { x: 0, y: h * 0.7, type: "in", label: "A2" },
+        { x: w / 2, y: h, type: "in", label: "EN" },
+        ...distributeOutputs(8, h, 10).map((y, i) => ({ x: w, y, type: "out", label: `Y${i}` } as Pin)),
+      ];
+    }
+    case "ENC83": {
+      return [
+        ...distributeInputs(8, h, 10).map((y, i) => ({ x: 0, y, type: "in", label: `D${i}` } as Pin)),
+        { x: w / 2, y: h, type: "in", label: "EN" },
+        { x: w, y: h * 0.3, type: "out", label: "Y0" },
+        { x: w, y: h * 0.5, type: "out", label: "Y1" },
+        { x: w, y: h * 0.7, type: "out", label: "Y2" },
+      ];
+    }
+    case "ALU4": {
+      return [
+        ...distributeInputs(4, h * 0.4, 10).map((y, i) => ({ x: 0, y, type: "in", label: `A${i}` } as Pin)),
+        ...distributeInputs(4, h * 0.4, 10).map((y, i) => ({ x: 0, y: y + h * 0.6, type: "in", label: `B${i}` } as Pin)),
+        { x: w * 0.3, y: h, type: "in", label: "S0" },
+        { x: w * 0.7, y: h, type: "in", label: "S1" },
+        ...distributeOutputs(4, h, 15).map((y, i) => ({ x: w, y, type: "out", label: `Y${i}` } as Pin)),
+      ];
+    }
+    case "RAM8": {
+      return [
+        { x: 0, y: h * 0.2, type: "in", label: "D" },
+        { x: 0, y: h * 0.4, type: "in", label: "ADDR" },
+        { x: 0, y: h * 0.6, type: "in", label: "WE" },
+        { x: 0, y: h * 0.8, type: "in", label: "CLK", clock: true },
+        ...distributeOutputs(8, h, 14).map((y, i) => ({ x: w, y, type: "out", label: `Q${i}` } as Pin)),
+      ];
+    }
+    case "COMPRESSOR":
+      return [{ x: w, y: h / 2, type: "out", label: "P" }];
+    case "EXHAUST":
+      return [{ x: 0, y: h / 2, type: "in", label: "T" }];
+    case "VALVE_3_2":
+      return [
+        { x: w * 0.3, y: h, type: "in", label: "P" },
+        { x: w * 0.7, y: h, type: "in", label: "T" },
+        { x: 0, y: h / 2, type: "in", label: "S" },
+        { x: w, y: h / 2, type: "out", label: "A" },
+      ];
+    case "VALVE_5_2":
+      return [
+        { x: w * 0.2, y: h, type: "in", label: "T1" },
+        { x: w * 0.5, y: h, type: "in", label: "P" },
+        { x: w * 0.8, y: h, type: "in", label: "T2" },
+        { x: 0, y: h / 2, type: "in", label: "S1" },
+        { x: w, y: h / 2, type: "in", label: "S2" },
+        { x: w * 0.3, y: 0, type: "out", label: "A" },
+        { x: w * 0.7, y: 0, type: "out", label: "B" },
+      ];
+    case "CYLINDER_SA":
+      return [{ x: 0, y: h / 2, type: "in", label: "P" }];
+    case "CYLINDER_DA":
+      return [
+        { x: 0, y: h * 0.3, type: "in", label: "A" },
+        { x: 0, y: h * 0.7, type: "in", label: "B" },
+      ];
     /* Variable input logic gates */
     default: {
       const n = Math.max(2, g.inputs);
@@ -525,6 +634,56 @@ export function evaluateGate(kind: GateKind, inputs: Signal[]): Signal[] {
       const cout = reduceOr([ab, acin, bcin]);
       return [s, cout];
     }
+    case "DEC38": {
+      const [a0, a1, a2, en] = inputs;
+      if (en !== 1) return Array(8).fill(0);
+      if (a0 === "X" || a1 === "X" || a2 === "X" || a0 === undefined || a1 === undefined || a2 === undefined) {
+        return Array(8).fill("X");
+      }
+      const val = (a2 as number) * 4 + (a1 as number) * 2 + (a0 as number);
+      return Array.from({ length: 8 }, (_, i) => (i === val ? 1 : 0)) as Signal[];
+    }
+    case "ENC83": {
+      const en = inputs[8];
+      if (en !== 1) return [0, 0, 0];
+      const data = inputs.slice(0, 8);
+      if (data.includes("X")) return ["X", "X", "X"];
+      let val = 0;
+      for (let i = 7; i >= 0; i--) {
+        if (data[i] === 1) { val = i; break; }
+      }
+      return [(val & 1) ? 1 : 0, (val & 2) ? 1 : 0, (val & 4) ? 1 : 0];
+    }
+    case "ALU4": {
+      const a = inputs.slice(0, 4);
+      const b = inputs.slice(4, 8);
+      const s0 = inputs[8];
+      const s1 = inputs[9];
+      if (a.includes("X") || b.includes("X") || s0 === "X" || s1 === "X" || s0 === undefined || s1 === undefined) {
+        return Array(4).fill("X");
+      }
+      const valA = a.reduce((acc: number, bit, i) => acc | ((bit as number) << i), 0);
+      const valB = b.reduce((acc: number, bit, i) => acc | ((bit as number) << i), 0);
+      const sel = (s1 as number) * 2 + (s0 as number);
+      let res = 0;
+      if (sel === 0) res = valA + valB;
+      else if (sel === 1) res = Math.max(0, valA - valB);
+      else if (sel === 2) res = valA & valB;
+      else if (sel === 3) res = valA | valB;
+      return Array.from({ length: 4 }, (_, i) => ((res >> i) & 1) ? 1 : 0) as Signal[];
+    }
+    case "VALVE_3_2": {
+      const [p, t, s] = inputs;
+      if (s === "X" || s === undefined) return ["X"];
+      return [s === 1 ? (p ?? 0) : (t ?? 0)];
+    }
+    case "VALVE_5_2": {
+      const [t1, p, t2, s1, s2] = inputs;
+      if (s1 === "X" || s2 === "X" || s1 === undefined || s2 === undefined) return ["X", "X"];
+      if (s1 === 1) return [p ?? 0, t2 ?? 0];
+      if (s2 === 1) return [t1 ?? 0, p ?? 0];
+      return [0, 0];
+    }
     default:
       return [];
   }
@@ -563,6 +722,17 @@ export const KIND_DESCRIPTIONS: Partial<Record<GateKind, string>> & Record<strin
   RGBLED: "RGB LED. R, G, B inputs control the colour independently.",
   BUZZER: "Piezo buzzer indicator. Activated when input is HIGH.",
   LABEL: "Text annotation — no electrical connections.",
+  SHIFT8: "8-bit Shift Register. Shifts D into Q on CLK. CLR resets.",
+  DEC38: "3-to-8 Decoder. When EN=1, activates one of 8 outputs based on A2:A0.",
+  ENC83: "8-to-3 Priority Encoder. Outputs binary index of highest active D.",
+  ALU4: "4-bit ALU. S1:S0 selects operation (ADD, SUB, AND, OR).",
+  RAM8: "8-byte RAM. WE=1 writes D to ADDR on CLK.",
+  COMPRESSOR: "Air/Hydraulic source (logic 1).",
+  EXHAUST: "Tank/Exhaust return (logic 0).",
+  VALVE_3_2: "3/2-way Solenoid Valve. S=1 connects P to A. S=0 connects T to A.",
+  VALVE_5_2: "5/2-way Valve. S1 connects P-A/B-T2, S2 connects P-B/A-T1.",
+  CYLINDER_SA: "Single-acting cylinder. Extends on pressure, spring return.",
+  CYLINDER_DA: "Double-acting cylinder. Port A extends, Port B retracts.",
 }, {
   get: (target: any, prop: string) => {
     if (target[prop]) return target[prop];
@@ -607,6 +777,17 @@ export const IEC_LABEL: Partial<Record<GateKind, string>> & Record<string, strin
   RGBLED: "",
   BUZZER: "",
   LABEL: "",
+  SHIFT8: "SRG8",
+  DEC38: "DEC",
+  ENC83: "ENC",
+  ALU4: "ALU",
+  RAM8: "RAM",
+  COMPRESSOR: "PUMP",
+  EXHAUST: "EXH",
+  VALVE_3_2: "3/2v",
+  VALVE_5_2: "5/2v",
+  CYLINDER_SA: "CYL-S",
+  CYLINDER_DA: "CYL-D",
 };
 
 /** Index of the CLK input pin for each clocked gate, or -1 if none. */
@@ -615,6 +796,8 @@ export const CLOCK_PIN_INDEX: Partial<Record<GateKind, number>> & Record<string,
   TFF: 1,
   JKFF: 2,
   COUNTER4: 0,
+  SHIFT8: 1,
+  RAM8: 3,
 };
 
 export function snapToGrid(v: number): number {

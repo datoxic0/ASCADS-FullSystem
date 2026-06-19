@@ -77,6 +77,13 @@ export const GateBody = memo(function GateBody({
           signals={signals}
         />
       );
+    case "COMPRESSOR":
+    case "EXHAUST":
+    case "VALVE_3_2":
+    case "VALVE_5_2":
+    case "CYLINDER_SA":
+    case "CYLINDER_DA":
+      return <BoxBody gate={gate} w={w} h={h} signals={signals} />;
     default:
       // Multi-pin compound blocks (latches, FFs, mux, decoders, adders, counter)
       return <BoxBody gate={gate} w={w} h={h} signals={signals} />;

@@ -401,6 +401,112 @@ export function PropertyInspector({ selectedNode, values, history, onUpdate, onD
             </section>
           )}
 
+          {/* PID Controller Configuration */}
+          {selectedNode.type === 'pid-controller' && (
+            <section className="space-y-2.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                 <Activity size={9} className="text-pink-500" />
+                 <span className="text-[8.5px] font-black text-zinc-500 uppercase tracking-[0.2em]">PID Tuning Variables</span>
+              </div>
+              <div className="space-y-2.5 p-3 bg-zinc-900 border border-zinc-800 rounded-lg">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">SP (Setpoint)</label>
+                    <input type="text" value={selectedNode.params?.sp || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, sp: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-zinc-200 font-mono focus:border-blue-500 outline-none text-center text-[10px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">PV (Process Var)</label>
+                    <input type="text" value={selectedNode.params?.pv || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, pv: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-zinc-200 font-mono focus:border-blue-500 outline-none text-center text-[10px]" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-800">
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Kp</label>
+                    <input type="number" step="0.1" value={selectedNode.params?.kp || 0} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, kp: Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-pink-400 font-mono focus:border-pink-500 outline-none text-center text-[10px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Ki</label>
+                    <input type="number" step="0.01" value={selectedNode.params?.ki || 0} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, ki: Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-pink-400 font-mono focus:border-pink-500 outline-none text-center text-[10px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Kd</label>
+                    <input type="number" step="0.1" value={selectedNode.params?.kd || 0} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, kd: Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-pink-400 font-mono focus:border-pink-500 outline-none text-center text-[10px]" />
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-zinc-800 space-y-1">
+                  <label className="text-[7.5px] font-black text-emerald-550 uppercase tracking-widest pl-0.5">CV (Control Var Dest)</label>
+                  <input type="text" value={selectedNode.params?.cv || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, cv: e.target.value } })} className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-md p-1.5 text-emerald-400 font-mono font-bold focus:border-emerald-500 outline-none text-center text-[10px]" />
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Scale with Parameters (SCP) */}
+          {selectedNode.type === 'scale-param' && (
+            <section className="space-y-2.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                 <Settings size={9} className="text-blue-500" />
+                 <span className="text-[8.5px] font-black text-zinc-500 uppercase tracking-[0.2em]">Linear Scaling Parameters</span>
+              </div>
+              <div className="space-y-2.5 p-3 bg-zinc-900 border border-zinc-800 rounded-lg">
+                <div className="space-y-1">
+                  <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Input (Source A)</label>
+                  <input type="text" value={selectedNode.params?.sourceA || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, sourceA: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-zinc-200 font-mono focus:border-blue-500 outline-none text-center text-[10px]" />
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800">
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Input Min</label>
+                    <input type="text" value={selectedNode.params?.inMin || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, inMin: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-sky-400 font-mono focus:border-sky-500 outline-none text-center text-[10px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Input Max</label>
+                    <input type="text" value={selectedNode.params?.inMax || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, inMax: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-sky-400 font-mono focus:border-sky-500 outline-none text-center text-[10px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Scaled Min</label>
+                    <input type="text" value={selectedNode.params?.outMin || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, outMin: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-emerald-400 font-mono focus:border-emerald-500 outline-none text-center text-[10px]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Scaled Max</label>
+                    <input type="text" value={selectedNode.params?.outMax || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, outMax: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-emerald-400 font-mono focus:border-emerald-500 outline-none text-center text-[10px]" />
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-zinc-800 space-y-1">
+                  <label className="text-[7.5px] font-black text-emerald-550 uppercase tracking-widest pl-0.5">Destination Tag</label>
+                  <input type="text" value={selectedNode.params?.dest || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, dest: e.target.value } })} className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-md p-1.5 text-emerald-400 font-mono font-bold focus:border-emerald-500 outline-none text-center text-[10px]" />
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Limits & Alarms */}
+          {(selectedNode.type === 'limit-test' || selectedNode.type === 'alarm-block') && (
+            <section className="space-y-2.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                 <Settings size={9} className="text-rose-500" />
+                 <span className="text-[8.5px] font-black text-zinc-500 uppercase tracking-[0.2em]">Threshold Configuration</span>
+              </div>
+              <div className="space-y-2.5 p-3 bg-zinc-900 border border-zinc-800 rounded-lg">
+                <div className="space-y-1">
+                  <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Test Variable</label>
+                  <input type="text" value={selectedNode.params?.testVal || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, testVal: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-zinc-200 font-mono focus:border-blue-500 outline-none text-center text-[10px]" />
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800">
+                  {selectedNode.type === 'limit-test' && (
+                    <div className="space-y-1">
+                      <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">Low Limit</label>
+                      <input type="text" value={selectedNode.params?.lowLimit || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, lowLimit: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-sky-400 font-mono focus:border-sky-500 outline-none text-center text-[10px]" />
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <label className="text-[7.5px] font-black text-zinc-650 uppercase tracking-widest pl-0.5">High Limit</label>
+                    <input type="text" value={selectedNode.params?.highLimit || ''} onChange={(e) => onUpdate(selectedNode.id, { params: { ...selectedNode.params, highLimit: isNaN(Number(e.target.value)) ? e.target.value : Number(e.target.value) } })} className="w-full bg-black/40 border border-zinc-800 rounded-md p-1.5 text-rose-400 font-mono focus:border-rose-500 outline-none text-center text-[10px]" />
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Documentation Section */}
           <section className="space-y-2">
              <div className="flex items-center gap-1.5 mb-1">

@@ -9,14 +9,18 @@ Imagine a digital sandbox where the fundamental laws of physics, mathematics, an
 
 Even if you have never seen a circuit before, ASCADS visualizes the invisible. It turns abstract math into glowing lines of force, binary logic into pulsing signals, and rigid code into fluid, drag-and-drop schematics. It is the ultimate translation layer between human intent and machine execution.
 
+> [!TIP]
+> **ASCADS** is currently in an active evolution phase. New modules for 3D AI Vision and Dynamic CSG Modeling have recently come online.
+
 ### The Core Realms
-1. **Digital Logic Lab**: Build, simulate, and debug complex digital circuits with sub-millisecond precision.
+1. **Digital Logic Lab**: Build, simulate, and debug complex digital circuits with sub-millisecond precision. Now featuring premium glassmorphism interfaces and seamless PLC bridging.
 2. **Analog Schematic Editor**: A sprawling canvas for high-fidelity component routing, offering both legacy flow engines and an advanced engine for deep physical modeling.
 3. **Industrial PLC (VoltLogicPRO)**: IEC 61131-3 standard ladder logic simulation bridging software with real-world industrial control.
-4. **Robotics Workspace**: Solve complex inverse kinematics and plan motion for automated systems.
-5. **Maths System (Beyond CAS)**: A scientific computation engine designed for symbolic and numerical mastery.
-6. **EngiGraph Pro (Hybrid Code CAD)**: A dual-engine professional visual engineering suite featuring both 2D legacy architectural drafting and a modern, OpenSCAD-style 3D Constructive Solid Geometry (CSG) compiler for robotics and 3D printing.
-7. **Genesis AI Hub**: An omnipresent, context-aware artificial intelligence assistant powered by Gemini (Power Mode) or OpenRouter (Economy Mode), capable of inspecting schematics, optimizing logic, and generating code templates.
+4. **Robotics Workspace**: Solve complex inverse kinematics and plan motion for automated systems across **Industrial, Corporate, and Domestic** environments.
+5. **Context-Aware Vision Sandbox**: Newly minted module allowing robots to autonomously map and navigate their environment using raycasted LiDAR, recognizing objects uniquely based on their category (e.g., Sofas vs. Pallets).
+6. **Maths System (Beyond CAS)**: A scientific computation engine designed for symbolic and numerical mastery.
+7. **EngiGraph Pro (Hybrid Code CAD)**: A dual-engine professional visual engineering suite featuring both 2D legacy architectural drafting and a modern, OpenSCAD-style 3D Constructive Solid Geometry (CSG) compiler for robotics and 3D printing.
+8. **Genesis AI Hub**: An omnipresent, context-aware artificial intelligence assistant powered by Gemini (Power Mode) or OpenRouter (Economy Mode), capable of inspecting schematics, optimizing logic, and generating code templates.
 
 ---
 
@@ -87,12 +91,14 @@ ASCADS comes equipped with an optimized build and execution pipeline. From the t
 
 ## 5. Extensive Upgrades & Code Quality Standards
 
-The environment is now primed for expansion. When contributing or modifying the core systems, engineers must adhere strictly to these dogmas:
+> [!IMPORTANT]
+> The environment is now primed for expansion. When contributing or modifying the core systems, engineers must adhere strictly to these dogmas:
 
 1. **Zero-Stutter Principle**: Any logic added to the simulation loops must complete in `<16ms` to maintain 60FPS. Offload heavy math (e.g., Robot Kinematics, SPICE sims) to Web Workers if complexity increases.
 2. **Immutable State Transitions**: When updating global context in Zustand or React hooks, never mutate state directly. Always return fresh objects to prevent subtle visual bugs.
 3. **Bridge Protocols**: When writing new "Bridges" (e.g., Analog to Digital), ensure they utilize the global bus standard established in `useBridgeStatus()`, utilizing `localStorage` or robust cross-tab communication.
 4. **Absolute Aesthetics**: No generic UIs. Every component must utilize the established design language—deep slates, vibrant neon accents (indigo, emerald, cyan), and responsive hover states. 
+5. **Context-Aware Consistency**: System models (such as Robot Designers or 2D Digital Twins) must strictly respect their environment category (Domestic, Corporate, Industrial). An industrial conveyor should never render in a domestic living room.
 
 Welcome to ASCADS. Let the build begin.
 

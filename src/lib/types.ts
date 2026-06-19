@@ -49,7 +49,20 @@ export type GateKind =
   | "RGBLED"   // RGB LED (3 inputs: R, G, B)
   | "BUZZER"   // piezo buzzer (1 input)
   | "HEX4"     // 4-bit hex display (0-F)
-  | "LABEL";   // text annotation (no pins)
+  | "LABEL"    // text annotation (no pins)
+  // Advanced Digital
+  | "SHIFT8"   // 8-bit Shift Register
+  | "DEC38"    // 3-to-8 Decoder
+  | "ENC83"    // 8-to-3 Priority Encoder
+  | "ALU4"     // 4-bit ALU
+  | "RAM8"     // 8x8-bit RAM
+  // Fluidics (Pneumatics / Hydraulics)
+  | "COMPRESSOR" // Air / Hydraulic source
+  | "EXHAUST"    // Sink / Return tank
+  | "VALVE_3_2"  // 3/2-way Solenoid Valve
+  | "VALVE_5_2"  // 5/2-way Solenoid Valve
+  | "CYLINDER_SA"// Single-Acting Cylinder
+  | "CYLINDER_DA";// Double-Acting Cylinder
 
 export type Signal = 0 | 1 | "X";
 
@@ -95,10 +108,12 @@ export type Circuit = {
   wires: Record<string, Wire>;
 };
 
-/** Per-gate runtime memory used by latches, flip-flops, and counters. */
 export type GateMemory = {
   q?: 0 | 1;
   count?: number;
+  shift?: number;     // For SHIFT8
+  ram?: number[];     // For RAM8
+  extension?: number; // 0.0 to 1.0 for cylinders
 };
 
 export type SimState = {

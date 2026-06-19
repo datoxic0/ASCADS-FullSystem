@@ -2,6 +2,7 @@ import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Grid, Environment, ContactShadows, Box, Cylinder, Sphere, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { EffectComposer, Bloom, N8AO } from '@react-three/postprocessing';
 import { RobotJoint, RobotDesignConfig, CIMWorkpiece } from './types';
 
 interface Robot3DCanvasProps {
@@ -79,10 +80,10 @@ function RobotSegment({
             )}
             {endEffectorType === "welder" && (
               <group position={[0, length / 2 + 8, 0]}>
-                <Cylinder args={[2, 6, 16, 32]} material={materials.welder} />
+                <Cylinder castShadow receiveShadow args={[2, 6, 16, 32]} material={materials.welder} />
                 {/* Glowing Laser/Welding tip */}
                 <Sphere args={[2, 16, 16]} position={[0, 9, 0]}>
-                  <meshBasicMaterial color="#fcd34d" />
+                  <meshBasicMaterial color={[2, 2, 0]} toneMapped={false} />
                 </Sphere>
               </group>
             )}
@@ -173,6 +174,58 @@ function Workpieces3D({ workpieces }: { workpieces?: CIMWorkpiece[] }) {
   );
 }
 
+function IndustrialEnvironment3D({ workpieces }: { workpieces?: CIMWorkpiece[] }) {
+  return (
+    <>
+      <ConveyorBelt3D />
+      <CNCMachine3D />
+      <Workpieces3D workpieces={workpieces} />
+    </>
+  );
+}
+
+function DomesticEnvironment3D() {
+  return (
+    <group position={[100, -20, 100]}>
+      {/* Sofa */}
+      <Box castShadow receiveShadow args={[120, 30, 60]} material={materials.base} position={[0, 0, 0]} />
+      <Box castShadow receiveShadow args={[140, 40, 20]} material={materials.base} position={[0, 10, -30]} />
+      <Box castShadow receiveShadow args={[20, 40, 60]} material={materials.base} position={[-60, 10, 0]} />
+      <Box castShadow receiveShadow args={[20, 40, 60]} material={materials.base} position={[60, 10, 0]} />
+      
+      {/* Coffee Table */}
+      <Cylinder castShadow receiveShadow args={[30, 30, 5]} material={materials.link} position={[-50, -5, 80]} />
+      <Cylinder castShadow receiveShadow args={[4, 4, 15]} material={materials.link} position={[-50, -15, 80]} />
+      
+      {/* Rug */}
+      <Cylinder receiveShadow args={[100, 100, 2]} position={[0, -24, 60]}>
+        <meshStandardMaterial color="#fef08a" />
+      </Cylinder>
+    </group>
+  );
+}
+
+function CorporateEnvironment3D() {
+  return (
+    <group position={[100, -5, 100]}>
+      {/* Office Desk */}
+      <Box castShadow receiveShadow args={[100, 5, 50]} material={materials.conveyorFrame} position={[0, 10, 0]} />
+      <Box castShadow receiveShadow args={[5, 40, 40]} material={materials.conveyorFrame} position={[-45, -10, 0]} />
+      <Box castShadow receiveShadow args={[5, 40, 40]} material={materials.conveyorFrame} position={[45, -10, 0]} />
+      
+      {/* Monitor */}
+      <Box castShadow receiveShadow args={[40, 25, 5]} material={materials.link} position={[0, 25, -15]} />
+      <Cylinder castShadow receiveShadow args={[2, 2, 10]} material={materials.link} position={[0, 15, -15]} />
+      
+      {/* Water Cooler */}
+      <Box castShadow receiveShadow args={[20, 40, 20]} material={materials.cncMachine} position={[120, -5, -20]} />
+      <Cylinder castShadow receiveShadow args={[8, 8, 20]} position={[120, 25, -20]}>
+        <meshStandardMaterial color="#38bdf8" transparent opacity={0.6} />
+      </Cylinder>
+    </group>
+  );
+}
+
 export default function Robot3DCanvas({ joints, robotDesign, workpieces }: Robot3DCanvasProps) {
   const activeJoints = useMemo(() => {
     if (joints && joints.length > 0) return joints;
@@ -193,7 +246,7 @@ export default function Robot3DCanvas({ joints, robotDesign, workpieces }: Robot
 
   return (
     <div className="w-full h-full relative bg-[#0a0a0c]">
-      <Canvas camera={{ position: [0, 200, 500], fov: 50 }}>
+      <Canvas shadows camera={{ position: [0, 200, 500], fov: 50 }} dpr={[1, 2]} gl={{ antialias: false }}>
         <color attach="background" args={['#0a0a0c']} />
         
         {/* Cinematic Lighting */}
@@ -214,9 +267,9 @@ export default function Robot3DCanvas({ joints, robotDesign, workpieces }: Robot
         <ContactShadows position={[0, -49.9, 0]} opacity={0.4} scale={500} blur={2} far={100} />
 
         {/* Environment Set Pieces */}
-        <ConveyorBelt3D />
-        <CNCMachine3D />
-        <Workpieces3D workpieces={workpieces} />
+        {robotDesign?.category === "domestic" && <DomesticEnvironment3D />}
+        {robotDesign?.category === "corporate" && <CorporateEnvironment3D />}
+        {(!robotDesign?.category || robotDesign.category === "industrial") && <IndustrialEnvironment3D workpieces={workpieces} />}
 
         {/* The Base Pedestal */}
         <group position={[0, -25, 0]}>
@@ -282,6 +335,12 @@ export default function Robot3DCanvas({ joints, robotDesign, workpieces }: Robot
         </group>
 
         <OrbitControls makeDefault minDistance={100} maxDistance={1000} maxPolarAngle={Math.PI / 2 + 0.1} />
+        
+        {/* Advanced Post-Processing Pipeline bypassed for React 19 compatibility */}
+        {/* <EffectComposer enableNormalPass={false}>
+          <N8AO aoRadius={10} intensity={1} />
+          <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} />
+        </EffectComposer> */}
       </Canvas>
     </div>
   );

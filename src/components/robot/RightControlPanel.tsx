@@ -262,6 +262,18 @@ const QUIZ_QUESTIONS = [
     options: ["100% Correct on all multiple-choice and mathematical coding exercises", "At least 55% with manual calibration offset bypass active", "Exactly three correct multiple-choice answers, code not checked", "90% on MC only, with a vacuum alarm leak present"],
     correct: 0,
     hint: "Perfection on both theoretical questions and physical G-code scripts defines the A+ Elite rating."
+  },
+  {
+    q: "In ASCADS Context-Aware Vision, how does the Sandbox distinguish between Domestic and Industrial layouts?",
+    options: ["By scaling all conveyor objects to 50% opacity", "By completely partitioning rendered object categories (e.g., Sofas vs. Pallets) preventing environment tangling", "By forcing the robotic base to lock into a strictly cartesian rail system", "By shifting the color palette to red for all collisions"],
+    correct: 1,
+    hint: "Domestic elements (furniture, pets) will never spawn or tangle with Industrial elements (conveyors, barriers) to ensure pure situational context."
+  },
+  {
+    q: "What is the primary role of the newly integrated LiDAR Raycast mapping in the 3D Vision Lab?",
+    options: ["To scan and convert G-Code syntax errors into JSON", "To provide autonomous depth perception and point-cloud distance generation allowing robots to map boundaries", "To increase the frame rate of the post-processing Bloom effects", "To translate physical operator hand signals into Python scripts"],
+    correct: 1,
+    hint: "LiDAR sweeping utilizes Raycasters to generate exact distance point clouds, forming the robot's physical awareness."
   }
 ];
 
