@@ -11,23 +11,17 @@ export function calculateForwardKinematics(
 ): { x: number; y: number }[] {
   const points: { x: number; y: number }[] = [{ x: baseX, y: baseY }];
   
-  // Waist (Base) rotates the base visually or J1 turntable depth
-  // We model J2 (Shoulder) -> J3 (Elbow) -> J4 (Wrist) -> Tool as a chain in the 2D plane
   let currentX = baseX;
   let currentY = baseY;
-  let absoluteAngleRad = 0; // Cumulative absolute angle in radians
+  let absoluteAngleRad = 0; 
 
-  // We convert angles relative to the previous link
   for (let i = 1; i < joints.length; i++) {
     const joint = joints[i];
-    // Convert to radians and add to the running cumulative angle
     const relativeRad = (joint.angle * Math.PI) / 180;
     
     if (i === 1) {
-      // Shoulder: J2 is relative to horizontal 0 (pointing right)
       absoluteAngleRad = relativeRad;
     } else {
-      // Elbow and onwards are cumulative relative angles
       absoluteAngleRad += relativeRad;
     }
 
@@ -52,7 +46,6 @@ export function solveInverseKinematics(
   maxIterations = 50,
   tolerance = 0.5
 ): RobotJoint[] {
-  // Guard against invalid targets to prevent NaN poisoning in kinematics state
   if (
     !target ||
     isNaN(target.x) ||
@@ -63,64 +56,60 @@ export function solveInverseKinematics(
     return joints;
   }
 
-  // Clone joints to avoid mutating active state during search
   const resultJoints = joints.map(j => ({ ...j }));
   
-  // Helper to calculate FK coordinates for cloned joints
+  // Guard 1: Reachability check to prevent geometric singularity curling
+  const distToTargetInitial = Math.hypot(target.x - baseX, target.y - baseY);
+  const totalMaxReach = resultJoints.slice(1).reduce((sum, j) => sum + j.length, 0);
+  
+  let safeTarget = { ...target };
+  if (distToTargetInitial > totalMaxReach) {
+    const ratio = totalMaxReach / distToTargetInitial;
+    safeTarget.x = baseX + (target.x - baseX) * ratio * 0.999; // 0.999 to avoid straight-line locking
+    safeTarget.y = baseY + (target.y - baseY) * ratio * 0.999;
+  }
+
   const getFkCoords = () => calculateForwardKinematics(baseX, baseY, resultJoints);
 
   for (let iter = 0; iter < maxIterations; iter++) {
     const coords = getFkCoords();
     const endEffector = coords[coords.length - 1];
 
-    // Check if close enough
-    const distToTarget = Math.hypot(target.x - endEffector.x, target.y - endEffector.y);
+    const distToTarget = Math.hypot(safeTarget.x - endEffector.x, safeTarget.y - endEffector.y);
     if (distToTarget < tolerance) {
       break;
     }
 
-    // Iterate backwards through the active joint links (from tool down to shoulder J1)
-    // resultJoints index matches coords indexing (0 base, 1 shoulder J1, 2 elbow J2, 3 wrist J3, 4 tool J4)
     for (let i = resultJoints.length - 2; i >= 1; i--) {
-      // Retrieve fresh coordinates for each joint angle adjust step
       const freshCoords = getFkCoords();
-      const jointCoord = freshCoords[i - 1]; // Position of current joint we are rotating around
-      const currentEffector = freshCoords[freshCoords.length - 1]; // Effector position
+      const jointCoord = freshCoords[i - 1]; 
+      const currentEffector = freshCoords[freshCoords.length - 1]; 
 
-      // Vector from joint to effector
       const eX = currentEffector.x - jointCoord.x;
       const eY = currentEffector.y - jointCoord.y;
       const jToEffectorAngle = Math.atan2(eY, eX);
 
-      // Vector from joint to target
-      const tX = target.x - jointCoord.x;
-      const tY = target.y - jointCoord.y;
+      const tX = safeTarget.x - jointCoord.x;
+      const tY = safeTarget.y - jointCoord.y;
       const jToTargetAngle = Math.atan2(tY, tX);
 
-      // Angle diff in radians
       let diffAngle = jToTargetAngle - jToEffectorAngle;
-
-      // Normalize diffAngle to -PI to PI
       diffAngle = Math.atan2(Math.sin(diffAngle), Math.cos(diffAngle));
 
-      // Deg angle alteration
       const diffDeg = (diffAngle * 180) / Math.PI;
 
-      // Guard against NaN difference calculations
-      if (isNaN(diffDeg) || !isFinite(diffDeg)) {
-        continue;
-      }
+      if (isNaN(diffDeg) || !isFinite(diffDeg)) continue;
 
-      // Adjust joint angle with a damping factor for smooth, non-oscillating trajectory convergence
-      const dampingFactor = 0.55;
-      let newAngle = resultJoints[i].angle + diffDeg * dampingFactor;
-
-      // Apply physical mechanical boundaries
+      // Strict Geometric Angle Limits instead of static damping.
+      // Clamping rotation step prevents snapping, allowing fast, organic convergence.
+      const maxStepDeg = 45; 
+      const clampedDiff = Math.max(-maxStepDeg, Math.min(diffDeg, maxStepDeg));
+      
+      let newAngle = resultJoints[i].angle + clampedDiff;
       newAngle = Math.max(resultJoints[i].minAngle, Math.min(newAngle, resultJoints[i].maxAngle));
       
-      // Secondary NaN protection before rounding
       if (!isNaN(newAngle) && isFinite(newAngle)) {
-        resultJoints[i].angle = Math.round(newAngle * 10) / 10; // Round to 1 decimal place
+        resultJoints[i].angle = Math.round(newAngle * 10) / 10;
       }
     }
   }
@@ -138,10 +127,10 @@ export interface ParsedGcode {
     X?: number;
     Y?: number;
     Z?: number;
-    A?: number; // custom angle parameters
+    A?: number; 
     B?: number;
-    P?: number; // payload parameters or delays
-    S?: number; // state toggles (conveyor, gripper etc)
+    P?: number; 
+    S?: number; 
   };
   comment?: string;
   originalText: string;
@@ -158,9 +147,7 @@ export function parseGcodeLine(line: string): ParsedGcode | null {
     };
   }
 
-  // Split comment at ";"
   const parts = cleanLine.split(";");
-  // Strip parenthetical comments from action parts first, e.g. "G00 X0 (comment) Y0" -> "G00 X0  Y0"
   const actionPart = parts[0].replace(/\([^)]*\)/g, " ").trim();
   const comment = parts[1] ? parts[1].trim() : undefined;
 
@@ -173,7 +160,6 @@ export function parseGcodeLine(line: string): ParsedGcode | null {
     };
   }
 
-  // Robust RegExp token parser: extracts letter keys followed by optional numeric integers or floats
   const tokenRegex = /([A-Z])\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+))?/gi;
   const matches: { letter: string; val: number }[] = [];
 
@@ -189,16 +175,24 @@ export function parseGcodeLine(line: string): ParsedGcode | null {
     return null;
   }
 
-  // First token establishes the primary G/M code action
+  let command = "";
+  let startIndex = 0;
+
   const firstToken = matches[0];
-  let command = firstToken.letter + firstToken.val.toString();
-  // Standardize/pad single digit commands, e.g., G1 -> G01, M3 -> M03
-  if (/^[GM]\d$/.test(command)) {
-    command = command.charAt(0) + "0" + command.slice(1);
+  if (firstToken.letter === "G" || firstToken.letter === "M") {
+    command = firstToken.letter + firstToken.val.toString();
+    if (/^[GM]\d$/.test(command)) {
+      command = command.charAt(0) + "0" + command.slice(1);
+    }
+    startIndex = 1;
+  } else {
+    // If the line consists only of coordinates without an explicit command, inherit modal state.
+    command = "MODAL_CONTINUE";
+    startIndex = 0;
   }
 
   const params: Record<string, number> = {};
-  for (let i = 1; i < matches.length; i++) {
+  for (let i = startIndex; i < matches.length; i++) {
     params[matches[i].letter] = matches[i].val;
   }
 
@@ -209,4 +203,3 @@ export function parseGcodeLine(line: string): ParsedGcode | null {
     originalText: line
   };
 }
-

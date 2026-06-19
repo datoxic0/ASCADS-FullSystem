@@ -176,6 +176,7 @@ export default function RobotWorkspaceIDE({
   const loopCountRef = useRef<number>(0);
   const maxLoopsRef = useRef<number>(9999);
   const activeDelayTicksRef = useRef<number>(0);
+  const activeModalCommandRef = useRef<string>("G01");
   const isSteppingRef = useRef<boolean>(false);
   const compileTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const uploadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -507,6 +508,7 @@ export default function RobotWorkspaceIDE({
     let loopCount = resumeFromPause ? loopCountRef.current : 0;
     let maxLoops = resumeFromPause ? maxLoopsRef.current : 9999;
     let activeDelayTicks = resumeFromPause ? activeDelayTicksRef.current : 0;
+    let activeModalCommand = resumeFromPause ? activeModalCommandRef.current : "G01";
     const currentSpeed = simulationSpeed; // Cache current delay value in closure
 
     const intervalId = setInterval(() => {
@@ -517,6 +519,7 @@ export default function RobotWorkspaceIDE({
       loopCountRef.current = loopCount;
       maxLoopsRef.current = maxLoops;
       activeDelayTicksRef.current = activeDelayTicks;
+      activeModalCommandRef.current = activeModalCommand;
 
       // If we are currently in a dwell (G04), decrement ticks and return/stall execution
       if (activeDelayTicks > 0) {
@@ -706,15 +709,37 @@ export default function RobotWorkspaceIDE({
             lineIdx++;
             continue;
           } else {
+            // Apply modal continuation if no command is specified
+            let executableCommand = parsed.command;
+            if (executableCommand === "MODAL_CONTINUE") {
+              executableCommand = activeModalCommand;
+            } else if (/^G\d+$/.test(executableCommand)) {
+              activeModalCommand = executableCommand;
+            }
+
             // Dynamic execution logs
-            addLog("success", `[LINE ${lineIdx + 1}] Executing: ${parsed.command} ${JSON.stringify(parsed.params)}`);
+            addLog("success", `[LINE ${lineIdx + 1}] Executing: ${executableCommand} ${JSON.stringify(parsed.params)}`);
 
             let stepShouldPauseTick = false;
 
             // Process known instructions
-            switch (parsed.command) {
+            switch (executableCommand) {
+              case "G04": {
+                // Dwell command
+                const ms = parsed.params.P || 0;
+                const ticks = Math.max(1, Math.ceil(ms / currentSpeed));
+                activeDelayTicks = ticks;
+                addLog("info", `[Dwell] Pausing execution for ${ms}ms (${ticks} ticks).`);
+                stepShouldPauseTick = true;
+                break;
+              }
+              case "G02":
+              case "G03":
               case "G00":
               case "G01": {
+                if (executableCommand === "G02" || executableCommand === "G03") {
+                  addLog("warn", `[Kinematics Warning] Circular interpolation ${executableCommand} interpreted as linear G01 move (Hardware Spline Generator Offline).`);
+                }
                 // Coordinated joints & planar kinematics solver
                 const hasCoords = parsed.params.X !== undefined || parsed.params.Y !== undefined || parsed.params.Z !== undefined;
                 const hasA = parsed.params.A !== undefined;

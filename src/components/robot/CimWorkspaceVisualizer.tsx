@@ -1014,7 +1014,7 @@ export default function CimWorkspaceVisualizer({
       <div className="relative flex-1 w-full min-h-[250px] sm:min-h-[300px] md:min-h-[380px] bg-[#0d0d0f] flex flex-col items-center justify-center p-1.5 group select-none border-b border-white/5">
         {viewMode === "3D" ? (
            <div className="w-full h-full bg-[#0a0a0c] rounded">
-              <Robot3DCanvas joints={displayJoints} robotDesign={robotDesign} />
+              <Robot3DCanvas joints={displayJoints} robotDesign={robotDesign} workpieces={workpieces} />
               <div className="absolute top-4 left-4 bg-black/60 text-[10px] text-white/50 px-2 py-1 rounded font-mono border border-white/5 pointer-events-none">
                  LIVING DIGITAL TWIN RENDERING ENGINE (3D MODE)
               </div>
