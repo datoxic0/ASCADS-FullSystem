@@ -1,6 +1,7 @@
 import React from 'react';
 import { RobotDesignConfig } from './types';
 import { Settings, Cpu, Activity, Move, Zap } from 'lucide-react';
+import Robot3DCanvas from './Robot3DCanvas';
 
 interface Props {
   robotDesign: RobotDesignConfig;
@@ -134,20 +135,17 @@ export default function RobotChassisBuilder({ robotDesign, setRobotDesign }: Pro
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#0d0d0f]">
-        {/* Placeholder 3D wireframe render */}
-        <div className="w-full max-w-lg aspect-square border border-white/5 rounded-full flex items-center justify-center relative overflow-hidden bg-black/20">
-           <div className="absolute inset-0" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)' }}></div>
-           
-           <div className="relative z-10 flex flex-col items-center">
-             <div className="text-blue-500 mb-4 animate-pulse">
-                <Settings className="w-16 h-16 opacity-50" />
-             </div>
-             <h3 className="text-xl font-bold text-white tracking-widest font-mono uppercase">{(robotDesign.chassisType || '').replace('_', ' ')}</h3>
-             <div className="flex space-x-4 mt-6 text-[10px] font-mono text-slate-400 bg-black/40 px-4 py-2 rounded-full border border-white/5">
-                <span className="flex items-center"><Move className="w-3 h-3 mr-1" /> Reach: {robotDesign.shoulderLength + robotDesign.elbowLength + robotDesign.wristLength}mm</span>
-                <span className="flex items-center"><Zap className="w-3 h-3 mr-1" /> Power: {robotDesign.batteryCapacity}Wh</span>
-                <span className="flex items-center"><Activity className="w-3 h-3 mr-1" /> Payload: {robotDesign.payloadWeight}kg</span>
+      <div className="flex-1 relative bg-[#0d0d0f]">
+        <Robot3DCanvas robotDesign={robotDesign} />
+        
+        {/* Overlay the stats on top of the 3D Canvas */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none z-10">
+           <div className="flex flex-col items-center">
+             <h3 className="text-xl font-bold text-white tracking-widest font-mono uppercase drop-shadow-md">{(robotDesign.chassisType || '').replace('_', ' ')}</h3>
+             <div className="flex space-x-4 mt-2 text-[10px] font-mono text-slate-200 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg">
+                <span className="flex items-center"><Move className="w-3 h-3 mr-1 text-teal-400" /> Reach: {robotDesign.shoulderLength + robotDesign.elbowLength + robotDesign.wristLength}mm</span>
+                <span className="flex items-center"><Zap className="w-3 h-3 mr-1 text-amber-400" /> Power: {robotDesign.batteryCapacity}Wh</span>
+                <span className="flex items-center"><Activity className="w-3 h-3 mr-1 text-rose-400" /> Payload: {robotDesign.payloadWeight}kg</span>
              </div>
            </div>
         </div>

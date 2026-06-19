@@ -67,6 +67,8 @@ export interface SimulationState {
   simulationSpeed: number; // Multiplier, default 1
   dryRunMode?: boolean;
   profilingEnabled?: boolean;
+  targetAngles?: Record<string, number>;
+  currentAngles?: Record<string, number>;
 }
 
 export interface TerminalLog {

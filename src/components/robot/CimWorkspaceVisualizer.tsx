@@ -41,6 +41,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { askAI } from "../../lib/ai";
+import Robot3DCanvas from "./Robot3DCanvas";
 
 interface CimWorkspaceVisualizerProps {
   joints: RobotJoint[];
@@ -101,6 +102,7 @@ export default function CimWorkspaceVisualizer({
 }: CimWorkspaceVisualizerProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [isDraggingTarget, setIsDraggingTarget] = useState(false);
+  const [viewMode, setViewMode] = useState<"2D" | "3D">("3D"); // Default to 3D for WOW factor
   const [showGrid, setShowGrid] = useState(true);
   const [showAngles, setShowAngles] = useState(true);
   const [activeTab, setActiveTab] = useState<
@@ -975,6 +977,13 @@ export default function CimWorkspaceVisualizer({
         <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 w-full sm:w-auto">
           <div className="flex items-center space-x-1">
             <button
+              onClick={() => setViewMode(viewMode === "2D" ? "3D" : "2D")}
+              title="Toggle 3D/2D Render Engine"
+              className={`p-1 rounded transition-colors mr-1 ${viewMode === "3D" ? "text-purple-400 bg-purple-950/40" : "text-blue-400 bg-[#0d0d0f]"}`}
+            >
+              <Box className="w-3.5 h-3.5" />
+            </button>
+            <button
               onClick={() => setShowGrid(!showGrid)}
               title="Toggle Grid Lines"
               className={`p-1 rounded transition-colors ${showGrid ? "text-blue-400 bg-[#0d0d0f]" : "text-slate-600 hover:text-slate-300"}`}
@@ -1003,7 +1012,14 @@ export default function CimWorkspaceVisualizer({
 
       {/* Primary Simulation Workspace (Always visible, responsive scaling consuming remaining space) */}
       <div className="relative flex-1 w-full min-h-[250px] sm:min-h-[300px] md:min-h-[380px] bg-[#0d0d0f] flex flex-col items-center justify-center p-1.5 group select-none border-b border-white/5">
-        {/* Interactive Canvas Grid */}
+        {viewMode === "3D" ? (
+           <div className="w-full h-full bg-[#0a0a0c] rounded">
+              <Robot3DCanvas joints={displayJoints} robotDesign={robotDesign} />
+              <div className="absolute top-4 left-4 bg-black/60 text-[10px] text-white/50 px-2 py-1 rounded font-mono border border-white/5 pointer-events-none">
+                 LIVING DIGITAL TWIN RENDERING ENGINE (3D MODE)
+              </div>
+           </div>
+        ) : (
         <svg
           id="simulation-svg-viewport"
           ref={svgRef}

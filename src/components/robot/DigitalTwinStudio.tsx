@@ -39,6 +39,7 @@ import {
   Printer,
   RefreshCw
 } from "lucide-react";
+import Robot3DCanvas from "./Robot3DCanvas";
 
 // --- Types for CAD objects ---
 interface CADObject {
@@ -81,9 +82,10 @@ interface PLCRung {
 interface DigitalTwinStudioProps {
   robotDesign?: any;
   setRobotDesign?: any;
+  joints?: any[];
 }
 
-export default function DigitalTwinStudio({ robotDesign, setRobotDesign }: DigitalTwinStudioProps) {
+export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints }: DigitalTwinStudioProps) {
   // --- CIM Syncing Notifications and Alerts ---
   const [syncStatus, setSyncStatus] = useState<"idle" | "success" | "loading" | "error">("idle");
   const [syncMessage, setSyncMessage] = useState("");
@@ -1773,9 +1775,36 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign }: Digit
                   </svg>
 
                   {/* RENDER TOP-VIEW OR PROJECTED VIEWPANELS */}
+                  {cadProjection === "perspective" ? (
+                    <div className="absolute inset-0 z-0 bg-[#0a0a0c]">
+                      <Robot3DCanvas 
+                        joints={joints && joints.length > 0 ? joints.map((j) => ({
+                          id: j.id,
+                          name: j.name,
+                          angle: j.angle,
+                          minAngle: j.minAngle,
+                          maxAngle: j.maxAngle,
+                          length: j.length,
+                          color: "#14b8a6"
+                        })) : customJoints.map((j, idx) => ({
+                          id: j.id,
+                          name: j.name,
+                          angle: idx === 0 ? calculatedAngles.theta1 :
+                                 idx === 1 ? calculatedAngles.theta2 :
+                                 idx === 2 ? calculatedAngles.theta3 :
+                                 j.activeAngle,
+                          minAngle: -180,
+                          maxAngle: 180,
+                          length: j.length,
+                          color: "#14b8a6"
+                        }))}
+                        robotDesign={robotDesign}
+                      />
+                    </div>
+                  ) : (
                   <svg 
                     viewBox="0 0 500 320" 
-                    className="w-full h-full max-w-2xl max-h-[360px]"
+                    className="w-full h-full max-w-2xl max-h-[360px] relative z-10"
                     onClick={() => setSelectedCADId(null)}
                   >
                     {/* Top Blueprint View */}
@@ -1950,51 +1979,8 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign }: Digit
                       </g>
                     )}
 
-                    {/* PERSPECTIVE Digital Twin Factory/Isometric simulation view */}
-                    {cadProjection === "perspective" && (
-                      <g transform="translate(10, 0)">
-                        {/* Iso Grid floor line meshes */}
-                        <path d="M 60,180 L 250,50 L 440,180 L 250,310 Z" fill="#0a0a0d" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-                        
-                        {/* Iso lines */}
-                        <line x1="123" y1="135" x2="313" y2="265" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-                        <line x1="186" y1="92" x2="376" y2="222" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-                        <line x1="123" y1="222" x2="313" y2="92" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-                        
-                        {/* Render 2.5D Isometric style blocks to represent physical machinery */}
-                        {/* KUKA robot base riser block */}
-                        <g transform="translate(250, 160)">
-                          {/* Top isometric face of cylinder base */}
-                          <polygon points="0,-15 15,-7 0,1 -15,-7" fill="#a855f7" stroke="rgba(250,250,250,0.15)" strokeWidth="0.8" />
-                          <polygon points="-15,-7 0,1 0,11 -15,3" fill="#7e22ce" />
-                          <polygon points="15,-7 0,1 0,11 15,3" fill="#6b21a8" />
-                          
-                          {/* Segment lines soaring vertically */}
-                          <line x1="0" y1="-7" x2="25" y2="-55" stroke="#c084fc" strokeWidth="4.5" strokeLinecap="round" />
-                          <line x1="25" y1="-55" x2="70" y2="-45" stroke="#f472b6" strokeWidth="3" />
-                          <circle cx="70" cy="-45" r="4" fill="#f472b6" />
-                          
-                          {/* Text indicator overlay */}
-                          <text x="0" y="27" textAnchor="middle" className="text-[7.5px] fill-slate-350 bg-black font-semibold text-center uppercase tracking-wider">
-                            TWIN_NODE #01 : ARTICULATED_ARM
-                          </text>
-                        </g>
-
-                        {/* AMR Mobile cart */}
-                        <g transform="translate(130, 210)">
-                          <polygon points="0,-10 20,-2 0,6 -20,-2" fill="#0369a1" />
-                          <polygon points="-20,-2 0,6 0,14 -20,6" fill="#02507e" />
-                          <polygon points="20,-2 0,6 0,14 20,6" fill="#0c4a6e" />
-                          <circle cx="0" cy="0" r="2" fill="#4ade80" className="animate-blink" />
-                        </g>
-
-                        <text x="250" y="45" textAnchor="middle" className="text-[10px] fill-purple-300 uppercase font-extrabold tracking-widest">
-                          3D Digital Twin Virtual Space
-                        </text>
-                      </g>
-                    )}
-
                   </svg>
+                  )}
                 </div>
 
                 {/* Live Sequence Recording Timeline Deck */}

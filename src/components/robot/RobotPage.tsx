@@ -382,7 +382,7 @@ export default function RobotPage() {
       {activeMainTab === "digital-twin" ? (
         <div className="flex-1 p-3 flex flex-col min-h-0 overflow-hidden select-none">
           <div className="flex-1 bg-[#101014] border border-white/5 rounded-xl overflow-y-auto shadow-2xl">
-            <DigitalTwinStudio robotDesign={robotDesign} setRobotDesign={setRobotDesign} />
+            <DigitalTwinStudio robotDesign={robotDesign} setRobotDesign={setRobotDesign} joints={joints} />
           </div>
         </div>
       ) : activeMainTab === "env-builder" ? (
