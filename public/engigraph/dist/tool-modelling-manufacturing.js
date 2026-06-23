@@ -1,0 +1,31 @@
+import paper from 'https://esm.sh/paper';
+/**
+ * Manufacturing-focused Design Automation (Enclosures/Mounts)
+ */
+export class ManufacturingOps {
+    static handleGenerateEnclosure(app) {
+        const selection = paper.project.selectedItems.filter(i => i.layer && i.layer.name !== 'grid_layer');
+        if (selection.length === 0)
+            return;
+        const bounds = selection.reduce((acc, item) => acc.unite(item.bounds), selection[0].bounds);
+        const padding = 15 * app.scaleFactor;
+        const encBounds = bounds.expand(padding * 2);
+        const enclosureLayer = app.layers.enclosure || new paper.Layer({ name: 'enclosure_layer' });
+        enclosureLayer.activate();
+        enclosureLayer.removeChildren();
+        const topGroup = new paper.Group();
+        const shell = new paper.Path.Rectangle(encBounds, 5 * app.scaleFactor);
+        shell.strokeColor = 'var(--accent)';
+        shell.strokeWidth = 2;
+        shell.fillColor = 'rgba(0, 136, 255, 0.05)';
+        topGroup.addChild(shell);
+        const frontY = encBounds.bottom + 50 * app.scaleFactor;
+        const frontBase = new paper.Path.Rectangle(new paper.Point(encBounds.left, frontY), new paper.Size(encBounds.width, 3 * app.scaleFactor));
+        frontBase.strokeColor = 'var(--accent)';
+        app.ai.logAI("System", "SANS 10111 enclosure blueprint generated.");
+        app.history.pushState();
+        app.layers.geometry.activate();
+        app.ui.layers.updateLayerUI();
+    }
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidG9vbC1tb2RlbGxpbmctbWFudWZhY3R1cmluZy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3Rvb2wtbW9kZWxsaW5nLW1hbnVmYWN0dXJpbmcudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEsT0FBTyxLQUFLLE1BQU0sc0JBQXNCLENBQUM7QUFFekM7O0dBRUc7QUFDSCxNQUFNLE9BQU8sZ0JBQWdCO0lBQ3pCLE1BQU0sQ0FBQyx1QkFBdUIsQ0FBQyxHQUFHO1FBQzlCLE1BQU0sU0FBUyxHQUFHLEtBQUssQ0FBQyxPQUFPLENBQUMsYUFBYSxDQUFDLE1BQU0sQ0FBQyxDQUFDLENBQUMsRUFBRSxDQUFDLENBQUMsQ0FBQyxLQUFLLElBQUksQ0FBQyxDQUFDLEtBQUssQ0FBQyxJQUFJLEtBQUssWUFBWSxDQUFDLENBQUM7UUFDcEcsSUFBSSxTQUFTLENBQUMsTUFBTSxLQUFLLENBQUM7WUFBRSxPQUFPO1FBRW5DLE1BQU0sTUFBTSxHQUFHLFNBQVMsQ0FBQyxNQUFNLENBQUMsQ0FBQyxHQUFHLEVBQUUsSUFBSSxFQUFFLEVBQUUsQ0FBQyxHQUFHLENBQUMsS0FBSyxDQUFDLElBQUksQ0FBQyxNQUFNLENBQUMsRUFBRSxTQUFTLENBQUMsQ0FBQyxDQUFDLENBQUMsTUFBTSxDQUFDLENBQUM7UUFDNUYsTUFBTSxPQUFPLEdBQUcsRUFBRSxHQUFHLEdBQUcsQ0FBQyxXQUFXLENBQUM7UUFDckMsTUFBTSxTQUFTLEdBQUcsTUFBTSxDQUFDLE1BQU0sQ0FBQyxPQUFPLEdBQUcsQ0FBQyxDQUFDLENBQUM7UUFDN0MsTUFBTSxjQUFjLEdBQUcsR0FBRyxDQUFDLE1BQU0sQ0FBQyxTQUFTLElBQUksSUFBSSxLQUFLLENBQUMsS0FBSyxDQUFDLEVBQUUsSUFBSSxFQUFFLGlCQUFpQixFQUFFLENBQUMsQ0FBQztRQUM1RixjQUFjLENBQUMsUUFBUSxFQUFFLENBQUM7UUFDMUIsY0FBYyxDQUFDLGNBQWMsRUFBRSxDQUFDO1FBRWhDLE1BQU0sUUFBUSxHQUFHLElBQUksS0FBSyxDQUFDLEtBQUssRUFBRSxDQUFDO1FBQ25DLE1BQU0sS0FBSyxHQUFHLElBQUksS0FBSyxDQUFDLElBQUksQ0FBQyxTQUFTLENBQUMsU0FBUyxFQUFFLENBQUMsR0FBRyxHQUFHLENBQUMsV0FBVyxDQUFDLENBQUM7UUFDdkUsS0FBSyxDQUFDLFdBQVcsR0FBRyxlQUFlLENBQUM7UUFDcEMsS0FBSyxDQUFDLFdBQVcsR0FBRyxDQUFDLENBQUM7UUFDdEIsS0FBSyxDQUFDLFNBQVMsR0FBRyx5QkFBeUIsQ0FBQztRQUM1QyxRQUFRLENBQUMsUUFBUSxDQUFDLEtBQUssQ0FBQyxDQUFDO1FBRXpCLE1BQU0sTUFBTSxHQUFHLFNBQVMsQ0FBQyxNQUFNLEdBQUcsRUFBRSxHQUFHLEdBQUcsQ0FBQyxXQUFXLENBQUM7UUFDdkQsTUFBTSxTQUFTLEdBQUcsSUFBSSxLQUFLLENBQUMsSUFBSSxDQUFDLFNBQVMsQ0FBQyxJQUFJLEtBQUssQ0FBQyxLQUFLLENBQUMsU0FBUyxDQUFDLElBQUksRUFBRSxNQUFNLENBQUMsRUFBRSxJQUFJLEtBQUssQ0FBQyxJQUFJLENBQUMsU0FBUyxDQUFDLEtBQUssRUFBRSxDQUFDLEdBQUcsR0FBRyxDQUFDLFdBQVcsQ0FBQyxDQUFDLENBQUM7UUFDMUksU0FBUyxDQUFDLFdBQVcsR0FBRyxlQUFlLENBQUM7UUFFeEMsR0FBRyxDQUFDLEVBQUUsQ0FBQyxLQUFLLENBQUMsUUFBUSxFQUFFLDJDQUEyQyxDQUFDLENBQUM7UUFDcEUsR0FBRyxDQUFDLE9BQU8sQ0FBQyxTQUFTLEVBQUUsQ0FBQztRQUN4QixHQUFHLENBQUMsTUFBTSxDQUFDLFFBQVEsQ0FBQyxRQUFRLEVBQUUsQ0FBQztRQUMvQixHQUFHLENBQUMsRUFBRSxDQUFDLE1BQU0sQ0FBQyxhQUFhLEVBQUUsQ0FBQztJQUNsQyxDQUFDO0NBQ0oifQ==
