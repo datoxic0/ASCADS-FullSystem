@@ -18,6 +18,7 @@ import {
   savePrefs,
   writeAutosave,
 } from "@/lib/storage";
+import { useHardwareBus } from "@/lib/hardware-bus";
 import { EXAMPLES } from "@/lib/examples";
 import {
   type History,
@@ -74,7 +75,9 @@ function historyReducer(state: History, action: Action): History {
 const WAVE_HISTORY_MS = 6000;
 const WAVE_SAMPLE_MIN_MS = 24;
 
-export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircuit?: Circuit }) {
+import type { AnalogProject } from "@/lib/analog-types";
+
+export default function Editor({ initialCircuit: bridgeCircuit, project, onProjectChange }: { initialCircuit?: Circuit, project?: AnalogProject, onProjectChange?: (p: AnalogProject) => void }) {
   const { toast } = useToast();
 
   // Preferences
@@ -87,11 +90,25 @@ export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircu
   }, [prefs.dark]);
 
   // Circuit history
-  const initialCircuit = useMemo(() => bridgeCircuit ?? loadAutosave() ?? EMPTY_CIRCUIT, []);
-  const [history, dispatch] = useReducer(historyReducer, initialCircuit, createHistory);
-  const circuit = history.present.circuit;
-  const [circuitName, setCircuitName] = useState<string>(bridgeCircuit ? "Analog Bridge" : "Untitled circuit");
+  const initialCircuitMemo = useMemo(() => {
+    if (project?.data && project.data.gates && project.data.wires) return project.data;
+    const loaded = bridgeCircuit ?? loadAutosave();
+    if (loaded && loaded.gates && loaded.wires) return loaded;
+    return EMPTY_CIRCUIT;
+  }, []);
+  const [history, dispatch] = useReducer(historyReducer, initialCircuitMemo, createHistory);
+  const circuit = (history.present.circuit && history.present.circuit.gates) ? history.present.circuit : EMPTY_CIRCUIT;
+  const [circuitName, setCircuitName] = useState<string>(project?.name || (bridgeCircuit ? "Analog Bridge" : "Untitled circuit"));
   const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    if (project?.data && project.data.gates && project.data.wires) {
+      dispatch({ type: "reset", circuit: project.data });
+      setCircuitName(project.name);
+      setDirty(false);
+      clearSimState(simStateRef.current);
+    }
+  }, [project?.id]);
 
   // Selection / view
   const [selection, setSelection] = useState<Selection>(() => ({
@@ -119,6 +136,7 @@ export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircu
     let raf = 0;
     let last = performance.now();
     const phases: Record<string, number> = {};
+    let lastHwStateStr = "";
     const tick = (t: number) => {
       const dt = ((t - last) / 1000) * speed;
       last = t;
@@ -136,6 +154,13 @@ export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircu
         }
       }
       if (changed) setClockState(next);
+
+      const hwStateStr = JSON.stringify(useHardwareBus.getState().analogOut);
+      if (hwStateStr !== lastHwStateStr) {
+        lastHwStateStr = hwStateStr;
+        setStepNonce((n) => n + 1);
+      }
+
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -219,9 +244,14 @@ export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircu
 
   // Autosave
   useEffect(() => {
-    const t = setTimeout(() => writeAutosave(circuit), 300);
+    const t = setTimeout(() => {
+      writeAutosave(circuit);
+      if (project && onProjectChange) {
+        onProjectChange({ ...project, data: circuit, name: circuitName });
+      }
+    }, 300);
     return () => clearTimeout(t);
-  }, [circuit]);
+  }, [circuit, project, onProjectChange, circuitName]);
 
   /* ---------- Mutators ---------- */
 
@@ -301,6 +331,17 @@ export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircu
       }, "delete-wire");
     },
     [apply],
+  );
+
+  const updateWire = useCallback(
+    (id: string, partial: Partial<Wire>) => {
+      apply((c) => {
+        const existing = c.wires[id];
+        if (!existing) return c;
+        return { ...c, wires: { ...c.wires, [id]: { ...existing, ...partial } } };
+      }, `update-wire:${id}`);
+    },
+    [apply]
   );
 
   const removeWiresAtInput = useCallback(
@@ -497,7 +538,7 @@ export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircu
   }, [selection, deleteSelection, selectAll, duplicateSelection, onUndo, onRedo, onStep]);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background text-foreground overflow-hidden">
+    <div className="h-full w-full flex flex-col bg-background text-foreground overflow-hidden">
       <Toolbar
         circuitName={circuitName}
         onCircuitNameChange={(n) => {
@@ -543,13 +584,17 @@ export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircu
           try {
             const raw = localStorage.getItem('ascads_bridge_plc_digital');
             if (!raw) { toast({ title: 'Bridge Import', description: 'No PLC bridge data — export from Industrial PLC first', variant: 'destructive' }); return; }
-            const { circuit: bridged } = JSON.parse(raw) as { circuit: import('@/lib/types').Circuit; description: string; mapping: unknown[] };
+            const parsed = JSON.parse(raw);
+            const bridged = parsed.circuit;
+            if (!bridged || !bridged.gates || !bridged.wires) {
+               throw new Error("Invalid or legacy bridge data");
+            }
             dispatch({ type: 'set', circuit: bridged, kind: 'Import from PLC' });
             setCircuitName('PLC Bridge');
             setView({ tx: 0, ty: 0, scale: 1 });
             setDirty(false);
             toast({ title: 'Bridge Import', description: 'PLC ladder logic loaded as digital gates' });
-          } catch { toast({ title: 'Bridge Import', description: 'Failed to parse PLC bridge data', variant: 'destructive' }); }
+          } catch { toast({ title: 'Bridge Import', description: 'Failed to parse PLC bridge data. Please export from PLC again.', variant: 'destructive' }); }
         }}
       />
 
@@ -579,6 +624,7 @@ export default function Editor({ initialCircuit: bridgeCircuit }: { initialCircu
             onUpdateGate={updateGate}
             onMoveGates={moveGates}
             onAddWire={addWire}
+            onUpdateWire={updateWire}
             onRemoveWiresAtInput={removeWiresAtInput}
             onDeleteWire={deleteWire}
             onCursorChange={setCursor}

@@ -37,6 +37,7 @@ export function CodeIDE({ program, onSave, onAddLog }: Props) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault();
       handleSave();
@@ -46,7 +47,7 @@ export function CodeIDE({ program, onSave, onAddLog }: Props) {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#0a0b0e]">
       {/* Toolbar */}
-      <div className="h-9 bg-[#0a0c12] border-b border-white/5 flex items-center px-3 gap-2">
+      <div className="h-9 bg-[#0a0c12] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 gap-2">
         <div className="flex items-center gap-1.5 mr-4">
           <FileCode size={12} className="text-blue-400" />
           <span className="text-[10px] font-bold text-white">{program.name}</span>
@@ -82,7 +83,7 @@ export function CodeIDE({ program, onSave, onAddLog }: Props) {
       {/* Editor */}
       <div className="flex-1 flex overflow-hidden">
         {/* Line numbers */}
-        <div className="w-12 bg-[#07080b] border-r border-white/5 flex flex-col items-end py-3 pr-2 text-[10px] font-mono text-zinc-600 select-none overflow-hidden">
+        <div className="w-12 bg-[#07080b] border-r border-emerald-300 dark:border-white/5 flex flex-col items-end py-3 pr-2 text-[10px] font-mono text-zinc-600 select-none overflow-hidden">
           {Array.from({ length: lineNumbers }, (_, i) => (
             <div key={i} className="leading-5">{i + 1}</div>
           ))}

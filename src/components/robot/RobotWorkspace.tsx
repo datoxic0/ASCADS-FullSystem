@@ -420,13 +420,13 @@ export function RobotWorkspace({ config, simState, onJointChange }: Props) {
           onMouseUp={handleMouseUp}
         />
         {!ikTarget && (
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/50 border border-white/10 rounded text-[9px] font-mono text-zinc-500 pointer-events-none">
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/50 border border-emerald-400 dark:border-white/10 rounded text-[9px] font-mono text-zinc-500 pointer-events-none">
             Click anywhere to set IK target · Drag target to move
           </div>
         )}
         {ikTarget && (
           <button
-            className="absolute top-3 right-3 px-2 py-1 bg-[#111318] border border-white/10 rounded text-[9px] font-mono text-zinc-500 hover:text-red-400 hover:border-red-500/30 transition-colors"
+            className="absolute top-3 right-3 px-2 py-1 bg-[#111318] border border-emerald-400 dark:border-white/10 rounded text-[9px] font-mono text-zinc-500 hover:text-red-400 hover:border-red-500/30 transition-colors"
             onClick={(e) => { e.stopPropagation(); setIkTarget(null); trailRef.current = []; }}
           >
             Clear IK Target
@@ -434,7 +434,7 @@ export function RobotWorkspace({ config, simState, onJointChange }: Props) {
         )}
       </div>
       {/* Joint sliders */}
-      <div className="shrink-0 bg-[#0a0c12] border-t border-white/5 px-4 py-2">
+      <div className="shrink-0 bg-[#0a0c12] border-t border-emerald-300 dark:border-white/5 px-4 py-2">
         <div className="flex items-center gap-4 overflow-x-auto">
           {config.joints.map(joint => (
             <div key={joint.id} className="flex flex-col gap-1 min-w-[100px]">
@@ -458,7 +458,7 @@ export function RobotWorkspace({ config, simState, onJointChange }: Props) {
               </div>
             </div>
           ))}
-          <div className="ml-auto flex flex-col gap-1 text-[8px] font-mono text-zinc-600 shrink-0 pl-4 border-l border-white/5">
+          <div className="ml-auto flex flex-col gap-1 text-[8px] font-mono text-zinc-600 shrink-0 pl-4 border-l border-emerald-300 dark:border-white/5">
             <span>Reach: {config.joints.reduce((s, j) => s + j.length, 0)}mm</span>
             <span>DOF: {config.joints.length}</span>
             <span>Status: <span className={simState.isRunning ? 'text-emerald-400' : 'text-zinc-500'}>{simState.isRunning ? 'ACTIVE' : 'IDLE'}</span></span>

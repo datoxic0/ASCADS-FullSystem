@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Cpu, 
   Settings, 
@@ -42,11 +42,24 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
   // Hardcoded presets configs
   const presets = [
     {
-      id: 'fixture',
+      id: 'fixture_double',
       name: 'Double-Acting Pneumatic Clamp & Stamp',
-      desc: 'Typical assembly line clamp utilizing a pneumatic solenoid with spring return and cylinder status sensors.',
+      desc: 'Typical assembly line clamp utilizing dual pneumatic solenoids (extend/retract) and cylinder status sensors.',
       pneuExtendAddr: 'O:0/2',
       pneuRetractAddr: 'O:0/3',
+      pneuSensRet: 'I:0/2',
+      pneuSensExt: 'I:0/3',
+      hydExtendAddr: 'O:0/4',
+      hydRetractAddr: 'O:0/5',
+      hydSensRet: 'I:0/4',
+      hydSensExt: 'I:0/5',
+    },
+    {
+      id: 'fixture_single',
+      name: 'Single-Acting Pneumatic Clamp (Spring Return)',
+      desc: 'Basic clamp utilizing a single pneumatic solenoid with mechanical spring return and cylinder status sensors.',
+      pneuExtendAddr: 'O:0/2',
+      pneuRetractAddr: '',
       pneuSensRet: 'I:0/2',
       pneuSensExt: 'I:0/3',
       hydExtendAddr: 'O:0/4',
@@ -66,10 +79,23 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
       hydRetractAddr: 'O:0/7',
       hydSensRet: 'I:0/6',
       hydSensExt: 'I:0/7',
+    },
+    {
+      id: 'motor_star_delta',
+      name: 'Star-Delta Motor Starter',
+      desc: 'High-power 3-phase AC motor startup sequence using MAIN, STAR, and DELTA contactors to reduce inrush current.',
+      pneuExtendAddr: 'O:0/0', // Used for MAIN contactor
+      pneuRetractAddr: 'O:0/1', // Used for STAR contactor
+      pneuSensRet: 'O:0/2', // Used for DELTA contactor
+      pneuSensExt: '', 
+      hydExtendAddr: '',
+      hydRetractAddr: '',
+      hydSensRet: '',
+      hydSensExt: '',
     }
   ];
 
-  const [activePreset, setActivePreset] = useState('fixture');
+  const [activePreset, setActivePreset] = useState('fixture_double');
   const presetConfig = presets.find(p => p.id === activePreset) || presets[0];
 
   // Static general state values for high-fidelity stations
@@ -77,6 +103,8 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
   const [hydraulicPumpPsi, setHydraulicPumpPsi] = useState(1250); // PSI
   const [compressorRunning, setCompressorRunning] = useState(true);
   const [hydroPumpRunning, setHydroPumpRunning] = useState(false);
+  const [motorRPM, setMotorRPM] = useState(0);
+  const [motorFault, setMotorFault] = useState(false);
   const [showFlowLines, setShowFlowLines] = useState(true);
 
   // Address overrides for custom high-fidelity profiles
@@ -125,18 +153,62 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
   const rungCoordinates = Array.from(new Set(state.nodes.map(getRungIndex)));
   rungCoordinates.sort((a, b) => a - b);
 
+  // Stable refs for interval to prevent re-renders / re-mounting the timer 100 times a second
+  const simStateRef = useRef({
+    isRunning: state.simulation.isRunning,
+    activePreset,
+    isPneuExtendCoilActive,
+    isPneuRetractCoilActive,
+    isHydExtendCoilActive,
+    isHydRetractCoilActive,
+    compressorRunning,
+    hydroPumpRunning,
+    rungCoordinates,
+    rungMediums,
+    nodes: state.nodes,
+    values: state.simulation.values,
+    presetConfig
+  });
+
+  useEffect(() => {
+    simStateRef.current = {
+      isRunning: state.simulation.isRunning,
+      activePreset,
+      isPneuExtendCoilActive,
+      isPneuRetractCoilActive,
+      isHydExtendCoilActive,
+      isHydRetractCoilActive,
+      compressorRunning,
+      hydroPumpRunning,
+      rungCoordinates,
+      rungMediums,
+      nodes: state.nodes,
+      values: state.simulation.values,
+      presetConfig
+    };
+  }, [state.simulation.isRunning, activePreset, isPneuExtendCoilActive, isPneuRetractCoilActive, isHydExtendCoilActive, isHydRetractCoilActive, compressorRunning, hydroPumpRunning, rungCoordinates, rungMediums, state.nodes, state.simulation.values, presetConfig]);
+
   // Simulation loop
   useEffect(() => {
-    if (!state.simulation.isRunning) return;
-
     const interval = setInterval(() => {
+      const refs = simStateRef.current;
+      if (!refs.isRunning) return;
+
       // 1. High Fidelity Station: Pneumatic cylinder mechanical movement
       setCylinder1Pos(prev => {
         let dest = prev;
-        if (isPneuExtendCoilActive && !isPneuRetractCoilActive) {
-          dest = Math.min(100, prev + 8);
-        } else if (isPneuRetractCoilActive && !isPneuExtendCoilActive) {
-          dest = Math.max(0, prev - 8);
+        if (refs.activePreset === 'fixture_single') {
+          if (refs.isPneuExtendCoilActive) {
+            dest = Math.min(100, prev + 8);
+          } else {
+            dest = Math.max(0, prev - 8);
+          }
+        } else {
+          if (refs.isPneuExtendCoilActive && !refs.isPneuRetractCoilActive) {
+            dest = Math.min(100, prev + 8);
+          } else if (refs.isPneuRetractCoilActive && !refs.isPneuExtendCoilActive) {
+            dest = Math.max(0, prev - 8);
+          }
         }
         return dest;
       });
@@ -144,17 +216,51 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
       // 2. High Fidelity Station: Hydraulic Cylinder mechanical movement
       setCylinder2Pos(prev => {
         let dest = prev;
-        if (isHydExtendCoilActive && !isHydRetractCoilActive) {
+        if (refs.isHydExtendCoilActive && !refs.isHydRetractCoilActive) {
           dest = Math.min(100, prev + 4);
-        } else if (isHydRetractCoilActive && !isHydExtendCoilActive) {
+        } else if (refs.isHydRetractCoilActive && !refs.isHydExtendCoilActive) {
           dest = Math.max(0, prev - 4);
         }
         return dest;
       });
 
+      // 2b. High Fidelity Station: Motor Star-Delta Simulation
+      if (refs.activePreset === 'motor_star_delta') {
+        const isMain = refs.isPneuExtendCoilActive;
+        const isStar = refs.isPneuRetractCoilActive;
+        const isDelta = Boolean(refs.values[refs.presetConfig.pneuSensRet]);
+
+        setMotorFault(prevFault => {
+          let nextFault = prevFault;
+          if (isStar && isDelta) {
+             nextFault = true;
+             setMotorRPM(0);
+          } else if (prevFault && !isMain && !isStar && !isDelta) {
+             nextFault = false;
+          }
+          
+          if (!nextFault) {
+            if (isMain) {
+              if (isStar) {
+                setMotorRPM(prev => Math.min(1000, prev + 50)); // Spool up to STAR speed
+              } else if (isDelta) {
+                setMotorRPM(prev => Math.min(3000, prev + 100)); // Spool up to DELTA speed
+              } else {
+                setMotorRPM(prev => Math.max(0, prev - 20)); // Slow down if neither
+              }
+            } else {
+              setMotorRPM(prev => Math.max(0, prev - 30)); // Coast to stop
+            }
+          }
+          return nextFault;
+        });
+      }
+
       // 3. AUTO-GENERATED COMPILER MODE: Dynamic mechanical piston stroke calculations
-      rungCoordinates.forEach(rungIdx => {
-        const rungNodes = state.nodes.filter(n => getRungIndex(n) === rungIdx).sort((a, b) => a.x - b.x);
+      refs.rungCoordinates.forEach(rungIdx => {
+        // Internal helper to avoid closure staleness
+        const getRungIdxLocal = (n: any) => Math.round((n.y + n.height / 2 - 48) / 96);
+        const rungNodes = refs.nodes.filter(n => getRungIdxLocal(n) === rungIdx).sort((a, b) => a.x - b.x);
         const outputs = rungNodes.filter(n => 
           n.type.startsWith('coil') || 
           n.type.startsWith('timer') || 
@@ -163,19 +269,17 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
 
         if (outputs.length > 0) {
           const activeOutput = outputs[0];
-          const isCoilActive = Boolean(state.simulation.values[activeOutput.address]);
-          const systemMedium = rungMediums[rungIdx] || 'pneumatic';
+          const isCoilActive = Boolean(refs.values[activeOutput.address]);
+          const systemMedium = refs.rungMediums[rungIdx] || 'pneumatic';
           
           setCompiledCylinderPositions(prev => {
             const currentVal = prev[rungIdx] ?? 0;
-            // High speed fluid change for air; steadier stable motion for hydraulic
             const delta = systemMedium === 'pneumatic' ? 10 : 4;
             let nextVal = currentVal;
 
             if (isCoilActive) {
               nextVal = Math.min(100, currentVal + delta);
             } else {
-              // Standard spring or logic retract return if output loses power
               nextVal = Math.max(0, currentVal - delta);
             }
 
@@ -185,9 +289,9 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
       });
 
       // Air compressor pressure build
-      if (compressorRunning) {
+      if (refs.compressorRunning) {
         setPneumaticReservoirBar(prev => {
-          const loss = (isPneuExtendCoilActive || isPneuRetractCoilActive) ? 0.12 : 0.01;
+          const loss = (refs.isPneuExtendCoilActive || refs.isPneuRetractCoilActive) ? 0.12 : 0.01;
           return Math.max(0, Math.min(10, prev + 0.1 - loss));
         });
       } else {
@@ -195,9 +299,9 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
       }
 
       // Hydraulic unit pressure build
-      if (hydroPumpRunning) {
+      if (refs.hydroPumpRunning) {
         setHydraulicPumpPsi(prev => {
-          const target = (isHydExtendCoilActive || isHydRetractCoilActive) ? 1400 : 2000;
+          const target = (refs.isHydExtendCoilActive || refs.isHydRetractCoilActive) ? 1400 : 2000;
           return Math.round(prev + (target - prev) * 0.18 + (Math.random() * 10 - 5));
         });
       } else {
@@ -207,19 +311,7 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
     }, 100);
 
     return () => clearInterval(interval);
-  }, [
-    state.simulation.isRunning, 
-    isPneuExtendCoilActive, 
-    isPneuRetractCoilActive, 
-    isHydExtendCoilActive, 
-    isHydRetractCoilActive,
-    state.simulation.values,
-    compressorRunning,
-    hydroPumpRunning,
-    rungCoordinates,
-    rungMediums,
-    state.nodes
-  ]);
+  }, []);
 
   // Decoupled back propagation effects to update IO states outside of state rendering/interval loop
   useEffect(() => {
@@ -674,7 +766,54 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
           {operatingMode === 'presets' && (
             <div className="space-y-4">
               
-              {/* Section 1: 5/2-Way Double-Acting Pneumatic Cylinder Circuit */}
+              <div className="bg-[#0b0c13] border border-white/5 p-3 rounded-2xl flex items-center justify-between shadow-sm">
+                <span className="text-[9.5px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <Layers size={13} className="text-pink-500" /> Select Industrial Preset:
+                </span>
+                <select 
+                  value={activePreset} 
+                  onChange={(e) => setActivePreset(e.target.value)}
+                  className="bg-[#07080c] border border-white/10 text-[9.5px] text-zinc-300 font-mono px-2 py-1.5 rounded focus:outline-none focus:border-pink-500 cursor-pointer"
+                >
+                  {presets.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {activePreset === 'motor_star_delta' && (
+                <div className="bg-[#090b0f] border border-white/5 rounded-2xl p-4 flex flex-col gap-3 relative">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full" />
+                      <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-200">
+                        High-Power AC Motor (Star-Delta)
+                      </h3>
+                    </div>
+                    <span className="text-[9px] font-mono text-zinc-500">
+                      RPM: <span className="text-yellow-400 font-bold">{motorRPM}</span>
+                    </span>
+                  </div>
+                  <div className="w-full h-[180px] bg-black/40 border border-white/5 rounded-xl flex items-center justify-center p-2 relative overflow-hidden">
+                    {/* SVG for Motor */}
+                    <div className="text-center font-mono">
+                      <div className={`w-28 h-28 mx-auto rounded-full border-4 flex items-center justify-center text-3xl font-black transition-all ${motorFault ? 'border-red-500 text-red-500 animate-pulse' : motorRPM > 0 ? 'border-emerald-500 text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]' : 'border-zinc-700 text-zinc-500'}`}>
+                        M
+                      </div>
+                      <div className="mt-6 flex gap-4 text-[10px] text-zinc-400 font-bold justify-center">
+                        <span className={isPneuExtendCoilActive ? "text-emerald-400 drop-shadow-[0_0_5px_rgba(16,185,129,0.8)]" : ""}>MAIN: {isPneuExtendCoilActive ? 'ON' : 'OFF'}</span>
+                        <span className={isPneuRetractCoilActive ? "text-sky-400 drop-shadow-[0_0_5px_rgba(56,189,248,0.8)]" : ""}>STAR: {isPneuRetractCoilActive ? 'ON' : 'OFF'}</span>
+                        <span className={Boolean(state.simulation.values[presetConfig.pneuSensRet]) ? "text-pink-400 drop-shadow-[0_0_5px_rgba(244,114,182,0.8)]" : ""}>DELTA: {Boolean(state.simulation.values[presetConfig.pneuSensRet]) ? 'ON' : 'OFF'}</span>
+                      </div>
+                      {motorFault && <div className="mt-3 text-red-500 font-bold text-[11px] animate-pulse">FAULT: STAR & DELTA SHORT CIRCUIT</div>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activePreset !== 'motor_star_delta' && (
+                <>
+                  {/* Section 1: 5/2-Way Double-Acting Pneumatic Cylinder Circuit */}
               <div className="bg-[#090b0f] border border-white/5 rounded-2xl p-4 flex flex-col gap-3 relative">
                 <div className="flex items-center justify-between border-b border-white/5 pb-2">
                   <div className="flex items-center gap-2">
@@ -733,7 +872,16 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
                       <rect x="-50" y="-10" width="15" height="16" fill={isPneuExtendCoilActive ? "#ec4899" : "#1e293b"} stroke="#ec4899" strokeWidth="1" rx="1" />
                       <line x1="-48" y1="-2" x2="-35" y2="-2" stroke="#ec4899" strokeWidth="1" />
                       <text x="-47" y="6" className="text-[7px] font-mono fill-white font-bold">SOL_A</text>
-                      <path d="M 35 -6 L 40 -12 L 45 -6 L 50 -12" fill="none" stroke="#475569" strokeWidth="1.5" />
+                      
+                      {activePreset === 'fixture_single' ? (
+                        <path d="M 35 -6 L 40 -12 L 45 -6 L 50 -12" fill="none" stroke="#475569" strokeWidth="1.5" />
+                      ) : (
+                        <g>
+                          <rect x="35" y="-10" width="15" height="16" fill={isPneuRetractCoilActive ? "#ec4899" : "#1e293b"} stroke="#ec4899" strokeWidth="1" rx="1" />
+                          <line x1="35" y1="-2" x2="48" y2="-2" stroke="#ec4899" strokeWidth="1" />
+                          <text x="36" y="6" className="text-[7px] font-mono fill-white font-bold">SOL_A2</text>
+                        </g>
+                      )}
                     </g>
 
                     <path d="M 275 45 L 275 25 L 420 25 L 420 12" 
@@ -868,6 +1016,8 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
                 </div>
               </div>
 
+                </>
+              )}
             </div>
           )}
           
@@ -934,7 +1084,7 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
                   
                   <div className="grid grid-cols-2 gap-2 text-[9px] font-mono">
                     <div>
-                      <label className="text-zinc-500 block mb-0.5">Solenoid Extend [A+]</label>
+                      <label className="text-zinc-500 block mb-0.5">{activePreset === 'motor_star_delta' ? 'MAIN Contactor' : 'Solenoid Extend [A+]'}</label>
                       <input 
                         type="text" 
                         value={pneuExtendAddr} 
@@ -945,23 +1095,25 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
                         className="w-full bg-[#07080c] border border-white/5 px-2 py-1.5 rounded focus:outline-none focus:border-pink-500 text-sky-400 font-bold text-center"
                       />
                     </div>
-                    <div>
-                      <label className="text-zinc-500 block mb-0.5">Solenoid Retract [A-]</label>
-                      <input 
-                        type="text" 
-                        value={pneuRetractAddr} 
-                        onChange={(e) => {
-                          setPneuRetractAddr(e.target.value);
-                          handleInjectAddress(e.target.value);
-                        }}
-                        className="w-full bg-[#07080c] border border-white/5 px-2 py-1.5 rounded focus:outline-none focus:border-pink-500 text-sky-400 font-bold text-center"
-                      />
-                    </div>
+                    {activePreset !== 'fixture_single' && (
+                      <div>
+                        <label className="text-zinc-500 block mb-0.5">{activePreset === 'motor_star_delta' ? 'STAR Contactor' : 'Solenoid Retract [A-]'}</label>
+                        <input 
+                          type="text" 
+                          value={pneuRetractAddr} 
+                          onChange={(e) => {
+                            setPneuRetractAddr(e.target.value);
+                            handleInjectAddress(e.target.value);
+                          }}
+                          className="w-full bg-[#07080c] border border-white/5 px-2 py-1.5 rounded focus:outline-none focus:border-pink-500 text-sky-400 font-bold text-center"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-[9px] font-mono">
                     <div>
-                      <label className="text-zinc-500 block mb-0.5">Retracted [1-LS]</label>
+                      <label className="text-zinc-500 block mb-0.5">{activePreset === 'motor_star_delta' ? 'DELTA Contactor' : 'Retracted [1-LS]'}</label>
                       <input 
                         type="text" 
                         value={pneuSensRet} 
@@ -969,20 +1121,23 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
                         className="w-full bg-[#07080c] border border-white/5 px-2 py-1.5 rounded focus:outline-none text-center text-emerald-400 font-bold"
                       />
                     </div>
-                    <div>
-                      <label className="text-zinc-500 block mb-0.5">Extended [2-LS]</label>
-                      <input 
-                        type="text" 
-                        value={pneuSensExt} 
-                        onChange={(e) => setPneuSensExt(e.target.value)}
-                        className="w-full bg-[#07080c] border border-white/5 px-2 py-1.5 rounded focus:outline-none text-center text-emerald-400 font-bold"
-                      />
-                    </div>
+                    {activePreset !== 'motor_star_delta' && (
+                      <div>
+                        <label className="text-zinc-500 block mb-0.5">Extended [2-LS]</label>
+                        <input 
+                          type="text" 
+                          value={pneuSensExt} 
+                          onChange={(e) => setPneuSensExt(e.target.value)}
+                          className="w-full bg-[#07080c] border border-white/5 px-2 py-1.5 rounded focus:outline-none text-center text-emerald-400 font-bold"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="bg-[#0b0c13] border border-white/5 p-3 rounded-xl flex flex-col gap-3">
-                  <span className="text-[9.5px] font-bold text-slate-330 tracking-wide uppercase">Cylinder B (Hydraulics) Address Link</span>
+                {activePreset !== 'motor_star_delta' && (
+                  <div className="bg-[#0b0c13] border border-white/5 p-3 rounded-xl flex flex-col gap-3">
+                    <span className="text-[9.5px] font-bold text-slate-330 tracking-wide uppercase">Cylinder B (Hydraulics) Address Link</span>
                   
                   <div className="grid grid-cols-2 gap-2 text-[9px] font-mono">
                     <div>
@@ -1032,6 +1187,7 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
                     </div>
                   </div>
                 </div>
+                )}
 
                 <div className="bg-[#0b0c13] border border-white/5 p-3 rounded-xl flex flex-col gap-2">
                   <span className="text-[9.5px] font-bold text-slate-350 tracking-wide uppercase">Override Coils Directly</span>
@@ -1040,14 +1196,16 @@ export function MechatronicsView({ state, onUpdateAddressValue, onForceIO }: Mec
                       onClick={() => onForceIO && onForceIO(pneuExtendAddr, !isPneuExtendCoilActive, true)}
                       className={clsx("w-full py-1 rounded text-center border font-bold uppercase transition", isPneuExtendCoilActive ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30" : "bg-zinc-800 text-zinc-500 border-transparent")}
                     >
-                      Force Pneu Sol [A+]: {isPneuExtendCoilActive ? 'ON' : 'OFF'}
+                      {activePreset === 'motor_star_delta' ? `Force MAIN Contactor: ${isPneuExtendCoilActive ? 'ON' : 'OFF'}` : `Force Pneu Sol [A+]: ${isPneuExtendCoilActive ? 'ON' : 'OFF'}`}
                     </button>
-                    <button 
-                      onClick={() => onForceIO && onForceIO(hydExtendAddr, !isHydExtendCoilActive, true)}
-                      className={clsx("w-full py-1 rounded text-center border font-bold uppercase transition-all", isHydExtendCoilActive ? "bg-amber-500/10 text-amber-500 border-amber-500/30" : "bg-zinc-800 text-zinc-500 border-transparent")}
-                    >
-                      Force Hyd Sol [B1]: {isHydExtendCoilActive ? 'ON' : 'OFF'}
-                    </button>
+                    {activePreset !== 'motor_star_delta' && activePreset !== 'fixture_single' && (
+                      <button 
+                        onClick={() => onForceIO && onForceIO(hydExtendAddr, !isHydExtendCoilActive, true)}
+                        className={clsx("w-full py-1 rounded text-center border font-bold uppercase transition-all", isHydExtendCoilActive ? "bg-amber-500/10 text-amber-500 border-amber-500/30" : "bg-zinc-800 text-zinc-500 border-transparent")}
+                      >
+                        Force Hyd Sol [B1]: {isHydExtendCoilActive ? 'ON' : 'OFF'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

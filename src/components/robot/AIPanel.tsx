@@ -159,12 +159,12 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
   };
 
   return (
-    <div id="ai-copilot-card" className="bg-[#1a1a1e] border border-white/5 rounded overflow-hidden flex flex-col h-full shadow-2xl">
+    <div id="ai-copilot-card" className="bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded overflow-hidden flex flex-col h-full shadow-2xl">
       {/* Title */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#141417] border-b border-white/5 shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#141417] border-b border-emerald-300 dark:border-white/5 shrink-0">
         <div className="flex items-center space-x-2">
           <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse animate-duration-1000" />
-          <span className="font-mono text-xs font-semibold text-slate-200 tracking-tight select-none uppercase">
+          <span className="font-mono text-xs font-semibold text-emerald-900 dark:text-slate-200 tracking-tight select-none uppercase">
             {apiProvider === "openrouter" ? "OpenRouter Copilot" : "Gemini Copilot v3"}
           </span>
         </div>
@@ -173,7 +173,7 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
             onClick={() => setShowSettings(!showSettings)}
             title="Model & API Calibration Setup"
             className={`p-1 rounded cursor-pointer transition-colors ${
-              showSettings ? "text-cyan-400 bg-white/5" : "text-slate-500 hover:text-slate-200"
+              showSettings ? "text-cyan-400 bg-white/5" : "text-slate-500 hover:text-emerald-900 dark:text-slate-200"
             }`}
           >
             <Settings className="w-3.5 h-3.5" />
@@ -181,7 +181,7 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
           <button
             onClick={() => setMessages([messages[0]])}
             title="Clear Chat Logs"
-            className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded hover:bg-[#0d0d0f] cursor-pointer"
+            className="text-slate-500 hover:text-emerald-800 dark:text-slate-300 transition-colors p-1 rounded hover:bg-[#0d0d0f] cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
@@ -199,9 +199,9 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
 
       {/* Retractable Settings Drawer */}
       {showSettings && (
-        <div className="bg-[#141417] border-b border-white/5 p-3 space-y-2.5 font-mono text-[10px] text-slate-300 animate-in slide-in-from-top duration-200 select-none">
-          <div className="flex justify-between items-center border-b border-white/5 pb-1 select-none">
-            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
+        <div className="bg-[#141417] border-b border-emerald-300 dark:border-white/5 p-3 space-y-2.5 font-mono text-[10px] text-emerald-800 dark:text-slate-300 animate-in slide-in-from-top duration-200 select-none">
+          <div className="flex justify-between items-center border-b border-emerald-300 dark:border-white/5 pb-1 select-none">
+            <span className="text-[9px] uppercase font-bold text-emerald-700 dark:text-slate-400 tracking-wider flex items-center gap-1">
               🛠️ LLM Calibration Console
             </span>
             <span className="text-[7.5px] font-bold text-blue-400 bg-blue-500/15 border border-blue-500/10 px-1 rounded uppercase tracking-wider">
@@ -212,12 +212,12 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
           {/* Provider Toggle Buttons */}
           <div className="space-y-0.5">
             <label className="text-[8px] font-bold uppercase tracking-wider text-slate-500 block">Service Provider</label>
-            <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-white/5 gap-0.5">
+            <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-emerald-300 dark:border-white/5 gap-0.5">
               <button
                 type="button"
                 onClick={() => handleProviderChange("gemini")}
                 className={`flex-1 py-1 rounded text-[9.5px] text-center font-bold tracking-tight block transition-all uppercase cursor-pointer ${
-                  apiProvider === "gemini" ? "bg-blue-600/95 text-white" : "text-slate-500 hover:text-slate-200"
+                  apiProvider === "gemini" ? "bg-blue-600/95 text-white" : "text-slate-500 hover:text-emerald-900 dark:text-slate-200"
                 }`}
               >
                 Gemini (Standard)
@@ -226,7 +226,7 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
                 type="button"
                 onClick={() => handleProviderChange("openrouter")}
                 className={`flex-1 py-1 rounded text-[9.5px] text-center font-bold tracking-tight block transition-all uppercase cursor-pointer ${
-                  apiProvider === "openrouter" ? "bg-purple-650/95 text-white" : "text-slate-500 hover:text-slate-200"
+                  apiProvider === "openrouter" ? "bg-purple-650/95 text-white" : "text-slate-500 hover:text-emerald-900 dark:text-slate-200"
                 }`}
               >
                 OpenRouter (Free Tiers)
@@ -243,23 +243,23 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
                 setSelectedModel(e.target.value);
                 saveSetting("robot_ai_model", e.target.value);
               }}
-              className="w-full bg-[#0d0d0f] border border-white/5 rounded px-2 py-1 text-[10px] text-slate-200 focus:outline-none focus:border-blue-500/30 cursor-pointer text-ellipsis overflow-hidden"
+              className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded px-2 py-1 text-[10px] text-emerald-900 dark:text-slate-200 focus:outline-none focus:border-blue-500/30 cursor-pointer text-ellipsis overflow-hidden"
             >
               {apiProvider === "gemini" ? (
                 <>
-                  <option value="gemini-3.5-flash" className="bg-[#141417] text-slate-200">gemini-3.5-flash (Fast & Accurate - Default)</option>
-                  <option value="gemini-3.1-flash-lite" className="bg-[#141417] text-slate-200">gemini-3.1-flash-lite (Cost Efficient)</option>
-                  <option value="gemini-2.5-flash" className="bg-[#141417] text-slate-200">gemini-2.5-flash (Standard)</option>
-                  <option value="gemini-2.5-pro" className="bg-[#141417] text-slate-200">gemini-2.5-pro (Creative Reasoning)</option>
+                  <option value="gemini-3.5-flash" className="bg-[#141417] text-emerald-900 dark:text-slate-200">gemini-3.5-flash (Fast & Accurate - Default)</option>
+                  <option value="gemini-3.1-flash-lite" className="bg-[#141417] text-emerald-900 dark:text-slate-200">gemini-3.1-flash-lite (Cost Efficient)</option>
+                  <option value="gemini-2.5-flash" className="bg-[#141417] text-emerald-900 dark:text-slate-200">gemini-2.5-flash (Standard)</option>
+                  <option value="gemini-2.5-pro" className="bg-[#141417] text-emerald-900 dark:text-slate-200">gemini-2.5-pro (Creative Reasoning)</option>
                 </>
               ) : (
                 <>
-                  <option value="openrouter/free" className="bg-[#141417] text-slate-200">openrouter/free (Auto-Free Model Routing - Recommended)</option>
-                  <option value="google/gemini-2.5-flash" className="bg-[#141417] text-slate-200">google/gemini-2.5-flash (Gemini 2.5 Flash)</option>
-                  <option value="google/gemini-2.5-pro" className="bg-[#141417] text-slate-200">google/gemini-2.5-pro (Gemini 2.5 Pro)</option>
-                  <option value="deepseek/deepseek-r1" className="bg-[#141417] text-slate-200">deepseek/deepseek-r1 (DeepSeek R1 Reasoning)</option>
-                  <option value="meta-llama/llama-3-8b-instruct" className="bg-[#141417] text-slate-200">meta-llama/llama-3-8b-instruct (Meta LLaMA 3)</option>
-                  <option value="mistralai/mistral-7b-instruct" className="bg-[#141417] text-slate-200">mistralai/mistral-7b-instruct (Mistral 7B)</option>
+                  <option value="openrouter/free" className="bg-[#141417] text-emerald-900 dark:text-slate-200">openrouter/free (Auto-Free Model Routing - Recommended)</option>
+                  <option value="google/gemini-2.5-flash" className="bg-[#141417] text-emerald-900 dark:text-slate-200">google/gemini-2.5-flash (Gemini 2.5 Flash)</option>
+                  <option value="google/gemini-2.5-pro" className="bg-[#141417] text-emerald-900 dark:text-slate-200">google/gemini-2.5-pro (Gemini 2.5 Pro)</option>
+                  <option value="deepseek/deepseek-r1" className="bg-[#141417] text-emerald-900 dark:text-slate-200">deepseek/deepseek-r1 (DeepSeek R1 Reasoning)</option>
+                  <option value="meta-llama/llama-3-8b-instruct" className="bg-[#141417] text-emerald-900 dark:text-slate-200">meta-llama/llama-3-8b-instruct (Meta LLaMA 3)</option>
+                  <option value="mistralai/mistral-7b-instruct" className="bg-[#141417] text-emerald-900 dark:text-slate-200">mistralai/mistral-7b-instruct (Mistral 7B)</option>
                 </>
               )}
             </select>
@@ -273,7 +273,7 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
                   saveSetting("robot_ai_model", e.target.value);
                 }}
                 placeholder={apiProvider === "gemini" ? "e.g. gemini-3.5-flash" : "e.g. openrouter/free"}
-                className="w-full bg-[#0d0d0f] border border-white/5 rounded px-2 py-0.5 mt-0.5 text-[9px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500/30 select-text font-mono"
+                className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded px-2 py-0.5 mt-0.5 text-[9px] text-emerald-900 dark:text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500/30 select-text font-mono"
               />
             </div>
           </div>
@@ -308,7 +308,7 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
                   ? "Leave blank to fallback to server GEMINI_API_KEY..."
                   : "Enter OpenRouter Key starting with sk-or-..."
               }
-              className="w-full bg-[#0d0d0f] border border-white/5 rounded px-2 py-1 text-[9.5px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500/30 select-text"
+              className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded px-2 py-1 text-[9.5px] text-emerald-900 dark:text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500/30 select-text"
             />
           </div>
         </div>
@@ -323,7 +323,7 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
               m.role === "user"
                 ? "bg-blue-600/10 border-blue-500/20 self-end ml-auto text-blue-100"
                 : m.role === "assistant"
-                ? "bg-[#141417]/80 border-white/5 self-start mr-auto text-slate-300"
+                ? "bg-[#141417]/80 border-emerald-300 dark:border-white/5 self-start mr-auto text-emerald-800 dark:text-slate-300"
                 : ""
             }`}
           >
@@ -352,9 +352,9 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
         ))}
 
         {isLoading && (
-          <div className="flex items-center space-x-2 p-2 bg-slate-900/40 border border-white/5 rounded self-start mr-auto max-w-[85%]">
+          <div className="flex items-center space-x-2 p-2 bg-slate-900/40 border border-emerald-300 dark:border-white/5 rounded self-start mr-auto max-w-[85%]">
             <Cpu className="w-3.5 h-3.5 text-blue-400 animate-spin" />
-            <span className="text-[10px] font-mono text-slate-400 animate-pulse font-medium">Co-pilot computing kinematic trajectory...</span>
+            <span className="text-[10px] font-mono text-emerald-700 dark:text-slate-400 animate-pulse font-medium">Co-pilot computing kinematic trajectory...</span>
           </div>
         )}
 
@@ -370,7 +370,7 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
       </div>
 
       {/* Board-specific automation Tasks */}
-      <div className="px-3 py-2 bg-[#141417] border-t border-white/5 space-y-2 shrink-0">
+      <div className="px-3 py-2 bg-[#141417] border-t border-emerald-300 dark:border-white/5 space-y-2 shrink-0">
         <div className="text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">
           💡 Trajectory Automation ({activeBoard.category})
         </div>
@@ -379,7 +379,7 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
             <button
               key={i}
               onClick={() => handleSendMessage(p.prompt)}
-              className="text-[9px] font-mono bg-[#0d0d0f] border border-white/5 text-slate-400 hover:text-white hover:bg-white/5 px-2 py-0.5 rounded transition-colors text-left truncate max-w-full cursor-pointer"
+              className="text-[9px] font-mono bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:text-white hover:bg-white/5 px-2 py-0.5 rounded transition-colors text-left truncate max-w-full cursor-pointer"
             >
               {p.label}
             </button>
@@ -399,14 +399,14 @@ I can help study mechanical kinematics, write firmware routines, evaluate stress
           e.preventDefault();
           handleSendMessage();
         }}
-        className="flex items-center p-2 bg-[#0d0d0f] border-t border-white/5 shrink-0"
+        className="flex items-center p-2 bg-[#0d0d0f] border-t border-emerald-300 dark:border-white/5 shrink-0"
       >
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder={`Instruct AI on ${activeBoard.name}...`}
-          className="flex-1 bg-[#141417] border border-white/5 text-slate-200 rounded px-2.5 py-1 text-[11px] font-mono focus:outline-none focus:border-blue-500/50 placeholder-slate-600"
+          className="flex-1 bg-[#141417] border border-emerald-300 dark:border-white/5 text-emerald-900 dark:text-slate-200 rounded px-2.5 py-1 text-[11px] font-mono focus:outline-none focus:border-blue-500/50 placeholder-slate-600"
         />
         <button
           type="submit"

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import interact from 'interactjs';
 import { 
   LadderState, 
@@ -14,6 +14,7 @@ import {
 import { clsx } from 'clsx';
 import { Trash2, Edit2 } from 'lucide-react';
 import { playClick, playConnect } from '@/lib/audio';
+import { InteractiveSvgWire } from '@/lib/wiring/InteractiveSvgWire';
 
 interface LadderCanvasProps {
   state: LadderState;
@@ -27,8 +28,11 @@ interface LadderCanvasProps {
   onViewportChange: (viewport: { x: number; y: number; zoom: number }) => void;
   onCanvasClick: (x: number, y: number) => void;
   onNodeDoubleClick: (id: string) => void;
-  onRungAction?: (rungIndex: number, action: 'delete' | 'edit-comment') => void;
+  onRungAction?: (rungIndex: number, action: 'delete' | 'edit-comment', newValue?: string) => void;
+  onUpdateTag?: (id: string, tag: string) => void;
+  onUpdateAddress?: (id: string, address: string) => void;
   onAddWire?: (fromId: string, fromSide: 'left' | 'right', toId: string, toSide: 'left' | 'right') => void;
+  onUpdateWire?: (id: string, updates: Partial<import('@/lib/plc-types').Wire>) => void;
   onDeleteWire?: (id: string) => void;
 }
 
@@ -47,6 +51,9 @@ const MemoizedLadderNode = React.memo<{
   onDoubleClick: (id: string) => void;
   onTerminalClick: (id: string, side: 'left' | 'right', x: number, y: number) => void;
   renderSymbol: (node: LadderNode) => React.ReactNode;
+  editState: { id: string | null, field: 'tag' | 'address' | 'rung', value: string, x: number, y: number, w: number } | null;
+  setEditState: (state: any) => void;
+  onCommitEdit: () => void;
 }>(({ 
   node, 
   selected, 
@@ -60,7 +67,10 @@ const MemoizedLadderNode = React.memo<{
   onToggle, 
   onDoubleClick, 
   onTerminalClick,
-  renderSymbol 
+  renderSymbol,
+  editState,
+  setEditState,
+  onCommitEdit
 }) => {
   const isConducting = isPowerActive;
   const clickStartRef = React.useRef<{ x: number; y: number } | null>(null);
@@ -123,27 +133,64 @@ const MemoizedLadderNode = React.memo<{
         
         {/* Labels */}
         {node.type !== 'wire-junction' && (
-          <text 
-            y={-12} 
-            x={node.width / 2} 
-            textAnchor="middle" 
-            className="text-[10px] font-mono fill-sky-400 font-bold tracking-tight"
-          >
-            {node.address}
-          </text>
-        )}
-        
-        {node.tag && node.type !== 'wire-junction' && (
-          <g transform={`translate(${node.width/2}, -32)`}>
-            <rect x={-35} y={0} width={70} height={14} fill="#141720" rx={3} stroke="rgba(255,255,255,0.07)" strokeWidth={1} />
-            <text 
-              y={10} 
-              textAnchor="middle" 
-              className="text-[8px] font-mono fill-slate-400 font-medium"
+          <>
+            <g 
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditState({
+                  id: node.id,
+                  field: 'tag',
+                  value: node.tag || '',
+                  x: node.x + (node.width / 2) - 40,
+                  y: node.y - 32,
+                  w: 80
+                });
+              }}
             >
-              {node.tag}
-            </text>
-          </g>
+              {editState?.id !== node.id || editState?.field !== 'tag' ? (
+                <text 
+                  x={(node.width / 2)} 
+                  y={-12} 
+                  textAnchor="middle" 
+                  fontSize={10} 
+                  fill="#cbd5e1" 
+                  fontWeight="bold"
+                  className="font-sans tracking-wide drop-shadow-sm select-all pointer-events-auto hover:fill-white"
+                >
+                  {node.tag || "TAG"}
+                </text>
+              ) : null}
+            </g>
+            
+            <g
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditState({
+                  id: node.id,
+                  field: 'address',
+                  value: node.address,
+                  x: node.x + (node.width / 2) - 30,
+                  y: node.y + node.height + 4,
+                  w: 60
+                });
+              }}
+            >
+              {editState?.id !== node.id || editState?.field !== 'address' ? (
+                <text 
+                  x={(node.width / 2)} 
+                  y={node.height + 14} 
+                  textAnchor="middle" 
+                  fontSize={8.5} 
+                  fill="#94a3b8" 
+                  className="font-mono tracking-wider pointer-events-auto hover:fill-white"
+                >
+                  {node.address || "I:0/0"}
+                </text>
+              ) : null}
+            </g>
+          </>
         )}
 
         {/* Live Physical Device Linker Status Badge */}
@@ -175,9 +222,8 @@ const MemoizedLadderNode = React.memo<{
         className="cursor-move"
       />
 
-      {/* Terminals (Ports) - Always highly accessible and styled beautifully under Siemens/Rockwell aesthetic */}
+      {/* Terminals (Ports) */}
       <g className="transition-all duration-200">
-        {/* Terminal Left */}
         <g 
           transform={`translate(0, ${node.height / 2})`}
           className="pointer-events-auto group/term cursor-crosshair"
@@ -186,7 +232,6 @@ const MemoizedLadderNode = React.memo<{
             onTerminalClick(node.id, 'left', node.x, node.y + node.height / 2);
           }}
         >
-          {/* Decorative Anchors (Sleek Outer Ring and Core) */}
           <circle 
             r={isSnappedLeft ? 8 : 5} 
             fill="#0d0e12" 
@@ -202,16 +247,9 @@ const MemoizedLadderNode = React.memo<{
             fill={isSnappedLeft ? "#10b981" : (wiringState?.fromId === node.id && wiringState?.fromSide === 'left' ? "#ef4444" : "#0284c7")}
             className="transition-all duration-150 group-hover/term:scale-125 group-hover/term:fill-sky-400"
           />
-          
-          {/* Large, forgiving hit target for seamless clicks */}
-          <circle 
-            r={24} 
-            fill="transparent" 
-            className="cursor-crosshair"
-          />
+          <circle r={24} fill="transparent" />
         </g>
 
-        {/* Terminal Right */}
         <g 
           transform={`translate(${node.width}, ${node.height / 2})`}
           className="pointer-events-auto group/term cursor-crosshair"
@@ -220,7 +258,6 @@ const MemoizedLadderNode = React.memo<{
             onTerminalClick(node.id, 'right', node.x + node.width, node.y + node.height / 2);
           }}
         >
-          {/* Decorative Anchors (Sleek Outer Ring and Core) */}
           <circle 
             r={isSnappedRight ? 8 : 5} 
             fill="#0d0e12" 
@@ -236,13 +273,7 @@ const MemoizedLadderNode = React.memo<{
             fill={isSnappedRight ? "#10b981" : (wiringState?.fromId === node.id && wiringState?.fromSide === 'right' ? "#ef4444" : "#0284c7")}
             className="transition-all duration-150 group-hover/term:scale-125 group-hover/term:fill-sky-400"
           />
-          
-          {/* Large, forgiving hit target for seamless clicks */}
-          <circle 
-            r={24} 
-            fill="transparent" 
-            className="cursor-crosshair"
-          />
+          <circle r={24} fill="transparent" />
         </g>
       </g>
     </g>
@@ -262,7 +293,10 @@ export function LadderCanvas({
   onCanvasClick,
   onNodeDoubleClick,
   onRungAction,
+  onUpdateTag,
+  onUpdateAddress,
   onAddWire,
+  onUpdateWire,
   onDeleteWire
 }: LadderCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -280,13 +314,40 @@ export function LadderCanvas({
   const wiringStateRef = useRef<{fromId: string; fromSide: 'left' | 'right'; x: number; y: number} | null>(wiringState);
   const activeSnapRef = useRef<{ nodeId: string; side: 'left' | 'right'; x: number; y: number } | null>(activeSnap);
 
+  const [editState, setEditState] = useState<{ id: string | null, field: 'tag' | 'address' | 'rung', value: string, x: number, y: number, w: number } | null>(null);
+  const editStateRef = useRef(editState);
+
   useEffect(() => {
     viewportRef.current = viewport;
     stateRef.current = state;
     placementTypeRef.current = placementType;
     wiringStateRef.current = wiringState;
     activeSnapRef.current = activeSnap;
-  }, [viewport, state, placementType, wiringState, activeSnap]);
+    editStateRef.current = editState;
+  }, [viewport, state, placementType, wiringState, activeSnap, editState]);
+
+  const commitEdit = useCallback(() => {
+    if (!editState) return;
+    if (editState.field === 'tag') {
+      if (onUpdateTag && editState.id) onUpdateTag(editState.id, editState.value);
+    } else if (editState.field === 'address') {
+      if (onUpdateAddress && editState.id) onUpdateAddress(editState.id, editState.value);
+    } else if (editState.field === 'rung') {
+      if (onRungAction && editState.id !== null) {
+        onRungAction(Number(editState.id), 'edit-comment', editState.value);
+      }
+    }
+    setEditState(null);
+  }, [editState, onUpdateTag, onUpdateAddress, onRungAction]);
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      commitEdit();
+    } else if (e.key === 'Escape') {
+      setEditState(null);
+    }
+    e.stopPropagation();
+  };
 
   // Performance: Memoize nodes grouped by rung
   const nodesByRung = React.useMemo(() => {
@@ -507,9 +568,12 @@ export function LadderCanvas({
        else if (node.type === 'math-mul') label = 'MUL';
        else if (node.type === 'math-div') label = 'DIV';
        else if (node.type === 'math-mov') label = 'MOV';
+       else if (node.type === 'math-abs') label = 'ABS';
+       else if (node.type === 'math-sqrt') label = 'SQR';
        else if (node.type === 'math-sin') label = 'SIN';
        else if (node.type === 'math-cos') label = 'COS';
        else if (node.type === 'math-tan') label = 'TAN';
+       else if (node.type === 'math-mod') label = 'MOD';
        else if (node.type === 'pid-controller') label = 'PID';
        else if (node.type === 'scale-param') label = 'SCP';
        else if (node.type === 'limit-test') label = 'LIM';
@@ -538,13 +602,13 @@ export function LadderCanvas({
                   PRE:
                 </text>
                 <text x={bX + bW - 8} y={bY + 18} textAnchor="end" fontSize={6} fill="#f1f5f9" className="font-mono font-bold">
-                  {node.params?.preset || 0}
+                  {node.params?.preset || 0}{isTimer ? (node.params?.timeBase === 'ms' ? 'ms' : 's') : ''}
                 </text>
                 <text x={bX + 8} y={bY + 28} textAnchor="start" fontSize={6} fill="currentColor" opacity={0.6} className="font-mono">
                   ACC:
                 </text>
                 <text x={bX + bW - 8} y={bY + 28} textAnchor="end" fontSize={6} fill="#f1f5f9" className={clsx("font-mono font-bold", dnVal && "text-emerald-400 drop-shadow-[0_0_4px_#10b981]")}>
-                  {isTimer ? (Number(accum)/1000).toFixed(1) : accum}
+                  {isTimer ? (node.params?.timeBase === 'ms' ? accum : (Number(accum)/1000).toFixed(1)) : accum}
                 </text>
                 <rect x={bX + bW - 10} y={bY + 2} width={8} height={8} rx={1} fill={dnVal ? "#10b981" : "#1e293b"} stroke={dnVal ? "#059669" : "#334155"} strokeWidth={0.8} />
                 <text x={bX + bW - 13} y={bY + 8} textAnchor="end" fontSize={5} fill={dnVal ? "#10b981" : "#475569"} fontWeight="bold">DN</text>
@@ -741,6 +805,14 @@ export function LadderCanvas({
     }
   };
 
+  const screenToWorld = useCallback((clientX: number, clientY: number) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    const rawX = clientX - rect.left - viewport.x;
+    const rawY = clientY - rect.top - viewport.y;
+    return { x: rawX / viewport.zoom, y: rawY / viewport.zoom };
+  }, [viewport]);
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -797,6 +869,48 @@ export function LadderCanvas({
     }
   };
 
+  // Prevent backspace from navigating back while editing
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (editStateRef.current) {
+        e.stopPropagation();
+      }
+
+      // Don't trigger if typing in an input
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement ||
+        activeEl?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Tinkercad color shortcuts for selected wire
+      if (/^[0-9]$/.test(e.key) && selectedId && onUpdateWire) {
+        // Check if selectedId is a wire
+        const isWire = state.wires.some(w => w.id === selectedId);
+        if (isWire) {
+          const colorMap: Record<string, string> = {
+            '1': '#6366f1', // Default
+            '2': '#ff3b30', // Red
+            '3': '#4cd964', // Green
+            '4': '#007aff', // Blue
+            '5': '#ffcc00', // Yellow
+            '6': '#5ac8fa', // Cyan
+            '7': '#ff9500', // Orange
+            '8': '#af52de', // Purple
+            '9': '#555555', // Steel
+            '0': '#000000'  // Black
+          };
+          onUpdateWire(selectedId, { color: colorMap[e.key] });
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
+  }, [selectedId, state.wires, onUpdateWire]);
+
   return (
     <div 
       ref={containerRef}
@@ -825,6 +939,9 @@ export function LadderCanvas({
           height={20000} 
           fill="transparent" 
           className="pointer-events-auto cursor-grab"
+          onClick={() => {
+            if (editState) commitEdit();
+          }}
         />
         <defs>
           <filter id="energized" x="-20%" y="-20%" width="140%" height="140%">
@@ -849,27 +966,77 @@ export function LadderCanvas({
           
           return (
             <g key={i}>
-              {/* Rung Interaction Handle */}
-              <g 
-                className="rung-handle opacity-0 hover:opacity-100 transition-opacity cursor-pointer pointer-events-auto"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRungAction?.(i, 'delete');
-                }}
-              >
-                 <rect x={LEFT_RAIL_X - 40} y={yCenter - 10} width={24} height={20} rx={4} fill="#fee2e2" />
-                 <Trash2 x={LEFT_RAIL_X - 34} y={yCenter - 6} size={12} className="text-red-500" />
+              {/* Rung Interaction Handles */}
+              <g className="rung-handle opacity-0 hover:opacity-100 transition-opacity pointer-events-auto">
+                <g 
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRungAction?.(i, 'delete');
+                  }}
+                >
+                   <rect x={LEFT_RAIL_X - 40} y={yCenter - 10} width={24} height={20} rx={4} fill="#fee2e2" />
+                   <Trash2 x={LEFT_RAIL_X - 34} y={yCenter - 6} size={12} className="text-red-500" />
+                </g>
+                <g 
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRungAction?.(i, 'edit-comment');
+                  }}
+                >
+                   <rect x={LEFT_RAIL_X - 70} y={yCenter - 10} width={24} height={20} rx={4} fill="#fef3c7" />
+                   <Edit2 x={LEFT_RAIL_X - 64} y={yCenter - 6} size={12} className="text-amber-500" />
+                </g>
               </g>
 
-              {comment && (
-                <g transform={`translate(${LEFT_RAIL_X}, ${yBase})`}>
+              {comment ? (
+                <g 
+                  transform={`translate(${LEFT_RAIL_X}, ${yBase})`} 
+                  className="cursor-pointer pointer-events-auto" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditState({
+                      id: i.toString(),
+                      field: 'rung',
+                      value: comment,
+                      x: LEFT_RAIL_X + 4,
+                      y: yBase + 8,
+                      w: RIGHT_RAIL_X - LEFT_RAIL_X - 8
+                    });
+                  }}
+                >
                   <rect x={0} y={4} width={RIGHT_RAIL_X - LEFT_RAIL_X} height={24} fill="#fffbeb" stroke="#fef3c7" strokeWidth={0.5} />
-                  <text x={8} y={20} fontStyle="italic" className="text-[10px] fill-amber-700 font-bold uppercase tracking-tight">
-                    {comment}
-                  </text>
-                  <g className="cursor-pointer pointer-events-auto" onClick={() => onRungAction?.(i, 'edit-comment')}>
-                    <Edit2 x={RIGHT_RAIL_X - LEFT_RAIL_X - 20} y={8} size={10} className="text-amber-400" />
-                  </g>
+                  {editState?.field !== 'rung' || editState?.id !== i.toString() ? (
+                    <>
+                      <text x={8} y={20} fontStyle="italic" className="text-[10px] fill-amber-700 font-bold uppercase tracking-tight">
+                        {comment}
+                      </text>
+                    </>
+                  ) : null}
+                </g>
+              ) : (
+                <g 
+                  transform={`translate(${LEFT_RAIL_X}, ${yBase})`} 
+                  className="cursor-pointer pointer-events-auto opacity-0 hover:opacity-100 transition-opacity" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditState({
+                      id: i.toString(),
+                      field: 'rung',
+                      value: '',
+                      x: LEFT_RAIL_X + 4,
+                      y: yBase + 8,
+                      w: RIGHT_RAIL_X - LEFT_RAIL_X - 8
+                    });
+                  }}
+                >
+                  <rect x={0} y={4} width={RIGHT_RAIL_X - LEFT_RAIL_X} height={24} fill="transparent" stroke="#fef3c7" strokeDasharray="4 2" strokeWidth={1} />
+                  {editState?.field !== 'rung' || editState?.id !== i.toString() ? (
+                    <text x={8} y={20} fontStyle="italic" className="text-[10px] fill-amber-600 font-medium">
+                      + Add Rung Title...
+                    </text>
+                  ) : null}
                 </g>
               )}
               
@@ -909,7 +1076,6 @@ export function LadderCanvas({
         {/* Logic Continuity Background Lines (Memoized) */}
         {Object.entries(nodesByRung).map(([rungIdx, nodes]) => {
           const i = parseInt(rungIdx);
-          const rungY = i * RUNG_HEIGHT + (RUNG_HEIGHT / 2);
           const activeNodes = nodes as LadderNode[];
           if (activeNodes.length === 0) return null;
 
@@ -927,7 +1093,6 @@ export function LadderCanvas({
           
           return (
             <g key={`rung-wires-${i}`}>
-              {/* Rail to first node */}
               <line 
                 x1={LEFT_RAIL_X} 
                 y1={sortedNodes[0].y + sortedNodes[0].height / 2} 
@@ -939,7 +1104,6 @@ export function LadderCanvas({
                 )} 
               />
               
-              {/* Node to node */}
               {sortedNodes.map((node, idx) => {
                 const nextNode = sortedNodes[idx + 1];
                 if (nextNode) {
@@ -963,7 +1127,6 @@ export function LadderCanvas({
                 return null;
               })}
               
-              {/* Last node to rail */}
               <line 
                 x1={sortedNodes[sortedNodes.length - 1].x + sortedNodes[sortedNodes.length - 1].width} 
                 y1={sortedNodes[sortedNodes.length - 1].y + sortedNodes[sortedNodes.length - 1].height / 2} 
@@ -991,56 +1154,29 @@ export function LadderCanvas({
 
           const isConducting = state.simulation.isRunning && 
                               !!state.simulation.values[`__pout_${fromNode.id}`];
+          const isSelected = selectedId === wire.id;
 
           return (
-            <g key={wire.id} className="group pointer-events-auto">
-              <line 
-                x1={x1} 
-                y1={y1} 
-                x2={x2} 
-                y2={y2}
-                stroke="transparent"
-                strokeWidth={14}
-                className="cursor-pointer pointer-events-auto"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteWire?.(wire.id);
-                }}
-              />
-              <line 
-                x1={x1} 
-                y1={y1} 
-                x2={x2} 
-                y2={y2}
-                stroke={isConducting ? "rgba(16, 185, 129, 0.45)" : "rgba(255, 255, 255, 0.05)"}
-                strokeWidth={isConducting ? 4 : 2.5}
-                strokeLinecap="round"
-                className={clsx("transition-all duration-300 group-hover:stroke-red-500/30", isConducting && "energized-flow-line")}
-              />
-              <line 
-                x1={x1} 
-                y1={y1} 
-                x2={x2} 
-                y2={y2}
-                stroke={isConducting ? "#10b981" : "#52525b"}
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                className={clsx("transition-all duration-300 group-hover:stroke-red-500", isConducting && "energized-flow-line")}
-                filter={isConducting ? "url(#energized)" : undefined}
-              />
-              {/* Delete Handle */}
-              <g 
-                transform={`translate(${(x1+x2)/2 - 8}, ${(y1+y2)/2 - 8})`}
-                className="opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-150"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteWire?.(wire.id);
-                }}
-              >
-                <circle r={8} fill="#ef4444" cx={8} cy={8} className="hover:fill-red-500 transition-colors" />
-                <Trash2 x={3} y={3} size={10} className="text-white" />
-              </g>
-            </g>
+            <InteractiveSvgWire
+              key={wire.id}
+              id={wire.id}
+              start={{ x: x1, y: y1 }}
+              end={{ x: x2, y: y2 }}
+              waypoints={wire.waypoints}
+              isActive={isConducting}
+              isSelected={isSelected}
+              color={wire.color}
+              thickness={wire.thickness}
+              onUpdateWaypoints={(id, newWaypoints) => {
+                onUpdateWire?.(id, { waypoints: newWaypoints });
+              }}
+              onSelect={(e) => onSelect(wire.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                onDeleteWire?.(wire.id);
+              }}
+              getCanvasCoordinates={screenToWorld}
+            />
           );
         })}
 
@@ -1080,8 +1216,40 @@ export function LadderCanvas({
             onDoubleClick={onNodeDoubleClick}
             onTerminalClick={handleTerminalClick}
             renderSymbol={renderNodeSymbol}
+            editState={editState}
+            setEditState={setEditState}
+            onCommitEdit={commitEdit}
           />
         ))}
+
+        {/* Inline Edit Input rendering inside SVG space via foreignObject */}
+        {editState && (
+          <foreignObject
+            x={editState.x}
+            y={editState.y}
+            width={editState.w}
+            height={20}
+            className="pointer-events-auto overflow-visible"
+          >
+            <div className="flex w-full h-full">
+              <input
+                autoFocus
+                type="text"
+                value={editState.value}
+                onChange={(e) => setEditState({ ...editState, value: e.target.value })}
+                onKeyDown={handleInputKeyDown}
+                onBlur={commitEdit}
+                className={clsx(
+                  "w-full h-full px-1 py-0 m-0 outline-none border shadow-xl shadow-black/50 text-center font-bold tracking-wider",
+                  editState.field === 'rung' 
+                    ? "bg-[#fffbeb] border-amber-400 text-amber-700 text-[10px] text-left uppercase pl-2" 
+                    : "bg-[#1e293b] border-sky-500 text-white rounded text-[10px]"
+                )}
+                style={{ WebkitAppearance: 'none' }}
+              />
+            </div>
+          </foreignObject>
+        )}
       </svg>
     </div>
   );

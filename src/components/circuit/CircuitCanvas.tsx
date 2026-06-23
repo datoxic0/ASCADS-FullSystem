@@ -21,6 +21,7 @@ import {
 import { signalColor } from "@/lib/simulator";
 import { GateBody } from "./GateBody";
 import { cn } from "@/lib/utils";
+import { InteractiveSvgWire } from "../../lib/wiring/InteractiveSvgWire";
 
 const SNAP_RADIUS = 28; // world-space pixels for magnetic pin snap
 
@@ -40,6 +41,7 @@ type Props = {
   onUpdateGate: (id: string, partial: Partial<Gate>, commit?: boolean) => void;
   onMoveGates: (dx: number, dy: number, ids: string[], commit?: boolean) => void;
   onAddWire: (wire: Wire) => void;
+  onUpdateWire?: (id: string, partial: Partial<Wire>) => void;
   onRemoveWiresAtInput: (gateId: string, pinIndex: number) => void;
   onDeleteWire?: (id: string) => void;
   onCursorChange?: (p: { x: number; y: number } | null) => void;
@@ -117,6 +119,7 @@ export function CircuitCanvas({
   onUpdateGate,
   onMoveGates,
   onAddWire,
+  onUpdateWire,
   onRemoveWiresAtInput,
   onDeleteWire,
   onCursorChange,
@@ -516,6 +519,47 @@ export function CircuitCanvas({
     return () => el.removeEventListener("wheel", handler);
   }, [setView]);
 
+  /* ---------- Tinkercad-Style Color Shortcuts ---------- */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement ||
+        activeEl?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (/^[0-9]$/.test(e.key)) {
+        const colorMap: Record<string, string> = {
+          '1': '#6366f1', // Default
+          '2': '#ff3b30', // Red
+          '3': '#4cd964', // Green
+          '4': '#007aff', // Blue
+          '5': '#ffcc00', // Yellow
+          '6': '#5ac8fa', // Cyan
+          '7': '#ff9500', // Orange
+          '8': '#af52de', // Purple
+          '9': '#555555', // Steel
+          '0': '#000000'  // Black
+        };
+        const newColor = colorMap[e.key];
+
+        // Apply to selected wires
+        if (selection.wires.size > 0 && onUpdateWire) {
+          selection.wires.forEach((id) => {
+            onUpdateWire(id, { color: newColor });
+          });
+        }
+        // (If gates supported coloring, we could apply here too)
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selection, onUpdateWire]);
+
   /* ---------- Rendering ---------- */
 
   const renderedGates = useMemo(() => {
@@ -572,7 +616,7 @@ export function CircuitCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 overflow-hidden bg-background select-none"
+      className="relative flex-1 overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 select-none shadow-inner"
       onDrop={onDrop}
       onDragOver={onDragOver}
       data-testid="circuit-canvas"
@@ -606,6 +650,7 @@ export function CircuitCanvas({
               cy={(GRID * view.scale) / 2}
               r={Math.max(0.5, 0.7 * view.scale)}
               fill="hsl(var(--grid))"
+              className="drop-shadow-sm"
             />
           </pattern>
           <pattern
@@ -621,7 +666,7 @@ export function CircuitCanvas({
               cy={(GRID * 5 * view.scale) / 2}
               r={Math.max(1, 1.4 * view.scale)}
               fill="hsl(var(--grid))"
-              opacity={0.65}
+              opacity={0.8}
             />
           </pattern>
         </defs>
@@ -640,58 +685,23 @@ export function CircuitCanvas({
               const isSel = selection.wires.has(wire.id);
               const high = sig === 1;
               return (
-                <g key={wire.id}>
-                  {/* Wide transparent hit area */}
-                  <path
-                    d={wirePath(a.x, a.y, b.x, b.y)}
-                    fill="none"
-                    stroke="transparent"
-                    strokeWidth={10}
-                    style={{ cursor: "pointer" }}
-                    onMouseDown={(e) => onWireMouseDown(e, wire.id)}
-                    onContextMenu={(e) => onWireContextMenu(e, wire.id)}
-                  />
-                  {/* Visible wire */}
-                  <path
-                    d={wirePath(a.x, a.y, b.x, b.y)}
-                    fill="none"
-                    stroke={signalColor(sig)}
-                    strokeWidth={isSel ? 3 : 2.2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{
-                      filter: high ? "drop-shadow(0 0 3px hsl(var(--signal-high)/0.6))" : "none",
-                      pointerEvents: "none",
-                    }}
-                  />
-                  {/* Animated pulse on HIGH wires */}
-                  {high && (
-                    <path
-                      className="wire-pulse"
-                      d={wirePath(a.x, a.y, b.x, b.y)}
-                      fill="none"
-                      stroke="hsl(var(--signal-high))"
-                      strokeWidth={2.6}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeDasharray="6 14"
-                      strokeOpacity={0.85}
-                      pointerEvents="none"
-                    />
-                  )}
-                  {/* Selection highlight */}
-                  {isSel && (
-                    <path
-                      d={wirePath(a.x, a.y, b.x, b.y)}
-                      fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={5}
-                      strokeOpacity={0.18}
-                      strokeLinecap="round"
-                      style={{ pointerEvents: "none" }}
-                    />
-                  )}
-                </g>
+                <InteractiveSvgWire
+                  key={wire.id}
+                  id={wire.id}
+                  start={a}
+                  end={b}
+                  waypoints={wire.waypoints}
+                  isActive={high}
+                  isSelected={isSel}
+                  color={wire.color}
+                  thickness={wire.thickness}
+                  onUpdateWaypoints={(id, newWaypoints) => {
+                    onUpdateWire?.(id, { waypoints: newWaypoints });
+                  }}
+                  onSelect={(e) => onWireMouseDown(e as any, wire.id)}
+                  onContextMenu={(e) => onWireContextMenu(e as any, wire.id)}
+                  getCanvasCoordinates={screenToWorld}
+                />
               );
             })}
           </g>

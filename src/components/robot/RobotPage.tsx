@@ -42,7 +42,9 @@ import {
   Minimize2
 } from "lucide-react";
 
-export default function RobotPage() {
+import type { AnalogProject } from "@/lib/analog-types";
+
+export default function RobotPage({ project, onProjectChange }: { project?: AnalogProject, onProjectChange?: (p: AnalogProject) => void }) {
   // Active hardware setups
   const [activeBoard, setActiveBoard] = useState<BoardConfig>(BOARDS[0]);
   const [activeLanguage, setActiveLanguage] = useState<ProgramLanguageConfig>(
@@ -50,8 +52,20 @@ export default function RobotPage() {
   );
 
   // File explorer documents state
-  const [files, setFiles] = useState<WorkspaceFile[]>(DEFAULT_FILES[activeBoard.id] || []);
+  const [files, setFiles] = useState<WorkspaceFile[]>(() => {
+    if (project?.data?.files && Array.isArray(project.data.files)) {
+      return project.data.files;
+    }
+    return DEFAULT_FILES[activeBoard.id] || [];
+  });
   const [activeFileIndex, setActiveFileIndex] = useState<number>(0);
+  
+  // Persist files to project when changed
+  useEffect(() => {
+    if (project && onProjectChange) {
+      onProjectChange({ ...project, data: { ...project.data, files } });
+    }
+  }, [files, project?.id]);
 
   // Base mechanical design boundaries (parametric robot design!)
   const [robotDesign, setRobotDesign] = useState<RobotDesignConfig>({
@@ -255,13 +269,28 @@ export default function RobotPage() {
     ]);
   };
 
+  // Global spacebar listener for Run/Pause Simulation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+        return;
+      }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setSimulationState(prev => ({ ...prev, isRunning: !prev.isRunning }));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
 
 
   return (
-    <div className="h-full w-full flex-1 min-h-0 bg-[#0d0d0f] text-slate-350 flex flex-col antialiased overflow-hidden relative">
+    <div className="h-full w-full flex-1 min-h-0 bg-[#0d0d0f] text-emerald-800 dark:text-slate-350 flex flex-col antialiased overflow-hidden relative">
       
       {/* 1. High Density Workspace Header */}
-      <header className="h-12 bg-[#1a1a1e] border-b border-white/5 flex items-center justify-between px-4 shrink-0 shadow-md">
+      <header className="h-12 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center justify-between px-4 shrink-0 shadow-md">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">
             <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center shadow-lg">
@@ -275,30 +304,30 @@ export default function RobotPage() {
             <button
               onClick={() => setActiveMainTab("visualizer")}
               className={`px-3 py-1 rounded transition-all cursor-pointer ${
-                activeMainTab !== "digital-twin"
+                activeMainTab !== "digital-twin" && activeMainTab !== "env-builder" && activeMainTab !== "chassis-builder"
                   ? "bg-blue-600/20 border border-blue-500/40 text-blue-400 font-extrabold shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  : "text-emerald-700 dark:text-slate-400 hover:text-white"
               }`}
             >
-              🛠️ Physical CIM Workspace
+              🌐 Digital Twin CAD Console (2D)
             </button>
             <button
               onClick={() => setActiveMainTab("digital-twin")}
               className={`px-3 py-1 rounded flex items-center transition-all cursor-pointer ${
                 activeMainTab === "digital-twin"
                   ? "bg-teal-650/20 border border-teal-500/40 text-teal-300 font-extrabold shadow-md shadow-teal-500/10"
-                  : "text-slate-400 hover:text-white"
+                  : "text-emerald-700 dark:text-slate-400 hover:text-white"
               }`}
             >
               <Workflow className="w-3.5 h-3.5 mr-1 text-teal-400" />
-              🌐 Digital Twin CAD Console
+              🛠️ Physical CIM Workspace (3D)
             </button>
             <button
               onClick={() => setActiveMainTab("env-builder")}
               className={`px-3 py-1 rounded flex items-center transition-all cursor-pointer ${
                 activeMainTab === "env-builder"
                   ? "bg-purple-650/20 border border-purple-500/40 text-purple-300 font-extrabold shadow-md shadow-purple-500/10"
-                  : "text-slate-400 hover:text-white"
+                  : "text-emerald-700 dark:text-slate-400 hover:text-white"
               }`}
             >
               <Layers className="w-3.5 h-3.5 mr-1 text-purple-400" />
@@ -309,7 +338,7 @@ export default function RobotPage() {
               className={`px-3 py-1 rounded flex items-center transition-all cursor-pointer ${
                 activeMainTab === "chassis-builder"
                   ? "bg-pink-650/20 border border-pink-500/40 text-pink-300 font-extrabold shadow-md shadow-pink-500/10"
-                  : "text-slate-400 hover:text-white"
+                  : "text-emerald-700 dark:text-slate-400 hover:text-white"
               }`}
             >
               <Cpu className="w-3.5 h-3.5 mr-1 text-pink-400" />
@@ -320,66 +349,66 @@ export default function RobotPage() {
 
         {/* Global Connection/Microcontroller selectors */}
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 bg-black/40 border border-white/10 rounded px-2.5 py-1 text-xs">
+          <div className="flex items-center space-x-2 bg-black/40 border border-emerald-400 dark:border-white/10 rounded px-2.5 py-1 text-xs">
             <span className="text-[9px] text-slate-500 font-mono font-bold uppercase">TARGET:</span>
             <select
               value={activeBoard.id}
               onChange={(e) => handleBoardShift(e.target.value)}
-              className="bg-transparent border-none text-slate-300 focus:outline-none cursor-pointer font-semibold font-mono text-[11px] p-0"
+              className="bg-transparent border-none text-emerald-800 dark:text-slate-300 focus:outline-none cursor-pointer font-semibold font-mono text-[11px] p-0"
             >
               {BOARDS.map((b) => (
-                <option key={b.id} value={b.id} className="bg-[#1a1a1e] text-slate-300">
+                <option key={b.id} value={b.id} className="bg-[#1a1a1e] text-emerald-800 dark:text-slate-300">
                   {b.name}
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="hidden sm:flex items-center space-x-1.5 bg-black/40 border border-white/10 rounded px-2.5 py-1 text-[10px] font-mono text-slate-400">
+          <div className="hidden sm:flex items-center space-x-1.5 bg-black/40 border border-emerald-400 dark:border-white/10 rounded px-2.5 py-1 text-[10px] font-mono text-emerald-700 dark:text-slate-400">
             <div className="w-2 h-2 rounded-full bg-green-500 mr-1 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
             <span>{activeLanguage.name}</span>
           </div>
 
           <button
             onClick={() => setIsSettingsModalOpen(true)}
-            className="flex items-center justify-center p-1.5 bg-[#1e1e24] hover:bg-[#2e2e38] text-slate-350 hover:text-white border border-white/10 rounded transition-all cursor-pointer"
+            className="flex items-center justify-center p-1.5 bg-[#1e1e24] hover:bg-[#2e2e38] text-emerald-800 dark:text-slate-350 hover:text-white border border-emerald-400 dark:border-white/10 rounded transition-all cursor-pointer"
             title="Dedicated Settings & Preferences Panel"
           >
-            <Settings className="w-4 h-4 text-slate-400 hover:text-blue-400 animate-spin-slow" />
+            <Settings className="w-4 h-4 text-emerald-700 dark:text-slate-400 hover:text-blue-400 animate-spin-slow" />
           </button>
         </div>
       </header>
 
       {/* 2. Responsive Workspace View-Tab Switcher (Only visible below xl) */}
-      <div className="xl:hidden flex bg-[#141417]/90 backdrop-blur border-b border-white/5 p-1 px-3 shrink-0 overflow-x-auto scrollbar-none gap-1">
+      <div className="xl:hidden flex bg-[#141417]/90 backdrop-blur border-b border-emerald-300 dark:border-white/5 p-1 px-3 shrink-0 overflow-x-auto scrollbar-none gap-1">
         <button
           onClick={() => setActiveMainTab("visualizer")}
           className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
             activeMainTab === "visualizer"
               ? "bg-blue-600 text-white font-bold shadow-md"
-              : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+              : "text-emerald-700 dark:text-slate-400 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5"
           }`}
         >
-          <Workflow className="w-3.5 h-3.5" />
-          <span>1. Simulation</span>
+          <Compass className="w-3.5 h-3.5" />
+          <span>1. 2D Visualizer</span>
         </button>
         <button
           onClick={() => setActiveMainTab("ide")}
           className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
             activeMainTab === "ide"
-              ? "bg-blue-600 text-white font-bold shadow-md"
-              : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+              ? "bg-purple-650 text-white font-bold shadow-md"
+              : "text-emerald-700 dark:text-slate-400 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5"
           }`}
         >
           <FileCode className="w-3.5 h-3.5" />
-          <span>2. Code IDE</span>
+          <span>2. IDE Dashboard</span>
         </button>
         <button
           onClick={() => setActiveMainTab("ai")}
           className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
             activeMainTab === "ai"
-              ? "bg-blue-600 text-white font-bold shadow-md"
-              : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+              ? "bg-cyan-650 text-white font-bold shadow-md"
+              : "text-emerald-700 dark:text-slate-400 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5"
           }`}
         >
           <Cpu className="w-3.5 h-3.5" />
@@ -390,30 +419,30 @@ export default function RobotPage() {
           className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
             activeMainTab === "digital-twin"
               ? "bg-teal-650 text-white font-bold shadow-md"
-              : "text-slate-400 hover:text-slate-300 hover:bg-white/5"
+              : "text-emerald-700 dark:text-slate-400 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5"
           }`}
         >
           <Workflow className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
-          <span>4. Twin CAD</span>
+          <span>4. CIM Room (3D)</span>
         </button>
       </div>
 
       {/* 3. Main Interactive Dashboard Column Grid */}
       {activeMainTab === "digital-twin" ? (
         <div className="flex-1 p-3 flex flex-col min-h-0 overflow-hidden select-none">
-          <div className="flex-1 bg-[#101014] border border-white/5 rounded-xl overflow-y-auto shadow-2xl">
+          <div className="flex-1 bg-[#101014] border border-emerald-300 dark:border-white/5 rounded-xl overflow-y-auto shadow-2xl">
             <DigitalTwinStudio robotDesign={robotDesign} setRobotDesign={setRobotDesign} joints={joints} />
           </div>
         </div>
       ) : activeMainTab === "env-builder" ? (
         <div className="flex-1 p-3 flex flex-col min-h-0 overflow-hidden select-none">
-          <div className="flex-1 bg-[#101014] border border-white/5 rounded-xl overflow-y-auto shadow-2xl">
+          <div className="flex-1 bg-[#101014] border border-emerald-300 dark:border-white/5 rounded-xl overflow-y-auto shadow-2xl">
             <EnvironmentBuilder robotDesign={robotDesign} setRobotDesign={setRobotDesign} objects={envObjects} setObjects={setEnvObjects} />
           </div>
         </div>
       ) : activeMainTab === "chassis-builder" ? (
         <div className="flex-1 p-3 flex flex-col min-h-0 overflow-hidden select-none">
-          <div className="flex-1 bg-[#101014] border border-white/5 rounded-xl overflow-y-auto shadow-2xl">
+          <div className="flex-1 bg-[#101014] border border-emerald-300 dark:border-white/5 rounded-xl overflow-y-auto shadow-2xl">
             <RobotChassisBuilder robotDesign={robotDesign} setRobotDesign={setRobotDesign} />
           </div>
         </div>
@@ -422,24 +451,24 @@ export default function RobotPage() {
           className="w-full flex-1 overflow-hidden relative bg-[#0a0a0c] select-none flex min-h-0"
         >
           {/* Action Menu / Taskbar for closed windows (Activity Bar style) */}
-          <div className="w-12 h-full bg-[#141417] border-r border-white/5 flex flex-col items-center py-4 gap-4 shrink-0 z-10 shadow-lg">
+          <div className="w-12 h-full bg-[#141417] border-r border-emerald-300 dark:border-white/5 flex flex-col items-center py-4 gap-4 shrink-0 z-10 shadow-lg">
             <button 
               onClick={() => toggleWindow('visualizer')} 
-              className={`p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer ${windows.visualizer.isOpen ? 'bg-blue-600/20 text-blue-400 border border-blue-500/50' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+              className={`p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer ${windows.visualizer.isOpen ? 'bg-blue-600/20 text-blue-400 border border-blue-500/50' : 'text-slate-500 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5'}`}
               title="Toggle Visualizer"
             >
               <Workflow className="w-5 h-5"/>
             </button>
             <button 
               onClick={() => toggleWindow('ide')} 
-              className={`p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer ${windows.ide.isOpen ? 'bg-purple-600/20 text-purple-400 border border-purple-500/50' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+              className={`p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer ${windows.ide.isOpen ? 'bg-purple-600/20 text-purple-400 border border-purple-500/50' : 'text-slate-500 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5'}`}
               title="Toggle IDE"
             >
               <FileCode className="w-5 h-5"/>
             </button>
             <button 
               onClick={() => toggleWindow('ai')} 
-              className={`p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer ${windows.ai.isOpen ? 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/50' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+              className={`p-2 rounded-lg transition-all flex items-center justify-center cursor-pointer ${windows.ai.isOpen ? 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/50' : 'text-slate-500 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5'}`}
               title="Toggle AI Copilot"
             >
               <Cpu className="w-5 h-5"/>
@@ -457,12 +486,25 @@ export default function RobotPage() {
                 {windows.visualizer.isOpen && (
                   <>
                     <ResizablePanel minSize={20} className="relative bg-[#101014] flex flex-col">
-                      <div className="h-8 bg-[#1a1a1e] border-b border-white/5 flex items-center px-3 justify-between shrink-0">
+                      <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
                         <div className="flex items-center space-x-2 text-blue-400">
                           <Workflow className="w-3.5 h-3.5" />
                           <span className="font-mono text-[10px] font-bold tracking-wider">WORKSPACE SIMULATOR</span>
                         </div>
-                        <button onClick={() => toggleWindow('visualizer')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
+                        <div className="flex items-center gap-3">
+                          <button 
+                            onClick={() => setSimulationState(prev => ({ ...prev, isRunning: !prev.isRunning }))}
+                            className={`flex items-center justify-center w-5 h-5 rounded transition-all border ${
+                              simulationState.isRunning 
+                                ? 'bg-red-900/40 text-red-400 border-red-500/30 hover:bg-red-800/60' 
+                                : 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/40'
+                            }`}
+                            title={simulationState.isRunning ? "Stop Simulation" : "Run Simulation"}
+                          >
+                            {simulationState.isRunning ? <div className="w-2 h-2 bg-red-400 rounded-sm" /> : <Play size={10} className="ml-0.5" />}
+                          </button>
+                          <button onClick={() => toggleWindow('visualizer')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
+                        </div>
                       </div>
                       <div className="flex-1 min-h-0 relative">
                         <CimWorkspaceVisualizer
@@ -501,7 +543,7 @@ export default function RobotPage() {
                 {windows.ide.isOpen && (
                   <>
                     <ResizablePanel minSize={20} className="relative bg-[#0d0d11] flex flex-col">
-                      <div className="h-8 bg-[#1a1a1e] border-b border-white/5 flex items-center px-3 justify-between shrink-0">
+                      <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
                         <div className="flex items-center space-x-2 text-purple-400">
                           <Code2 className="w-3.5 h-3.5" />
                           <span className="font-mono text-[10px] font-bold tracking-wider">CODE IDE</span>
@@ -544,7 +586,7 @@ export default function RobotPage() {
 
                 {windows.ai.isOpen && (
                   <ResizablePanel minSize={20} className="relative bg-[#101014] flex flex-col">
-                    <div className="h-8 bg-[#1a1a1e] border-b border-white/5 flex items-center px-3 justify-between shrink-0">
+                    <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
                         <div className="flex items-center space-x-2 text-cyan-400">
                           <Cpu className="w-3.5 h-3.5" />
                           <span className="font-mono text-[10px] font-bold tracking-wider">AI COPILOT</span>
@@ -587,7 +629,7 @@ export default function RobotPage() {
       )}
 
       {/* 3. Mechanical Robot DESIGN Studio Panel */}
-      <footer className="bg-[#141417] border-t border-white/5 px-4 py-2 shrink-0">
+      <footer className="bg-[#141417] border-t border-emerald-300 dark:border-white/5 px-4 py-2 shrink-0">
         <div id="mechanical-design-studio" className="w-full flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Sliders className="w-3.5 h-3.5 text-purple-405" />
@@ -616,13 +658,13 @@ export default function RobotPage() {
         >
           {/* Exact same Robot Design and Configuration layout inside the Modal with spacious styling! */}
           <div className="space-y-4 p-4 font-mono select-none bg-[#0e0e11] text-slate-100 min-h-full">
-            <div className="flex space-x-2 bg-black/40 p-1.5 rounded-lg border border-white/5 select-none w-fit pb-1.5 mb-3">
+            <div className="flex space-x-2 bg-black/40 p-1.5 rounded-lg border border-emerald-300 dark:border-white/5 select-none w-fit pb-1.5 mb-3">
               <button
                 onClick={() => setSelectedDesignTab("robot-designer")}
                 className={`flex items-center space-x-1.5 px-4 py-1.5 font-mono text-[10px] uppercase rounded-md transition-all cursor-pointer ${
                   selectedDesignTab === "robot-designer"
                     ? "bg-purple-650 text-white font-bold shadow-md shadow-purple-500/10"
-                    : "text-slate-400 hover:text-white"
+                    : "text-emerald-700 dark:text-slate-400 hover:text-white"
                 }`}
               >
                 <Cpu className="w-3.5 h-3.5 text-purple-400" />
@@ -634,7 +676,7 @@ export default function RobotPage() {
                 className={`flex items-center space-x-1.5 px-4 py-1.5 font-mono text-[10px] uppercase rounded-md transition-all cursor-pointer ${
                   selectedDesignTab === "workspace-config"
                     ? "bg-purple-650 text-white font-bold shadow-md shadow-purple-500/10"
-                    : "text-slate-400 hover:text-white"
+                    : "text-emerald-700 dark:text-slate-400 hover:text-white"
                 }`}
               >
                 <Settings className="w-3.5 h-3.5 text-purple-400" />
@@ -646,7 +688,7 @@ export default function RobotPage() {
                 className={`flex items-center space-x-1.5 px-4 py-1.5 font-mono text-[10px] uppercase rounded-md transition-all cursor-pointer ${
                   selectedDesignTab === "vision-sandbox"
                     ? "bg-purple-650 text-white font-bold shadow-md shadow-purple-500/10"
-                    : "text-slate-400 hover:text-white"
+                    : "text-emerald-700 dark:text-slate-400 hover:text-white"
                 }`}
               >
                 <Compass className="w-3.5 h-3.5 text-purple-400" />
@@ -658,7 +700,7 @@ export default function RobotPage() {
                 className={`flex items-center space-x-1.5 px-4 py-1.5 font-mono text-[10px] uppercase rounded-md transition-all cursor-pointer ${
                   selectedDesignTab === "system-status"
                     ? "bg-purple-650 text-white font-bold shadow-md shadow-purple-500/10"
-                    : "text-slate-400 hover:text-white"
+                    : "text-emerald-700 dark:text-slate-400 hover:text-white"
                 }`}
               >
                 <Activity className="w-3.5 h-3.5 text-purple-400" />
@@ -670,7 +712,7 @@ export default function RobotPage() {
             {selectedDesignTab === "robot-designer" && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in duration-200">
                 {/* Sector Preset & Kinematics Selector */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 space-y-4 shadow-lg flex flex-col justify-between">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 space-y-4 shadow-lg flex flex-col justify-between">
                   <div className="space-y-3.5">
                     <div>
                       <div className="text-[10px] font-mono text-purple-300 font-extrabold uppercase tracking-wider mb-2">
@@ -695,7 +737,7 @@ export default function RobotPage() {
                             className={`px-1.5 py-2.5 rounded-lg border text-center transition-all cursor-pointer ${
                               (robotDesign.category || "industrial") === cat.id
                                 ? "bg-purple-650/20 border-purple-500 text-purple-300 font-bold shadow-md shadow-purple-500/10"
-                                : "bg-[#0d0d0f]/60 border-white/5 text-slate-400 hover:bg-[#1a1a24]"
+                                : "bg-[#0d0d0f]/60 border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:bg-[#1a1a24]"
                             }`}
                           >
                             <div className="text-[10px] font-extrabold tracking-wide">{cat.label}</div>
@@ -705,7 +747,7 @@ export default function RobotPage() {
                       </div>
                     </div>
 
-                    <div className="border-t border-white/5 pt-3">
+                    <div className="border-t border-emerald-300 dark:border-white/5 pt-3">
                       <div className="text-[10px] font-mono text-purple-300 font-extrabold uppercase tracking-wider mb-2">
                         2. Select Kinematics Class
                       </div>
@@ -721,7 +763,7 @@ export default function RobotPage() {
                             className={`w-full text-left px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
                               robotType === type.id
                                 ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                                : "bg-[#0d0d0f] border-white/5 text-slate-400 hover:bg-[#1c1c24]"
+                                : "bg-[#0d0d0f] border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:bg-[#1c1c24]"
                             }`}
                           >
                             <div className="text-[10px] font-mono font-bold leading-none">{type.name}</div>
@@ -731,21 +773,21 @@ export default function RobotPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-[7.5px] text-slate-550 font-mono uppercase bg-black/30 p-1.5 border border-white/5 rounded text-center">
+                  <div className="text-[7.5px] text-slate-550 font-mono uppercase bg-black/30 p-1.5 border border-emerald-300 dark:border-white/5 rounded text-center">
                     Sector: {(robotDesign.category || "industrial").toUpperCase()}
                   </div>
                 </div>
 
                 {/* Physical link scales */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
-                  <div className="text-[10px] font-mono text-purple-300 font-extrabold uppercase tracking-wider flex justify-between pb-1 border-b border-white/5">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
+                  <div className="text-[10px] font-mono text-purple-300 font-extrabold uppercase tracking-wider flex justify-between pb-1 border-b border-emerald-300 dark:border-white/5">
                     <span>Joint Link Lengths</span>
                     <span className="text-purple-400 font-bold">CAD Scales</span>
                   </div>
                   
                   <div className="space-y-2.5">
                     <div className="flex justify-between text-[10px] font-mono animate-fade-in">
-                      <span className="text-slate-400">Shoulder J1 Length:</span>
+                      <span className="text-emerald-700 dark:text-slate-400">Shoulder J1 Length:</span>
                       <span className="text-purple-300 font-bold">{robotDesign.shoulderLength} mm</span>
                     </div>
                     <input
@@ -760,7 +802,7 @@ export default function RobotPage() {
 
                   <div className="space-y-2.5">
                     <div className="flex justify-between text-[10px] font-mono font-bold">
-                      <span className="text-slate-400">Elbow J2 Length:</span>
+                      <span className="text-emerald-700 dark:text-slate-400">Elbow J2 Length:</span>
                       <span className="text-purple-300 font-bold">{robotDesign.elbowLength} mm</span>
                     </div>
                     <input
@@ -775,7 +817,7 @@ export default function RobotPage() {
 
                   <div className="space-y-2.5">
                     <div className="flex justify-between text-[10px] font-mono font-bold">
-                      <span className="text-slate-400">Wrist J3 Length:</span>
+                      <span className="text-emerald-700 dark:text-slate-400">Wrist J3 Length:</span>
                       <span className="text-purple-300 font-bold">{robotDesign.wristLength} mm</span>
                     </div>
                     <input
@@ -790,8 +832,8 @@ export default function RobotPage() {
                 </div>
 
                 {/* End Effectors list */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
-                  <div className="text-[10px] font-mono text-purple-300 font-extrabold uppercase tracking-wider pb-1 border-b border-white/5">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
+                  <div className="text-[10px] font-mono text-purple-300 font-extrabold uppercase tracking-wider pb-1 border-b border-emerald-300 dark:border-white/5">
                     End Effector Head Tool
                   </div>
                   <div className="grid grid-cols-1 gap-2 pt-1.5">
@@ -805,7 +847,7 @@ export default function RobotPage() {
                         className={`flex items-center px-3 py-2 border rounded-lg text-[10px] font-mono cursor-pointer transition-colors ${
                           robotDesign.endEffectorType === tool.id 
                             ? "bg-purple-500/20 border-purple-500 text-purple-300 font-bold" 
-                            : "bg-[#141417]/40 border-white/5 text-slate-400 hover:text-white"
+                            : "bg-[#141417]/40 border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:text-white"
                         }`}
                       >
                         <input
@@ -823,9 +865,9 @@ export default function RobotPage() {
                 </div>
 
                 {/* Advanced Propulsion & Electronics Diagnostics */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 flex flex-col justify-between shadow-lg">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 flex flex-col justify-between shadow-lg">
                   <div className="space-y-3">
-                    <div className="flex justify-between text-[10px] font-mono font-bold border-b border-white/5 pb-1">
+                    <div className="flex justify-between text-[10px] font-mono font-bold border-b border-emerald-300 dark:border-white/5 pb-1">
                       <span>3. Propulsion & Electronics</span>
                       <span className="text-teal-400 font-bold uppercase">{robotDesign.chassisType || "fixed_base"}</span>
                     </div>
@@ -844,7 +886,7 @@ export default function RobotPage() {
                             className={`py-1 text-[8.5px] font-mono border rounded transition-all cursor-pointer ${
                               (robotDesign.chassisType || "fixed_base") === type.id
                                 ? "bg-teal-950/30 border-teal-500 text-teal-300 font-bold"
-                                : "bg-black/40 border-white/5 text-slate-400 hover:bg-[#1a1a24]"
+                                : "bg-black/40 border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:bg-[#1a1a24]"
                             }`}
                           >
                             {type.label}
@@ -885,12 +927,12 @@ export default function RobotPage() {
                       />
                     </div>
 
-                    <div className="border-t border-white/5 pt-2 space-y-1">
+                    <div className="border-t border-emerald-300 dark:border-white/5 pt-2 space-y-1">
                       <div className="text-[8px] font-mono uppercase text-slate-500">Active Sensor Node</div>
                       <select
                         value={robotDesign.visionSensorType || "lidar_2d"}
                         onChange={(e) => setRobotDesign(prev => ({ ...prev, visionSensorType: e.target.value as any }))}
-                        className="w-full bg-[#0d0d0f] border border-white/5 text-slate-350 rounded p-1 text-[9px] font-mono focus:border-purple-500"
+                        className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-350 rounded p-1 text-[9px] font-mono focus:border-purple-500"
                       >
                         <option value="lidar_2d">LIDAR 2D Scanner</option>
                         <option value="depth_camera_3d">Depth Camera 3D</option>
@@ -899,9 +941,9 @@ export default function RobotPage() {
                       </select>
                     </div>
 
-                    <div className="space-y-1 border-t border-white/5 pt-2">
+                    <div className="space-y-1 border-t border-emerald-300 dark:border-white/5 pt-2">
                       <div className="flex justify-between text-[9px] font-mono font-bold">
-                        <span className="text-slate-400">Payload Weight:</span>
+                        <span className="text-emerald-700 dark:text-slate-400">Payload Weight:</span>
                         <span className={robotDesign.payloadWeight > 3.5 ? "text-rose-400 font-bold animate-pulse" : "text-purple-300 font-semibold"}>
                           {robotDesign.payloadWeight} kg
                         </span>
@@ -917,7 +959,7 @@ export default function RobotPage() {
                       />
                     </div>
                   </div>
-                  <div className="text-[8px] font-mono text-slate-500 leading-none pt-2.5 border-t border-white/5 mt-3 text-center uppercase">
+                  <div className="text-[8px] font-mono text-slate-500 leading-none pt-2.5 border-t border-emerald-300 dark:border-white/5 mt-3 text-center uppercase">
                     Kinematic Resolver: V2.4-DH
                   </div>
                 </div>
@@ -927,13 +969,13 @@ export default function RobotPage() {
             {selectedDesignTab === "workspace-config" && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in duration-200">
                 {/* Conveyor factors */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
                   <div className="text-[10px] font-mono text-purple-300 font-bold uppercase tracking-wider">
                     Conveyor Belt Speed
                   </div>
                   <div className="space-y-3 pt-1">
                     <div className="flex justify-between text-[10px] font-mono">
-                      <span className="text-slate-400">Linear Feed Rate:</span>
+                      <span className="text-emerald-700 dark:text-slate-400">Linear Feed Rate:</span>
                       <span className="text-purple-300 font-semibold">{conveyorSpeed * 10} mm/s</span>
                     </div>
                     <input
@@ -952,13 +994,13 @@ export default function RobotPage() {
                 </div>
 
                 {/* Security Shield active obstacle barrier height */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
                   <div className="text-[10px] font-mono text-purple-300 font-bold uppercase tracking-wider">
                     Hazard Safety Shield (Obstacle)
                   </div>
                   <div className="space-y-3 pt-1">
                     <div className="flex justify-between text-[10px] font-mono">
-                      <span className="text-slate-400">Containment Wall Height:</span>
+                      <span className="text-emerald-700 dark:text-slate-400">Containment Wall Height:</span>
                       <span className={obstacleHeight > 0 ? "text-amber-400 font-bold" : "text-slate-500"}>
                         {obstacleHeight > 0 ? `${obstacleHeight} pixels` : "DEACTIVATED"}
                       </span>
@@ -979,13 +1021,13 @@ export default function RobotPage() {
                 </div>
 
                 {/* Dynamic sensor location */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 space-y-3 shadow-lg">
                   <div className="text-[10px] font-mono text-purple-300 font-bold uppercase tracking-wider">
                     Photoelectric Laser Offset
                   </div>
                   <div className="space-y-3 pt-1">
                     <div className="flex justify-between text-[10px] font-mono font-bold">
-                      <span className="text-slate-400">IRSENS_01 Coord:</span>
+                      <span className="text-emerald-700 dark:text-slate-400">IRSENS_01 Coord:</span>
                       <span className="text-purple-300 font-semibold">{sensorPositionX} px from base</span>
                     </div>
                     <input
@@ -1003,13 +1045,13 @@ export default function RobotPage() {
                 </div>
 
                 {/* Seed generator flow control guidelines */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 flex flex-col justify-between shadow-lg">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 flex flex-col justify-between shadow-lg">
                   <div>
-                    <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-purple-400 flex items-center space-x-1.5 mb-1 bg-black/20 p-2 rounded border border-white/5">
+                    <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-purple-400 flex items-center space-x-1.5 mb-1 bg-black/20 p-2 rounded border border-emerald-300 dark:border-white/5">
                       <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
                       <span>Layout Guideline</span>
                     </span>
-                    <p className="text-[10px] font-mono text-slate-400 leading-normal">
+                    <p className="text-[10px] font-mono text-emerald-700 dark:text-slate-400 leading-normal">
                       Adjust speed first. Placing barriers enforces rigorous spatial path constraints on the robot arms! Excellent for collision avoidance validation scripts.
                     </p>
                   </div>
@@ -1033,35 +1075,35 @@ export default function RobotPage() {
             {selectedDesignTab === "system-status" && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in duration-200">
                 {/* Joint stress monitors */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 space-y-2 col-span-2 shadow-lg">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 space-y-2 col-span-2 shadow-lg">
                   <div className="text-[10px] font-mono text-purple-300 font-bold uppercase tracking-wider mb-2">
                     Live Joint Motor Stress Analysis
                   </div>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                     <div className="space-y-1">
-                      <span className="text-[8.5px] text-slate-400 font-mono">J1 Turntable Base:</span>
-                      <div className="flex justify-between font-mono text-[10px] text-slate-200">
+                      <span className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-mono">J1 Turntable Base:</span>
+                      <div className="flex justify-between font-mono text-[10px] text-emerald-900 dark:text-slate-200">
                         <span>NEMA 23 standard</span>
                         <span className="text-emerald-400 font-bold">OPERATIONAL</span>
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[8.5px] text-slate-400 font-mono">J2 Shoulder:</span>
-                      <div className="flex justify-between font-mono text-[10px] text-slate-200">
+                      <span className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-mono">J2 Shoulder:</span>
+                      <div className="flex justify-between font-mono text-[10px] text-emerald-900 dark:text-slate-200">
                         <span>Max temp 42°C</span>
                         <span className="text-emerald-400 font-bold">SYS_HEALTHY</span>
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[8.5px] text-slate-400 font-mono">J3 Forearm Elbow:</span>
-                      <div className="flex justify-between font-mono text-[10px] text-slate-200">
+                      <span className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-mono">J3 Forearm Elbow:</span>
+                      <div className="flex justify-between font-mono text-[10px] text-emerald-900 dark:text-slate-200">
                         <span>Slip back: 0.02%</span>
                         <span className="text-purple-400 font-bold">CALIBRATED</span>
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[8.5px] text-slate-400 font-mono">Wrist Solenoid:</span>
-                      <div className="flex justify-between font-mono text-[10px] text-slate-200">
+                      <span className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-mono">Wrist Solenoid:</span>
+                      <div className="flex justify-between font-mono text-[10px] text-emerald-900 dark:text-slate-200">
                         <span>Pneu vac scale: 1.0</span>
                         <span className="text-emerald-400 font-bold">READY</span>
                       </div>
@@ -1070,39 +1112,39 @@ export default function RobotPage() {
                 </div>
 
                 {/* Kinematic solvers stats */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 space-y-2.5 shadow-lg">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 space-y-2.5 shadow-lg">
                   <div className="text-[10px] font-mono text-purple-300 font-bold uppercase tracking-wider">
                     Inverse Kinematics (IK)
                   </div>
-                  <div className="text-[10px] font-mono text-slate-400 space-y-1.5">
+                  <div className="text-[10px] font-mono text-emerald-700 dark:text-slate-400 space-y-1.5">
                     <div className="flex justify-between">
                       <span>Active Solver:</span>
                       <span className="text-teal-400 font-semibold">CCD Loop Optimizer</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Accuracy range:</span>
-                      <span className="text-slate-200">±0.25mm bounds</span>
+                      <span className="text-emerald-900 dark:text-slate-200">±0.25mm bounds</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Solve Interval:</span>
-                      <span className="text-slate-200">&lt; 15 milliseconds</span>
+                      <span className="text-emerald-900 dark:text-slate-200">&lt; 15 milliseconds</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Technical indicators */}
-                <div className="bg-[#16161c] border border-white/5 rounded-xl p-4 flex flex-col justify-between shadow-lg">
+                <div className="bg-[#16161c] border border-emerald-300 dark:border-white/5 rounded-xl p-4 flex flex-col justify-between shadow-lg">
                   <div>
                     <div className="text-[10px] font-mono text-purple-300 font-bold uppercase tracking-wider mb-2">
                       System Clock Registers
                     </div>
-                    <div className="text-[10px] font-mono text-slate-400 leading-normal space-y-1">
+                    <div className="text-[10px] font-mono text-emerald-700 dark:text-slate-400 leading-normal space-y-1">
                       <div>RTC: 2026-06-02T12:16:04Z</div>
                       <div>PLL: LOCKED (400 MHz)</div>
                       <div>ADC Channels: 0x4B3A8</div>
                     </div>
                   </div>
-                  <div className="text-[9px] font-mono text-slate-600 uppercase pt-2.5 border-t border-white/5 mt-4">
+                  <div className="text-[9px] font-mono text-slate-600 uppercase pt-2.5 border-t border-emerald-300 dark:border-white/5 mt-4">
                     Firmware version check OK
                   </div>
                 </div>
@@ -1134,18 +1176,18 @@ export default function RobotPage() {
       {/* 5. Dedicated Modal for Settings & Preferences */}
       {isSettingsModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in select-none">
-          <div className="bg-[#141417] border border-white/10 rounded-lg w-full max-w-2xl h-auto max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+          <div className="bg-[#141417] border border-emerald-400 dark:border-white/10 rounded-lg w-full max-w-2xl h-auto max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-[#1a1a1e]">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-emerald-300 dark:border-white/5 bg-[#1a1a1e]">
               <div className="flex items-center space-x-2 text-blue-400">
                 <Settings className="w-4 h-4 text-blue-500 animate-spin-slow" />
-                <span className="font-mono text-xs font-black uppercase tracking-wider text-slate-200">
+                <span className="font-mono text-xs font-black uppercase tracking-wider text-emerald-900 dark:text-slate-200">
                   SYSTEM CALIBRATION_SETTINGS & PREFERENCES
                 </span>
               </div>
               <button
                 onClick={() => setIsSettingsModalOpen(false)}
-                className="p-1 hover:bg-white/5 text-slate-400 hover:text-white rounded transition-colors text-xs font-mono font-bold"
+                className="p-1 hover:bg-white/5 text-emerald-700 dark:text-slate-400 hover:text-white rounded transition-colors text-xs font-mono font-bold"
               >
                 [CLOSE]
               </button>
@@ -1156,12 +1198,12 @@ export default function RobotPage() {
               
               {/* Group A: Mechanical Kinematics */}
               <div className="space-y-4">
-                <div className="font-bold text-blue-400 border-b border-white/5 pb-1 uppercase text-[10px] tracking-wider">
+                <div className="font-bold text-blue-400 border-b border-emerald-300 dark:border-white/5 pb-1 uppercase text-[10px] tracking-wider">
                   Phase A: Robot Kinematics & Mechanics
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="flex justify-between font-bold text-slate-400">
+                    <label className="flex justify-between font-bold text-emerald-700 dark:text-slate-400">
                       <span>Shoulder segment link (J1):</span>
                       <span className="text-blue-400">{robotDesign.shoulderLength} mm</span>
                     </label>
@@ -1178,7 +1220,7 @@ export default function RobotPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="flex justify-between font-bold text-slate-400">
+                    <label className="flex justify-between font-bold text-emerald-700 dark:text-slate-400">
                       <span>Elbow segment link (J2):</span>
                       <span className="text-blue-400">{robotDesign.elbowLength} mm</span>
                     </label>
@@ -1195,7 +1237,7 @@ export default function RobotPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="flex justify-between font-bold text-slate-400">
+                    <label className="flex justify-between font-bold text-emerald-700 dark:text-slate-400">
                       <span>Wrist segment link (J3):</span>
                       <span className="text-blue-400">{robotDesign.wristLength} mm</span>
                     </label>
@@ -1212,7 +1254,7 @@ export default function RobotPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="flex justify-between font-bold text-slate-400">
+                    <label className="flex justify-between font-bold text-emerald-700 dark:text-slate-400">
                       <span>Payload Mass capacity:</span>
                       <span className="text-blue-400">{robotDesign.payloadWeight} kg</span>
                     </label>
@@ -1230,7 +1272,7 @@ export default function RobotPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <span className="block font-bold text-slate-400 uppercase">Interactive End-Effector Style Tool:</span>
+                  <span className="block font-bold text-emerald-700 dark:text-slate-400 uppercase">Interactive End-Effector Style Tool:</span>
                   <div className="flex gap-2">
                     {(["gripper", "suction", "welder"] as const).map((type) => (
                       <button
@@ -1239,7 +1281,7 @@ export default function RobotPage() {
                         className={`flex-1 py-1.5 rounded border text-[10px] font-bold uppercase transition-all ${
                           robotDesign.endEffectorType === type
                             ? "bg-blue-600 border-blue-500 text-white"
-                            : "bg-[#1e1e24] border-white/5 text-slate-400 hover:text-white"
+                            : "bg-[#1e1e24] border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:text-white"
                         }`}
                       >
                         {type}
@@ -1251,12 +1293,12 @@ export default function RobotPage() {
 
               {/* Group B: Factory Simulator Params */}
               <div className="space-y-4">
-                <div className="font-bold text-indigo-400 border-b border-white/5 pb-1 uppercase text-[10px] tracking-wider">
+                <div className="font-bold text-indigo-400 border-b border-emerald-300 dark:border-white/5 pb-1 uppercase text-[10px] tracking-wider">
                   Phase B: Factory Simulator & Color scanner configuration
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="flex justify-between font-bold text-slate-400">
+                    <label className="flex justify-between font-bold text-emerald-700 dark:text-slate-400">
                       <span>Conveyor horizontal speed:</span>
                       <span className="text-indigo-400">{conveyorSpeed}x scalar</span>
                     </label>
@@ -1273,7 +1315,7 @@ export default function RobotPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="flex justify-between font-bold text-slate-400">
+                    <label className="flex justify-between font-bold text-emerald-700 dark:text-slate-400">
                       <span>Color Scanner Location x-offset:</span>
                       <span className="text-indigo-400">{sensorPositionX} px</span>
                     </label>
@@ -1290,7 +1332,7 @@ export default function RobotPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="flex justify-between font-bold text-slate-400">
+                    <label className="flex justify-between font-bold text-emerald-700 dark:text-slate-400">
                       <span>Collision Obstacle Barrier Height:</span>
                       <span className="text-rose-400">{obstacleHeight} px</span>
                     </label>
@@ -1306,18 +1348,18 @@ export default function RobotPage() {
                     <span className="text-[9px] text-slate-600 block">Height ceiling obstacle to test path collisions (0 = bypassed).</span>
                   </div>
 
-                  <div className="space-y-2 bg-[#0c0c0e] p-2.5 rounded border border-white/5 flex flex-col justify-between">
-                    <span className="block font-bold text-slate-400 uppercase text-[9px] mb-1">Color spawning queue feed:</span>
+                  <div className="space-y-2 bg-[#0c0c0e] p-2.5 rounded border border-emerald-300 dark:border-white/5 flex flex-col justify-between">
+                    <span className="block font-bold text-emerald-700 dark:text-slate-400 uppercase text-[9px] mb-1">Color spawning queue feed:</span>
                     <select
                       value={feedMode}
                       onChange={(e: any) => setFeedMode(e.target.value)}
-                      className="bg-black/40 border border-white/10 rounded px-2 py-1 text-slate-300 w-full text-[10px]"
+                      className="bg-black/40 border border-emerald-400 dark:border-white/10 rounded px-2 py-1 text-emerald-800 dark:text-slate-300 w-full text-[10px]"
                     >
-                      <option value="random" className="bg-[#141417] text-slate-200">Random Spawns</option>
-                      <option value="red" className="bg-[#141417] text-slate-200">Always Red</option>
-                      <option value="green" className="bg-[#141417] text-slate-200">Always Green</option>
-                      <option value="blue" className="bg-[#141417] text-slate-200">Always Blue</option>
-                      <option value="yellow" className="bg-[#141417] text-slate-200">Always Yellow</option>
+                      <option value="random" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Random Spawns</option>
+                      <option value="red" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Always Red</option>
+                      <option value="green" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Always Green</option>
+                      <option value="blue" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Always Blue</option>
+                      <option value="yellow" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Always Yellow</option>
                     </select>
                   </div>
                 </div>
@@ -1325,36 +1367,36 @@ export default function RobotPage() {
 
               {/* Group C: Compiler and Virtual Settings */}
               <div className="space-y-4">
-                <div className="font-bold text-amber-500 border-b border-white/5 pb-1 uppercase text-[10px] tracking-wider">
+                <div className="font-bold text-amber-500 border-b border-emerald-300 dark:border-white/5 pb-1 uppercase text-[10px] tracking-wider">
                   Phase C: Interpreter Execution Core & Bypasses
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <span className="block font-bold text-slate-400 uppercase">Operational Mode Setup:</span>
+                    <span className="block font-bold text-emerald-700 dark:text-slate-400 uppercase">Operational Mode Setup:</span>
                     <div className="space-y-1">
-                      <label className="flex items-center space-x-2 text-slate-350 cursor-pointer">
+                      <label className="flex items-center space-x-2 text-emerald-800 dark:text-slate-350 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={simulationState.dryRunMode}
                           onChange={(e) => setSimulationState(prev => ({ ...prev, dryRunMode: e.target.checked }))}
-                          className="rounded border-white/10 bg-[#1e1e24] accent-amber-500"
+                          className="rounded border-emerald-400 dark:border-white/10 bg-[#1e1e24] accent-amber-500"
                         />
                         <span>Enable Dry-Run Bypass (Bypass Gripper Suction)</span>
                       </label>
-                      <label className="flex items-center space-x-2 text-slate-350 cursor-pointer">
+                      <label className="flex items-center space-x-2 text-emerald-800 dark:text-slate-350 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={simulationState.profilingEnabled}
                           onChange={(e) => setSimulationState(prev => ({ ...prev, profilingEnabled: e.target.checked }))}
-                          className="rounded border-white/10 bg-[#1e1e24] accent-amber-500"
+                          className="rounded border-emerald-400 dark:border-white/10 bg-[#1e1e24] accent-amber-500"
                         />
                         <span>Enable Microsecond Profiling Registers</span>
                       </label>
                     </div>
                   </div>
 
-                  <div className="space-y-2 bg-[#0c0c0e] p-2.5 rounded border border-white/5 text-[9.5px]">
-                    <div className="font-bold text-slate-400 mb-1 uppercase text-[8.5px]">Diagnostic Level Registers:</div>
+                  <div className="space-y-2 bg-[#0c0c0e] p-2.5 rounded border border-emerald-300 dark:border-white/5 text-[9.5px]">
+                    <div className="font-bold text-emerald-700 dark:text-slate-400 mb-1 uppercase text-[8.5px]">Diagnostic Level Registers:</div>
                     <div className="text-slate-500 leading-normal space-y-0.5">
                       <div>INTEGRATION LAYER: ACTIVE</div>
                       <div>PROFILING BUFFERS: ACTIVE</div>
@@ -1367,7 +1409,7 @@ export default function RobotPage() {
             </div>
 
             {/* Footer Summary Bar */}
-            <div className="px-5 py-3 border-t border-white/5 bg-[#141417] text-right">
+            <div className="px-5 py-3 border-t border-emerald-300 dark:border-white/5 bg-[#141417] text-right">
               <button
                 onClick={() => setIsSettingsModalOpen(false)}
                 className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase rounded text-[10px] transition-all cursor-pointer"

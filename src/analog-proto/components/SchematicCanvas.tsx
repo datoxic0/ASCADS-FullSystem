@@ -3,6 +3,7 @@ import { Stage, Layer, Line, Rect, Circle, Text, Group, Path } from 'react-konva
 import { COMPONENT_DEFINITIONS, GRID_SIZE } from '../constants';
 import { Component, Connection } from '../types';
 import { Zap, Activity, RefreshCcw } from 'lucide-react';
+import { InteractiveKonvaWire } from '../../lib/wiring/InteractiveKonvaWire';
 
 export interface SchematicCanvasRef {
   zoomIn: () => void;
@@ -14,7 +15,8 @@ interface SchematicCanvasProps {
   design: { components: Component[]; connections: Connection[] };
   onUpdateComponent: (id: string, updates: Partial<Component>) => void;
   onRemoveComponent: (id: string) => void;
-  onAddConnection: (from: string, fromPin: number, to: string, toPin: number) => void;
+  onAddConnection: (from: string, fromPin: number, to: string, toPin: number, routing?: 'HVH' | 'VHV') => void;
+  onUpdateConnection?: (id: string, updates: Partial<import('../types').Connection>) => void;
   onRemoveConnection: (id: string) => void;
   selectedTool: 'SELECT' | 'WIRE' | 'DELETE';
   selectedComponentId: string | null;
@@ -28,6 +30,7 @@ interface SchematicCanvasProps {
   simulationStates?: Record<string, any>;
   isSimulating?: boolean;
   tick?: number;
+  scopeHistory?: React.MutableRefObject<{ ch1: number[]; ch2: number[] }>;
 }
 
 const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, SchematicCanvasProps>(({
@@ -35,6 +38,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
   onUpdateComponent,
   onRemoveComponent,
   onAddConnection,
+  onUpdateConnection,
   onRemoveConnection,
   selectedTool,
   selectedComponentId,
@@ -46,14 +50,16 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
   activeConnectionIds = new Set(),
   simulationStates = {},
   isSimulating = false,
-  tick = 0
+  tick = 0,
+  scopeHistory
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [wiringState, setWiringState] = useState<{ fromId: string; fromPin: number; x: number; y: number } | null>(null);
+  const [wiringState, setWiringState] = useState<{ fromId: string; fromPin: number; x: number; y: number; routing: 'HVH' | 'VHV' } | null>(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [editingLabel, setEditingLabel] = useState<{ id: string, text: string, x: number, y: number } | null>(null);
 
   const zoomFit = useCallback(() => {
     if (design.components.length === 0 || dimensions.width === 0) return;
@@ -132,8 +138,31 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement as HTMLElement;
+      if (
+        activeEl instanceof HTMLInputElement || 
+        activeEl instanceof HTMLTextAreaElement || 
+        activeEl?.isContentEditable ||
+        activeEl?.tagName === 'INPUT' ||
+        activeEl?.tagName === 'TEXTAREA' ||
+        activeEl?.closest('.monaco-editor') !== null
+      ) {
+        return;
+      }
+      
+      if ((e.key === 'r' || e.key === 'R') && wiringState) {
+        setWiringState(prev => prev ? { ...prev, routing: prev.routing === 'HVH' ? 'VHV' : 'HVH' } : null);
+        return;
+      }
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedComponentId) onRemoveComponent(selectedComponentId);
+        if (selectedComponentId) {
+          if (design.connections.some(c => c.id === selectedComponentId)) {
+            onRemoveConnection(selectedComponentId);
+          } else {
+            onRemoveComponent(selectedComponentId);
+          }
+        }
       } else if (e.ctrlKey || e.metaKey) {
         if (e.key === 'z') {
           if (e.shiftKey) redo?.();
@@ -141,11 +170,37 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
         } else if (e.key === 'y') {
           redo?.();
         }
+      } else if (/^[0-9]$/.test(e.key) && selectedComponentId) {
+        // Tinkercad style color shortcuts
+        const colorMap: Record<string, string> = {
+          '1': '#6366f1', // Default
+          '2': '#ff3b30', // Red
+          '3': '#4cd964', // Green
+          '4': '#007aff', // Blue
+          '5': '#ffcc00', // Yellow
+          '6': '#5ac8fa', // Cyan
+          '7': '#ff9500', // Orange
+          '8': '#af52de', // Purple
+          '9': '#555555', // Steel
+          '0': '#000000'  // Black
+        };
+        const newColor = colorMap[e.key];
+        // Try updating component first
+        const comp = design.components.find(c => c.id === selectedComponentId);
+        if (comp) {
+          // If the component supports coloring, we can update it (not implemented fully for analog yet)
+        } else {
+          // Check if it's a connection
+          const conn = design.connections.find(c => c.id === selectedComponentId);
+          if (conn && onUpdateConnection) {
+            onUpdateConnection(selectedComponentId, { color: newColor });
+          }
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedComponentId, onRemoveComponent, undo, redo]);
+  }, [selectedComponentId, onRemoveComponent, undo, redo, design, onSelectComponent]);
 
   const lastComponentsCount = useRef(0);
 
@@ -215,7 +270,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
     });
   };
 
-  const calculateOrthogonalPoints = (start: { x: number; y: number }, end: { x: number; y: number }) => {
+  const calculateOrthogonalPoints = (start: { x: number; y: number }, end: { x: number; y: number }, preferredRouting?: 'HVH' | 'VHV') => {
     // If start and end are almost aligned, return 2 points
     if (Math.abs(start.x - end.x) < 2) return [start.x, start.y, start.x, end.y];
     if (Math.abs(start.y - end.y) < 2) return [start.x, start.y, end.x, start.y];
@@ -224,7 +279,9 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
     const dx = Math.abs(end.x - start.x);
     const dy = Math.abs(end.y - start.y);
 
-    if (dx > dy) {
+    const useHVH = preferredRouting ? preferredRouting === 'HVH' : dx > dy;
+
+    if (useHVH) {
       const midX = start.x + (end.x - start.x) / 2;
       return [start.x, start.y, midX, start.y, midX, end.y, end.x, end.y];
     } else {
@@ -246,13 +303,16 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       const comp = design.components.find(c => c.id === compId);
       if (!comp) return;
       const def = COMPONENT_DEFINITIONS[comp.type];
-      const pinPos = getRotatedPos(comp, def.pins[pinIdx]);
+      if (!def) return;
+      const pin = def.pins[pinIdx];
+      if (!pin) return;
+      const pinPos = getRotatedPos(comp, pin);
       
       if (!wiringState) {
-        setWiringState({ fromId: compId, fromPin: pinIdx, x: pinPos.x, y: pinPos.y });
+        setWiringState({ fromId: compId, fromPin: pinIdx, x: pinPos.x, y: pinPos.y, routing: 'HVH' });
       } else {
         if (wiringState.fromId !== compId) {
-          onAddConnection(wiringState.fromId, wiringState.fromPin, compId, pinIdx);
+          onAddConnection(wiringState.fromId, wiringState.fromPin, compId, pinIdx, wiringState.routing);
         }
         setWiringState(null);
       }
@@ -573,16 +633,18 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
                 <Line
                   points={(() => {
                     const pts = [];
-                    const time = tick * 0.1;
+                    const data = scopeHistory?.current?.ch1 || [];
                     for (let x = 0; x <= 40; x += 1) {
                       pts.push(5 + x);
-                      pts.push(17.5 + Math.sin(time + x * 0.25) * 9);
+                      const val = data[data.length - 41 + x] ?? 0;
+                      // map 0..5V to 25..10 Y coords
+                      pts.push(25 - (val * 3));
                     }
                     return pts;
                   })()}
                   stroke="#4ade80"
                   strokeWidth={2}
-                  tension={0.4}
+                  tension={0.2}
                   shadowBlur={5}
                   shadowColor="#4ade80"
                 />
@@ -590,16 +652,17 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
                 <Line
                   points={(() => {
                     const pts = [];
-                    const time = tick * 0.08;
+                    const data = scopeHistory?.current?.ch2 || [];
                     for (let x = 0; x <= 40; x += 1) {
                       pts.push(5 + x);
-                      pts.push(17.5 + Math.cos(time + x * 0.18) * 6);
+                      const val = data[data.length - 41 + x] ?? 0;
+                      pts.push(25 - (val * 3));
                     }
                     return pts;
                   })()}
                   stroke="#38bdf8"
                   strokeWidth={1.5}
-                  tension={0.4}
+                  tension={0.2}
                   opacity={0.8}
                   shadowBlur={3}
                   shadowColor="#38bdf8"
@@ -827,6 +890,20 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
           fontFamily="monospace"
           fill={color}
           fontStyle="bold"
+          onDblClick={(e) => {
+            e.cancelBubble = true;
+            const stage = e.target.getStage();
+            if (!stage) return;
+            const pos = e.target.getAbsolutePosition();
+            setEditingLabel({ id: comp.id, text: comp.label || def.name, x: pos.x, y: pos.y });
+          }}
+          onTap={(e) => {
+            e.cancelBubble = true;
+            const stage = e.target.getStage();
+            if (!stage) return;
+            const pos = e.target.getAbsolutePosition();
+            setEditingLabel({ id: comp.id, text: comp.label || def.name, x: pos.x, y: pos.y });
+          }}
         />
         {/* Render Pins */}
         {def.pins.map((pin, i) => {
@@ -856,6 +933,20 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
     );
   };
 
+  const handleUpdateConnectionPoints = useCallback((id: string, newPoints: number[]) => {
+    if (onUpdateConnection) {
+      onUpdateConnection(id, { points: newPoints });
+    } else {
+      const conn = design.connections.find(c => c.id === id);
+      if (conn) {
+        conn.points = newPoints;
+        const stage = (ref as any)?.current?.getStage?.();
+        if (stage) stage.draw();
+        onSelectComponent(selectedComponentId);
+      }
+    }
+  }, [design, onSelectComponent, selectedComponentId, onUpdateConnection]);
+
   const renderConnection = (conn: Connection) => {
     const fromComp = design.components.find(c => c.id === conn.from);
     const toComp = design.components.find(c => c.id === conn.to);
@@ -864,30 +955,38 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
     const fromDef = COMPONENT_DEFINITIONS[fromComp.type];
     const toDef = COMPONENT_DEFINITIONS[toComp.type];
     
-    const start = getRotatedPos(fromComp, fromDef.pins[conn.fromPin]);
-    const end = getRotatedPos(toComp, toDef.pins[conn.toPin]);
-    const isActive = activeConnectionIds.has(conn.id);
-    const wireColor = isActive ? '#fbbf24' : '#6366f1';
+    if (!fromDef || !toDef) return null;
+    const fromPin = fromDef.pins[conn.fromPin];
+    const toPin = toDef.pins[conn.toPin];
+    if (!fromPin || !toPin) return null;
 
-    const points = conn.points || calculateOrthogonalPoints(start, end);
+    const start = getRotatedPos(fromComp, fromPin);
+    const end = getRotatedPos(toComp, toPin);
+    const isActive = activeConnectionIds.has(conn.id);
+    const isSelected = selectedComponentId === conn.id;
 
     return (
-      <Group key={conn.id}>
-        <Line
-          points={points}
-          stroke={wireColor}
-          strokeWidth={isActive ? 3 : 2}
-          opacity={isActive ? 1 : 0.8}
-          lineJoin="round"
-          dash={isActive ? [6, 4] : undefined}
-          dashOffset={isActive ? -tick * 2 : 0}
-          shadowBlur={isActive ? 8 : 0}
-          shadowColor={wireColor}
-          onClick={() => selectedTool === 'DELETE' && onRemoveConnection(conn.id)}
-        />
-        <Circle x={start.x} y={start.y} radius={isActive ? 3 : 2} fill={wireColor} />
-        <Circle x={end.x} y={end.y} radius={isActive ? 3 : 2} fill={wireColor} />
-      </Group>
+      <InteractiveKonvaWire
+        key={conn.id}
+        id={conn.id}
+        start={start}
+        end={end}
+        points={conn.points}
+        isActive={isActive}
+        isSelected={isSelected}
+        isHovered={false}
+        color={conn.color}
+        thickness={conn.thickness}
+        routing={conn.routing}
+        onUpdatePoints={handleUpdateConnectionPoints}
+        onSelect={() => {
+          if (selectedTool === 'DELETE') {
+            onRemoveConnection(conn.id);
+          } else {
+            onSelectComponent(conn.id);
+          }
+        }}
+      />
     );
   };
 
@@ -932,6 +1031,32 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
              transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`
            }} 
       />
+
+      {editingLabel && (
+        <input
+          autoFocus
+          className="absolute z-50 bg-slate-900 border border-indigo-500 text-slate-200 text-[10px] font-mono px-1 py-0.5 outline-none rounded"
+          style={{ 
+            left: editingLabel.x, 
+            top: editingLabel.y - 14,
+            minWidth: '60px'
+          }}
+          value={editingLabel.text}
+          onChange={(e) => setEditingLabel(prev => prev ? { ...prev, text: e.target.value } : null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              onUpdateComponent(editingLabel.id, { label: editingLabel.text });
+              setEditingLabel(null);
+            } else if (e.key === 'Escape') {
+              setEditingLabel(null);
+            }
+          }}
+          onBlur={() => {
+            onUpdateComponent(editingLabel.id, { label: editingLabel.text });
+            setEditingLabel(null);
+          }}
+        />
+      )}
       
       <Stage
         width={dimensions.width}
@@ -984,10 +1109,11 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
 
           {wiringState && (
             <Line
-              points={calculateOrthogonalPoints(wiringState, {
-                x: snapToGrid(mousePos.x),
-                y: snapToGrid(mousePos.y)
-              })}
+              points={
+                mousePos.x !== 0 
+                  ? calculateOrthogonalPoints({ x: wiringState.x, y: wiringState.y }, mousePos, wiringState.routing)
+                  : [wiringState.x, wiringState.y, wiringState.x, wiringState.y]
+              }
               stroke="#6366f1"
               strokeWidth={2}
               dash={[4, 2]}

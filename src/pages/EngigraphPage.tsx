@@ -6,7 +6,7 @@ import { Database, Link2, Share2, Box, Square, Book } from "lucide-react";
 
 export default function EngigraphPage() {
   const [synced, setSynced] = useState(false);
-  const [mode, setMode] = useState<'3D' | '2D'>('3D');
+  const [mode, setMode] = useState<'3D' | '2D'>('2D');
   const [isDocsOpen, setIsDocsOpen] = useState(false);
 
   const handleSyncEcosystem = () => {

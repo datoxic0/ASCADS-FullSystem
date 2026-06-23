@@ -12,7 +12,7 @@ import MatrixStatus from '../analog-proto/components/MatrixStatus';
 import { SidebarTab } from '../analog-proto/types';
 import { audioEngine } from '../analog-proto/services/audioEngine';
 import { jsPDF } from 'jspdf';
-import { Cpu, Share2, Save, Menu, X, ChevronDown, FileText, Activity, Shield, Box, Zap, Globe, Github, Facebook, MessageSquare, Twitter, GitBranch, Braces, ChevronLeft } from 'lucide-react';
+import { Cpu, Share2, Save, Menu, X, ChevronDown, FileText, Activity, Shield, Box, Zap, Globe, Github, Facebook, MessageSquare, Twitter, GitBranch, Braces, ChevronLeft, Play, StopCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { AnalogProject } from '@/lib/analog-types';
 import type { Circuit } from '@/lib/types';
@@ -150,6 +150,20 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
     animId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animId);
   }, [isSimulating, design.components]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Spacebar toggles simulation globally
+      if (e.code === 'Space') {
+        const target = e.target as HTMLElement | null;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable) return;
+        e.preventDefault();
+        toggleSimulation();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleSimulation]);
 
   const handleExport = () => {
     if (stageRef.current) {
@@ -309,6 +323,63 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto lg:ml-0">
+             <button
+                onClick={toggleSimulation}
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg active:scale-95 border ${
+                  isSimulating 
+                    ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-600/30 shadow-emerald-500/20' 
+                    : 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40 hover:bg-indigo-600/30 shadow-indigo-500/20'
+                }`}
+                title={isSimulating ? "Stop Simulation (Space)" : "Run Simulation (Space)"}
+              >
+                {isSimulating ? <StopCircle size={16} /> : <Play size={16} />}
+                <span className="hidden sm:inline">{isSimulating ? 'Stop' : 'Run'}</span>
+              </button>
+
+            <button 
+              onClick={() => {
+                const circuit: Circuit = { gates: {}, wires: {} };
+                design.components.forEach(comp => {
+                   const kindMap: Record<string, any> = {
+                      'LOGIC_AND': 'AND', 'LOGIC_OR': 'OR', 'LOGIC_NOT': 'NOT',
+                      'NAND_GATE': 'NAND', 'NOR_GATE': 'NOR', 'XOR_GATE': 'XOR', 'XNOR_GATE': 'XNOR',
+                      'BATTERY': 'INPUT', 'SWITCH': 'INPUT', 'PUSH_BUTTON': 'BUTTON',
+                      'GROUND': 'OUTPUT', 'LED': 'OUTPUT', 'MULTIMETER': 'PROBE'
+                   };
+                   const kind = kindMap[comp.type] || 'BUFFER';
+                   circuit.gates[comp.id] = {
+                       id: comp.id,
+                       kind,
+                       x: comp.x,
+                       y: comp.y,
+                       inputs: 2,
+                       label: comp.label || comp.type
+                   };
+                });
+                design.connections.forEach(conn => {
+                   circuit.wires[conn.id] = {
+                       id: conn.id,
+                       from: { gateId: conn.from, pinIndex: conn.fromPin || 0 },
+                       to: { gateId: conn.to, pinIndex: conn.toPin || 0 }
+                   };
+                });
+                if (onBridgeToDigital) onBridgeToDigital(circuit);
+              }}
+              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 rounded-xl transition-all border border-cyan-500/30 active:scale-95 group"
+              title="Send to Digital Logic Lab"
+            >
+              <Cpu size={16} className="group-hover:scale-110 transition-transform" />
+            </button>
+            <button 
+              onClick={() => {
+                 localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(design));
+                 // flash effect or toast could go here
+              }}
+              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-fuchsia-600/20 hover:bg-fuchsia-600/40 text-fuchsia-400 rounded-xl transition-all border border-fuchsia-500/30 active:scale-95 group"
+              title="Send to Industrial PLC"
+            >
+              <Share2 size={16} className="group-hover:scale-110 transition-transform" />
+            </button>
             <button 
               onClick={handlePDFExport}
               className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 active:scale-95 group"
@@ -382,6 +453,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
                      activeConnectionIds={activeConnectionIds}
                      simulationStates={simulationStates}
                      tick={tick}
+                     scopeHistory={scopeHistory}
                    />
                 </div>
 
@@ -466,6 +538,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
                 onToggleSimulation={toggleSimulation}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+                scopeHistory={scopeHistory}
               />
             </motion.div>
           ) : view === 'BOM' ? (
@@ -513,7 +586,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
                initial={{ opacity: 0, scale: 0.8 }}
                animate={{ opacity: 1, scale: 1 }}
                exit={{ opacity: 0, scale: 1.2 }}
-               className="flex-1 overflow-auto scrollbar-hide p-4"
+               className="flex-1 overflow-hidden p-4 flex flex-col"
              >
                <LogicView 
                  design={design} 

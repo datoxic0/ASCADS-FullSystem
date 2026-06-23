@@ -9,7 +9,7 @@ function MathBlock({ tex }: { tex: string }) {
     try { return katex.renderToString(tex, { throwOnError: false, displayMode: true }); }
     catch { return `<span>${tex}</span>`; }
   }, [tex]);
-  return <div className="math-display text-sm" dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div className="math-display text-sm overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-white/10 pb-2" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 function StepCard({ step, index }: { step: ConversionStep; index: number }) {
@@ -146,89 +146,105 @@ export default function BaseConverter() {
         </aside>
 
         {/* ── Main ── */}
-        <section className="lg:col-span-8 space-y-5">
-
-          {/* Result card */}
-          <div className={`rounded-2xl border p-7 relative overflow-hidden transition-all duration-500 ${
-            error ? 'bg-red-950/20 border-red-800/30' : 'bg-slate-900/60 border-slate-800'
-          }`}>
-            <div className="absolute top-0 right-0 p-4 opacity-[0.04] pointer-events-none">
-              <Binary className="w-48 h-48" />
-            </div>
-
-            {error ? (
-              <div className="flex items-center gap-3 text-red-400">
-                <AlertCircle className="w-7 h-7 shrink-0" />
-                <div>
-                  <div className="font-black text-sm uppercase tracking-wide">Invalid Input</div>
-                  <div className="text-xs opacity-70 mt-0.5">{error}</div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-end justify-between gap-4 relative z-10">
-                <div>
-                  <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Computed Output</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-mono font-black text-white tracking-tight tabular-nums break-all">
-                      {result?.finalValue ?? '—'}
-                    </span>
-                    <span className="text-cyan-400 font-black text-lg">{baseLabel}</span>
-                  </div>
-                </div>
-                <button onClick={copyResult} className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all group">
-                  {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400 group-hover:text-white" />}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Binary cross-check */}
-          {result?.binaryCrossCheck && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="bg-cyan-950/20 border border-cyan-900/30 rounded-xl px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Binary className="w-4 h-4 text-cyan-500" />
-                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Binary Cross-check</span>
-              </div>
-              <code className="text-[10px] font-mono text-cyan-300/70 select-all">{result.binaryCrossCheck}</code>
-            </motion.div>
-          )}
-
-          {/* Steps */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
-                <Hash className="w-3.5 h-3.5" /> Operational Trace
-              </h3>
-              <span className="text-[9px] font-mono text-slate-700">
-                {result ? `${result.steps.length} step${result.steps.length !== 1 ? 's' : ''}` : ''}
-              </span>
-            </div>
-
-            <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-              <AnimatePresence mode="popLayout">
-                {result ? result.steps.map((step, i) => (
-                  <StepCard key={`${mode}-${i}`} step={step} index={i} />
-                )) : (
-                  <div className="p-12 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-700">
-                    <Calculator className="w-10 h-10 mb-3 opacity-20" />
-                    <p className="text-xs font-medium">Enter a value to see conversion steps</p>
-                  </div>
+        <section className="lg:col-span-8 space-y-5 relative min-h-[400px]">
+          {(!input.trim() || error) ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-10">
+              <div className="text-center space-y-4 max-w-lg bg-black/40 backdrop-blur-md p-8 rounded-2xl border border-white/5 shadow-2xl">
+                {error ? (
+                  <>
+                    <AlertCircle size={48} className="mx-auto text-red-500 opacity-50 mb-6" />
+                    <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-300 tracking-widest uppercase mb-2">Invalid Input</h2>
+                    <p className="text-red-200/70 text-sm leading-relaxed">{error}</p>
+                  </>
+                ) : (
+                  <>
+                    <ArrowRightLeft size={48} className="mx-auto text-cyan-500 opacity-50 mb-6" />
+                    <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-300 tracking-widest uppercase mb-2">Base Converter</h2>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      Enter a value in the input field to instantly see the conversion across all bases.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 mt-6">
+                      <div className="bg-white/5 border border-white/10 px-4 py-3 rounded-lg text-xs font-mono text-left">
+                        <span className="text-slate-500 block mb-1">Decimal to Binary:</span>
+                        <code className="text-emerald-400">255 → 11111111</code>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 px-4 py-3 rounded-lg text-xs font-mono text-left">
+                        <span className="text-slate-500 block mb-1">Hex to Decimal:</span>
+                        <code className="text-emerald-400">FF → 255</code>
+                      </div>
+                    </div>
+                  </>
                 )}
-              </AnimatePresence>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {/* Result card */}
+              <div className="bg-slate-900/60 border-slate-800 rounded-2xl border p-7 relative overflow-hidden transition-all duration-500">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.04] pointer-events-none">
+                  <Binary className="w-48 h-48" />
+                </div>
 
-              {result && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className="p-4 bg-cyan-950/20 border-t border-cyan-900/20 rounded-b-xl flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-cyan-500" />
-                    <span className="text-[10px] text-slate-400">Final: <span className="font-mono font-black text-white">{result.finalValue}</span></span>
+                <div className="flex items-end justify-between gap-4 relative z-10">
+                  <div>
+                    <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Computed Output</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-5xl font-mono font-black text-white tracking-tight tabular-nums break-all">
+                        {result?.finalValue ?? '—'}
+                      </span>
+                      <span className="text-cyan-400 font-black text-lg">{baseLabel}</span>
+                    </div>
                   </div>
-                  <span className="text-[9px] font-mono text-slate-700">{result.steps.length} cycles completed</span>
+                  <button onClick={copyResult} className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all group">
+                    {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400 group-hover:text-white" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Binary cross-check */}
+              {result?.binaryCrossCheck && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="bg-cyan-950/20 border border-cyan-900/30 rounded-xl px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Binary className="w-4 h-4 text-cyan-500" />
+                    <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider">Binary Cross-check</span>
+                  </div>
+                  <code className="text-[10px] font-mono text-cyan-300/70 select-all">{result.binaryCrossCheck}</code>
                 </motion.div>
               )}
+
+              {/* Steps */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
+                    <Hash className="w-3.5 h-3.5" /> Operational Trace
+                  </h3>
+                  <span className="text-[9px] font-mono text-slate-700">
+                    {result ? `${result.steps.length} step${result.steps.length !== 1 ? 's' : ''}` : ''}
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+                  <AnimatePresence mode="popLayout">
+                    {result && result.steps.map((step, i) => (
+                      <StepCard key={`${mode}-${i}`} step={step} index={i} />
+                    ))}
+                  </AnimatePresence>
+
+                  {result && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      className="p-4 bg-cyan-950/20 border-t border-cyan-900/20 rounded-b-xl flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Cpu className="w-4 h-4 text-cyan-500" />
+                        <span className="text-[10px] text-slate-400">Final: <span className="font-mono font-black text-white">{result.finalValue}</span></span>
+                      </div>
+                      <span className="text-[9px] font-mono text-slate-700">{result.steps.length} cycles completed</span>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </section>
       </div>
     </div>

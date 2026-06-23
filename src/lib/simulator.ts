@@ -29,6 +29,7 @@ import type {
   SimState,
   SimulationResult,
 } from "./types";
+import { useHardwareBus } from "./hardware-bus";
 
 const MAX_ITERATIONS = 200;
 
@@ -68,9 +69,17 @@ function seedSources(
     if (outs.length === 0) continue;
     const out0 = `${g.id}:${outs[0]}`;
     switch (g.kind) {
-      case "INPUT":
-        pinValues.set(out0, g.on ? 1 : 0);
+      case "INPUT": {
+        let val: Signal = g.on ? 1 : 0;
+        if (g.label) {
+           const hw = useHardwareBus.getState().analogOut;
+           if (hw[g.label] !== undefined) {
+             val = hw[g.label] > 2.5 ? 1 : 0;
+           }
+        }
+        pinValues.set(out0, val);
         break;
+      }
       case "CLOCK":
         pinValues.set(out0, clockState[g.id] ? 1 : 0);
         break;

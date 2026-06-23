@@ -26,6 +26,8 @@ interface ToolbarProps {
   onClear: () => void;
   onSave: () => void;
   onSearch: (term: string) => void;
+  onImportBridge?: () => void;
+  onExportBridge?: () => void;
 }
 
 export function Toolbar({ 
@@ -37,6 +39,8 @@ export function Toolbar({
   onClear, 
   onSave, 
   onSearch,
+  onImportBridge,
+  onExportBridge,
 }: ToolbarProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [ioPulse, setIoPulse] = useState(false);
@@ -145,6 +149,22 @@ export function Toolbar({
         <div className="w-px h-5 bg-white/10 mx-1" />
 
         {/* Action triggers */}
+        <button 
+          onClick={onImportBridge} 
+          className="p-1 px-[7px] h-7 w-7 flex items-center justify-center hover:bg-white/5 text-slate-300 hover:text-indigo-400 border border-[#21252e] hover:border-indigo-500/30 rounded-lg transition-all active:scale-90" 
+          title="Import Logic from Bridge (Analog/Digital)"
+        >
+          <Share2 size={12} />
+        </button>
+
+        <button 
+          onClick={onExportBridge} 
+          className="p-1 px-[7px] h-7 w-7 flex items-center justify-center hover:bg-white/5 text-slate-300 hover:text-cyan-400 border border-[#21252e] hover:border-cyan-500/30 rounded-lg transition-all active:scale-90" 
+          title="Export Logic to Bridge (Digital Lab)"
+        >
+          <Cpu size={12} />
+        </button>
+
         <button 
           onClick={onSave} 
           className="p-1 px-[7px] h-7 w-7 flex items-center justify-center hover:bg-white/5 text-slate-300 hover:text-white border border-[#21252e] hover:border-white/10 rounded-lg transition-all active:scale-90" 

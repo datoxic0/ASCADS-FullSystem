@@ -31,43 +31,49 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
     }
 
     // 2. Scan explicit manual wires leading to this node's LEFT side
-    const incomingWires = state.wires.filter(w => w.toId === node.id && w.toSide === 'left');
+    // Support drawing wires backwards (from left side to target's right side)
+    const incomingWires = state.wires.filter(w => 
+      (w.toId === node.id && w.toSide === 'left') || 
+      (w.fromId === node.id && w.fromSide === 'left')
+    );
+    
+    let hasExplicitPower = false;
     if (incomingWires.length > 0) {
       for (const wire of incomingWires) {
-        const fromNode = state.nodes.find(n => n.id === wire.fromId);
+        const sourceId = wire.toId === node.id ? wire.fromId : wire.toId;
+        const fromNode = state.nodes.find(n => n.id === sourceId);
         if (fromNode) {
           // Check if power conducts out of the fromNode's output side
           if (getPowerRight(fromNode, nextVisited)) {
-            memoLeft.set(node.id, true);
-            return true;
+            hasExplicitPower = true;
+            break;
           }
         }
       }
-      // If explicit wire linkages are present but none conduct, left is unenergized
-      memoLeft.set(node.id, false);
-      return false;
     }
 
-    // 3. Fallback: series rung continuity if no explicit wiring is present on its left side
+    // 3. Accumulate series rung continuity (implicit)
+    // Even if explicit wires exist, horizontal adjacency on the same rung acts as parallel source
+    let hasRungPower = false;
     const myRungIdx = getRungIndex(node);
     const rungNodes = state.nodes.filter(n => getRungIndex(n) === myRungIdx);
     rungNodes.sort((a, b) => a.x - b.x);
     const myIdx = rungNodes.findIndex(n => n.id === node.id);
+    
     if (myIdx === 0) {
       // If it is the first node on this rung horizontally, it implicitly receives power from the left rail!
-      memoLeft.set(node.id, true);
-      return true;
+      hasRungPower = true;
     } else if (myIdx > 0) {
       const leftNeighbor = rungNodes[myIdx - 1];
       // Neighbor must transmit power from its right side
       if (getPowerRight(leftNeighbor, nextVisited)) {
-        memoLeft.set(node.id, true);
-        return true;
+        hasRungPower = true;
       }
     }
 
-    memoLeft.set(node.id, false);
-    return false;
+    const hasPower = hasExplicitPower || hasRungPower;
+    memoLeft.set(node.id, hasPower);
+    return hasPower;
   };
 
   // Determine if power conducts OUT of the right side of a node
@@ -75,11 +81,8 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
     if (memoRight.has(node.id)) return memoRight.get(node.id)!;
     if (visited.has(node.id)) return false;
 
-    const nextVisited = new Set(visited);
-    nextVisited.add(node.id);
-
     // If power does not even arrive at the left side, it cannot conduct out
-    const hasInput = getPowerLeft(node, nextVisited);
+    const hasInput = getPowerLeft(node, visited);
     if (!hasInput) {
       memoRight.set(node.id, false);
       return false;
@@ -102,9 +105,28 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
       conducts = true; // pass through input power to allow visual continuity/cascading
     } else if (type.startsWith('counter-')) {
       conducts = true; // pass through input power to allow visual continuity/cascading
-    } else if (type.startsWith('compare-') || type.startsWith('math-') || type === 'reset') {
+    } else if (type.startsWith('compare-')) {
+      const a = getValue(node.params?.sourceA);
+      const b = getValue(node.params?.sourceB);
+      if (type === 'compare-eq') conducts = a === b;
+      else if (type === 'compare-ne') conducts = a !== b;
+      else if (type === 'compare-lt') conducts = a < b;
+      else if (type === 'compare-gt') conducts = a > b;
+      else if (type === 'compare-le') conducts = a <= b;
+      else if (type === 'compare-ge') conducts = a >= b;
+      else conducts = true;
+    } else if (type === 'limit-test') {
+      const testVal = getValue(node.params?.testVal);
+      const lowLimit = getValue(node.params?.lowLimit);
+      const highLimit = getValue(node.params?.highLimit);
+      if (lowLimit <= highLimit) {
+        conducts = testVal >= lowLimit && testVal <= highLimit;
+      } else {
+        conducts = testVal >= lowLimit || testVal <= highLimit;
+      }
+    } else if (type.startsWith('math-') || type === 'reset') {
       conducts = true; // pass through input power to allow visual continuity/cascading
-    } else if (type === 'pid-controller' || type === 'scale-param' || type === 'limit-test' || type === 'alarm-block') {
+    } else if (type === 'pid-controller' || type === 'scale-param' || type === 'alarm-block') {
       conducts = true; // pass through
     } else {
       conducts = true;
@@ -115,13 +137,10 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
   };
 
   // Helper to fetch register values for math & comparative elements
-  const getValue = (valOrAddr: string | number | undefined): number => {
-    if (valOrAddr === undefined) return 0;
+  const getValue = (valOrAddr: any): number => {
     if (typeof valOrAddr === 'number') return valOrAddr;
-    if (values[valOrAddr] !== undefined) return Number(values[valOrAddr]);
-    
-    // Address check for preset or accum values
-    if (typeof valOrAddr === 'string' && valOrAddr.includes('_')) {
+    if (typeof valOrAddr === 'string' && !isNaN(Number(valOrAddr))) return Number(valOrAddr);
+    if (typeof valOrAddr === 'string') {
       return Number(values[valOrAddr]) || 0;
     }
     return 0;
@@ -170,7 +189,8 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
       values[lastStateKey] = isPathEnergized;
       values[output.address] = result;
     } else if (output.type === 'timer-on') {
-      const preset = (output.params?.preset || 0) * 1000;
+      const baseMult = output.params?.timeBase === 'ms' ? 1 : 1000;
+      const preset = (output.params?.preset || 0) * baseMult;
       const accumKey = `${output.address}_ACC`;
       const dnKey = `${output.address}_DN`;
       let accum = Number(values[accumKey]) || 0;
@@ -184,10 +204,11 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
       }
       
       values[accumKey] = accum;
-      values[dnKey] = preset > 0 && accum >= preset;
+      values[dnKey] = accum >= preset;
       values[output.address] = values[dnKey]; // main target reflects state
     } else if (output.type === 'timer-off') {
-      const preset = (output.params?.preset || 0) * 1000;
+      const baseMult = output.params?.timeBase === 'ms' ? 1 : 1000;
+      const preset = (output.params?.preset || 0) * baseMult;
       const accumKey = `${output.address}_ACC`;
       const dnKey = `${output.address}_DN`;
       let accum = Number(values[accumKey]) || 0;
@@ -201,10 +222,11 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
       }
 
       values[accumKey] = accum;
-      values[dnKey] = isPathEnergized || (preset > 0 && accum < preset);
+      values[dnKey] = isPathEnergized || accum < preset;
       values[output.address] = values[dnKey];
     } else if (output.type === 'retentive-timer') {
-      const preset = (output.params?.preset || 0) * 1000;
+      const baseMult = output.params?.timeBase === 'ms' ? 1 : 1000;
+      const preset = (output.params?.preset || 0) * baseMult;
       const accumKey = `${output.address}_ACC`;
       const dnKey = `${output.address}_DN`;
       let accum = Number(values[accumKey]) || 0;
@@ -214,7 +236,7 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
       }
 
       values[accumKey] = accum;
-      values[dnKey] = preset > 0 && accum >= preset;
+      values[dnKey] = accum >= preset;
       values[output.address] = values[dnKey];
     } else if (output.type === 'counter-up') {
       const preset = output.params?.preset || 0;
@@ -270,8 +292,10 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
       else if (output.type === 'compare-ne') result = a !== b;
       else if (output.type === 'compare-lt') result = a < b;
       else if (output.type === 'compare-gt') result = a > b;
+      else if (output.type === 'compare-le') result = a <= b;
+      else if (output.type === 'compare-ge') result = a >= b;
       
-      values[output.address] = result;
+      values[output.address] = isPathEnergized && result;
     } else if (output.type.startsWith('math-')) {
       if (isPathEnergized) {
         const a = getValue(output.params?.sourceA);
@@ -284,9 +308,12 @@ export function solveCircuit(state: LadderState): Record<string, boolean | numbe
         else if (output.type === 'math-mul') result = a * b;
         else if (output.type === 'math-div') result = b !== 0 ? a / b : 0;
         else if (output.type === 'math-mov') result = a;
+        else if (output.type === 'math-abs') result = Math.abs(a);
+        else if (output.type === 'math-sqrt') result = Math.sqrt(Math.abs(a));
         else if (output.type === 'math-sin') result = Math.sin(a * (Math.PI / 180)); // Assume deg input
         else if (output.type === 'math-cos') result = Math.cos(a * (Math.PI / 180));
         else if (output.type === 'math-tan') result = Math.tan(a * (Math.PI / 180));
+        else if (output.type === 'math-mod') result = b !== 0 ? a % b : 0;
         
         values[dest] = result;
       }

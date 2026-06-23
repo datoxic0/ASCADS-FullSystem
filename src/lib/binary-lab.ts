@@ -28,7 +28,11 @@ export function pad(s: string, len: number): string {
 }
 
 export function decToBin(n: number, width = 8): string {
-  return pad(Math.abs(n).toString(2), width);
+  if (n < 0) {
+    const twos = (Math.pow(2, width) + n) % Math.pow(2, width);
+    return pad(twos.toString(2), width);
+  }
+  return pad(n.toString(2), width);
 }
 
 // ─── Binary Arithmetic ────────────────────────────────────────────────────────
@@ -73,8 +77,9 @@ export function subBinary(a: string, b: string): CalculationResult {
   const pa = pad(a, maxLen);
   const pb = pad(b, maxLen);
 
-  const bComplement = pad((Math.pow(2, maxLen) - parseInt(pb, 2)).toString(2), maxLen + 1);
-  const sumResult = (parseInt(pa, 2) + parseInt(bComplement, 2)).toString(2);
+  const bComplementDec = Math.pow(2, maxLen) - parseInt(pb, 2);
+  const bComplement = pad((bComplementDec % Math.pow(2, maxLen)).toString(2), maxLen);
+  const sumResult = (parseInt(pa, 2) + bComplementDec).toString(2);
 
   const steps: ArithmeticStep[] = [
     { label: 'Operand A', value: pa, type: 'operand' },
@@ -229,21 +234,20 @@ export class LogicSolver {
     }
 
     for (const p of primes) {
-      if (!allMins.has) continue;
       let hasNew = false;
       for (const m of p.mins) if (allMins.has(m) && !covered.has(m)) { hasNew = true; break; }
       if (hasNew) { chosen.push(p); p.mins.forEach(x => covered.add(x)); }
     }
 
     return chosen.map(p => {
-      let term = '';
+      const lits: string[] = [];
       for (let i = 0; i < varCount; i++) {
         const bit = varCount - 1 - i;
         if (!(p.mask & (1 << bit))) {
-          term += (p.bits & (1 << bit)) ? variables[i] : `${variables[i]}'`;
+          lits.push((p.bits & (1 << bit)) ? variables[i] : `!${variables[i]}`);
         }
       }
-      return term || '1';
+      return lits.join(' · ') || '1';
     }).join(' + ');
   }
 }

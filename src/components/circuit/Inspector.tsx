@@ -36,7 +36,7 @@ export function Inspector({
 
   if (totalSelected === 0) {
     return (
-      <aside className="w-72 shrink-0 border-l border-border bg-sidebar/80 backdrop-blur-sm flex flex-col">
+      <aside className="w-72 shrink-0 border-l border-indigo-500/20 shadow-[-4px_0_30px_rgba(0,0,0,0.5)] bg-slate-950/80 backdrop-blur-md flex flex-col relative z-40">
         <div className="px-4 py-3 border-b border-border">
           <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
             Inspector
@@ -57,7 +57,7 @@ export function Inspector({
 
   if (selectedGateIds.length > 1 || (selectedGateIds.length >= 1 && selectedWireCount > 0)) {
     return (
-      <aside className="w-72 shrink-0 border-l border-border bg-sidebar/80 backdrop-blur-sm flex flex-col">
+      <aside className="w-72 shrink-0 border-l border-indigo-500/20 shadow-[-4px_0_30px_rgba(0,0,0,0.5)] bg-slate-950/80 backdrop-blur-md flex flex-col relative z-40">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
             {totalSelected} selected
@@ -99,7 +99,7 @@ export function Inspector({
     const wireSig = simulation?.wireValues.get(wireId);
     const sigLabel = wireSig === 1 ? "HIGH (1)" : wireSig === 0 ? "LOW (0)" : "Unknown (X)";
     return (
-      <aside className="w-72 shrink-0 border-l border-border bg-sidebar/80 backdrop-blur-sm flex flex-col">
+      <aside className="w-72 shrink-0 border-l border-indigo-500/20 shadow-[-4px_0_30px_rgba(0,0,0,0.5)] bg-slate-950/80 backdrop-blur-md flex flex-col relative z-40">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <div>
             <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
@@ -155,7 +155,8 @@ export function Inspector({
     gate.kind === "INPUT" ||
     gate.kind === "OUTPUT" ||
     gate.kind === "CLOCK" ||
-    gate.kind === "PROBE";
+    gate.kind === "PROBE" ||
+    gate.kind === "LABEL";
 
   // Compute live pin signals for this gate
   const pins = pinsFor(gate);
@@ -165,7 +166,7 @@ export function Inspector({
   });
 
   return (
-    <aside className="w-72 shrink-0 border-l border-border bg-sidebar/80 backdrop-blur-sm flex flex-col">
+    <aside className="w-72 shrink-0 border-l border-indigo-500/20 shadow-[-4px_0_30px_rgba(0,0,0,0.5)] bg-slate-950/80 backdrop-blur-md flex flex-col relative z-40">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
         <div>
           <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">

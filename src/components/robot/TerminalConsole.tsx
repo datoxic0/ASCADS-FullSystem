@@ -29,7 +29,7 @@ export function TerminalConsole({ logs, onClear, isConnected, onToggleConnect }:
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#0a0b0e]">
       {/* Toolbar */}
-      <div className="h-9 bg-[#0a0c12] border-b border-white/5 flex items-center px-3 gap-2">
+      <div className="h-9 bg-[#0a0c12] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 gap-2">
         <Terminal size={12} className="text-zinc-400" />
         <span className="text-[10px] font-bold text-zinc-400">Serial Terminal</span>
         <div className="w-px h-5 bg-white/10" />
@@ -63,10 +63,10 @@ export function TerminalConsole({ logs, onClear, isConnected, onToggleConnect }:
 
       {/* Settings panel */}
       {showSettings && (
-        <div className="bg-[#0c0e14] border-b border-white/5 p-3 flex gap-4 text-[9px] font-mono">
+        <div className="bg-[#0c0e14] border-b border-emerald-300 dark:border-white/5 p-3 flex gap-4 text-[9px] font-mono">
           <div className="space-y-1">
             <label className="text-[8px] text-zinc-500">COM Port</label>
-            <select value={comPort} onChange={e => setComPort(e.target.value)} className="bg-[#111318] border border-white/5 rounded px-2 py-1 text-zinc-300 outline-none">
+            <select value={comPort} onChange={e => setComPort(e.target.value)} className="bg-[#111318] border border-emerald-300 dark:border-white/5 rounded px-2 py-1 text-zinc-300 outline-none">
               <option>COM3</option>
               <option>COM4</option>
               <option>COM5</option>
@@ -76,7 +76,7 @@ export function TerminalConsole({ logs, onClear, isConnected, onToggleConnect }:
           </div>
           <div className="space-y-1">
             <label className="text-[8px] text-zinc-500">Baud Rate</label>
-            <select value={baudRate} onChange={e => setBaudRate(Number(e.target.value))} className="bg-[#111318] border border-white/5 rounded px-2 py-1 text-zinc-300 outline-none">
+            <select value={baudRate} onChange={e => setBaudRate(Number(e.target.value))} className="bg-[#111318] border border-emerald-300 dark:border-white/5 rounded px-2 py-1 text-zinc-300 outline-none">
               <option value={9600}>9600</option>
               <option value={19200}>19200</option>
               <option value={38400}>38400</option>
@@ -115,7 +115,7 @@ export function TerminalConsole({ logs, onClear, isConnected, onToggleConnect }:
       </div>
 
       {/* Command input */}
-      <div className="h-10 border-t border-white/5 flex items-center px-3 gap-2 bg-[#0a0c12]">
+      <div className="h-10 border-t border-emerald-300 dark:border-white/5 flex items-center px-3 gap-2 bg-[#0a0c12]">
         <span className="text-emerald-400 text-[10px] font-bold">{`>`}</span>
         <input
           value={command}

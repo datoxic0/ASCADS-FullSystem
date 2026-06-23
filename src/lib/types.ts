@@ -101,6 +101,9 @@ export type Wire = {
   id: string;
   from: WireEnd; // output side
   to: WireEnd; // input side
+  waypoints?: { x: number, y: number }[];
+  color?: string;
+  thickness?: number;
 };
 
 export type Circuit = {

@@ -276,17 +276,44 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
   }, [isSimulating, simulationSpeed]);
 
   // --- Drag & Drop CAD placement triggers ---
-  const handleDragObject = (id: string, dx: number, dy: number) => {
+  const [draggingCADId, setDraggingCADId] = useState<string | null>(null);
+  const cadSvgRef = useRef<SVGSVGElement>(null);
+
+  const handlePointerDownCAD = (e: React.PointerEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedCADId(id);
+    setDraggingCADId(id);
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMoveCAD = (e: React.PointerEvent) => {
+    if (!draggingCADId || !cadSvgRef.current) return;
+    const svgRect = cadSvgRef.current.getBoundingClientRect();
+    const viewBoxWidth = 500;
+    const viewBoxHeight = 320;
+    
+    const dx = (e.movementX / svgRect.width) * viewBoxWidth;
+    const dy = (e.movementY / svgRect.height) * viewBoxHeight;
+    
     setCadObjects(prev => prev.map(obj => {
-      if (obj.id !== id) return obj;
-      let nx = obj.x + dx;
-      let ny = obj.y + dy;
-      if (snapToGrid) {
-        nx = Math.round(nx / 15) * 15;
-        ny = Math.round(ny / 15) * 15;
-      }
-      return { ...obj, x: nx, y: ny };
+      if (obj.id !== draggingCADId) return obj;
+      return { ...obj, x: obj.x + dx, y: obj.y + dy };
     }));
+  };
+
+  const handlePointerUpCAD = (e: React.PointerEvent) => {
+    if (draggingCADId) {
+      if (snapToGrid) {
+        setCadObjects(prev => prev.map(obj => {
+          if (obj.id !== draggingCADId) return obj;
+          return { ...obj, x: Math.round(obj.x / 15) * 15, y: Math.round(obj.y / 15) * 15 };
+        }));
+      }
+      setDraggingCADId(null);
+      try {
+        (e.target as Element).releasePointerCapture(e.pointerId);
+      } catch (err) {} // ignore capture release errors
+    }
   };
 
   // Add Object to CAD Layout
@@ -811,44 +838,44 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0d0d0f] text-slate-200">
+    <div className="flex flex-col h-full bg-[#0d0d0f] text-emerald-900 dark:text-slate-200">
       
       {/* 1. Header Toolbar area of next-gen suite */}
-      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between p-3.5 bg-[#141418] border-b border-white/5 gap-3 shrink-0">
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between p-3.5 bg-[#141418] border-b border-emerald-300 dark:border-white/5 gap-3 shrink-0">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded-lg bg-teal-500/25 border border-teal-500 flex items-center justify-center text-teal-400">
             <Workflow className="w-5 h-5" id="digital-twin-core-icon" />
           </div>
           <div>
             <h2 className="text-xs font-bold font-mono tracking-tight text-white uppercase">CIM Digital Twin Engine Studio</h2>
-            <p className="text-[10px] font-mono text-slate-400">Virtual CAD/CAM, PLC Controllers, Core Neural Vision & Analytics Suite</p>
+            <p className="text-[10px] font-mono text-emerald-700 dark:text-slate-400">Virtual CAD/CAM, PLC Controllers, Core Neural Vision & Analytics Suite</p>
           </div>
         </div>
 
         {/* Global Live status parameters */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center space-x-2 bg-black/45 border border-white/5 rounded px-2 py-1">
+          <div className="flex items-center space-x-2 bg-black/45 border border-emerald-300 dark:border-white/5 rounded px-2 py-1">
             <span className="text-[8px] font-mono text-slate-500 font-extrabold uppercase">ENV PRES:</span>
             <div className="flex space-x-1">
               <button 
                 onClick={() => setEnvironmentType("factory")}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition-colors uppercase ${environmentType === "factory" ? "bg-teal-900/40 text-teal-300 border border-teal-500/30" : "text-slate-500 hover:text-slate-350"}`}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition-colors uppercase ${environmentType === "factory" ? "bg-teal-900/40 text-teal-300 border border-teal-500/30" : "text-slate-500 hover:text-emerald-800 dark:text-slate-350"}`}
               >
                 <Briefcase className="w-2.5 h-2.5 inline mr-1" /> Factory
               </button>
               <button 
                 onClick={() => setEnvironmentType("domestic")}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition-colors uppercase ${environmentType === "domestic" ? "bg-purple-900/40 text-purple-300 border border-purple-500/30" : "text-slate-500 hover:text-slate-350"}`}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition-colors uppercase ${environmentType === "domestic" ? "bg-purple-900/40 text-purple-300 border border-purple-500/30" : "text-slate-500 hover:text-emerald-800 dark:text-slate-350"}`}
               >
                 <Home className="w-2.5 h-2.5 inline mr-1" /> Domestic
               </button>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 bg-black/45 border border-white/5 rounded px-2.5 py-1">
+          <div className="flex items-center space-x-2 bg-black/45 border border-emerald-300 dark:border-white/5 rounded px-2.5 py-1">
             <Zap className={`w-3.5 h-3.5 ${isSimulating ? "text-amber-400 animate-pulse" : "text-slate-500"}`} />
             <div className="text-[9px] font-mono leading-none">
-              <div className="text-slate-400 font-bold">{powerConsumption} W <span className="text-slate-550">GRID</span></div>
+              <div className="text-emerald-700 dark:text-slate-400 font-bold">{powerConsumption} W <span className="text-slate-550">GRID</span></div>
               <div className="text-slate-500 text-[8px] mt-0.5">{totalEnergyWh.toFixed(1)} Wh ACCUM</div>
             </div>
           </div>
@@ -866,10 +893,10 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
           </div>
 
           {/* Core controls */}
-          <div className="flex items-center bg-black/40 border border-white/10 rounded overflow-hidden">
+          <div className="flex items-center bg-black/40 border border-emerald-400 dark:border-white/10 rounded overflow-hidden">
             <button 
               onClick={() => setIsSimulating(!isSimulating)}
-              className="p-1 px-2.5 hover:bg-white/5 text-slate-300 border-r border-white/10 transition-colors"
+              className="p-1 px-2.5 hover:bg-white/5 text-emerald-800 dark:text-slate-300 border-r border-emerald-400 dark:border-white/10 transition-colors"
               title={isSimulating ? "Pause Twin Physics" : "Resume Twin Physics"}
             >
               {isSimulating ? <Pause className="w-3.5 h-3.5 text-amber-400" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
@@ -877,7 +904,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
             <select
               value={simulationSpeed}
               onChange={(e) => setSimulationSpeed(parseFloat(e.target.value))}
-              className="bg-transparent border-none text-slate-300 font-mono text-[9px] px-1.5 focus:outline-none cursor-pointer py-0.5"
+              className="bg-transparent border-none text-emerald-800 dark:text-slate-300 font-mono text-[9px] px-1.5 focus:outline-none cursor-pointer py-0.5"
             >
               <option value="0.5" className="bg-[#141418]">0.5x Time</option>
               <option value="1" className="bg-[#141418]">1.0x Realtime</option>
@@ -889,7 +916,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
       </div>
 
       {/* 2. Sub-Tab Switcher Belt */}
-      <div className="flex bg-[#111115] border-b border-white/5 p-1 px-3 overflow-x-auto scrollbar-none gap-1 shrink-0">
+      <div className="flex bg-[#111115] border-b border-emerald-300 dark:border-white/5 p-1 px-3 overflow-x-auto scrollbar-none gap-1 shrink-0">
         {[
           { id: "workspace-cad", label: "1. CAD Drag & Drop Layout", icon: Grid, count: cadObjects.length },
           { id: "robot-builder", label: "2. Actuator Link Builder", icon: Hammer, count: customJoints.length },
@@ -908,7 +935,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
               className={`flex items-center space-x-1.5 px-3 py-2 text-[9px] font-mono uppercase tracking-wider rounded-md transition-all cursor-pointer whitespace-nowrap border ${
                 isSelected
                   ? "bg-teal-950/40 text-teal-300 border-teal-500 shadow-md shadow-teal-500/10 font-bold"
-                  : "text-slate-400 bg-transparent border-transparent hover:text-white hover:bg-white/5"
+                  : "text-emerald-700 dark:text-slate-400 bg-transparent border-transparent hover:text-white hover:bg-white/5"
               }`}
             >
               <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-teal-400" : "text-slate-500"}`} />
@@ -924,11 +951,11 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
       </div>
 
       {/* CIM Synctronic Integration & Profiles Hub Banner */}
-      <div className="bg-[#101014] border-b border-teal-500/10 px-4 py-2.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0 text-slate-300 font-mono text-[9.5px]">
+      <div className="bg-[#101014] border-b border-teal-500/10 px-4 py-2.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0 text-emerald-800 dark:text-slate-300 font-mono text-[9.5px]">
         
         {/* Profile and DB Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center space-x-2 bg-black/40 border border-white/5 rounded px-2.5 py-1">
+          <div className="flex items-center space-x-2 bg-black/40 border border-emerald-300 dark:border-white/5 rounded px-2.5 py-1">
             <span className="text-[8px] uppercase font-bold text-teal-400">Profile Name:</span>
             <input 
               type="text" 
@@ -948,7 +975,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
 
           {/* Database Selector Dropdown */}
           {savedProfiles.length > 0 && (
-            <div className="flex items-center bg-black/40 border border-white/5 rounded overflow-hidden px-2 py-0.5">
+            <div className="flex items-center bg-black/40 border border-emerald-300 dark:border-white/5 rounded overflow-hidden px-2 py-0.5">
               <span className="text-[8px] uppercase font-bold text-slate-500 mr-2">Saved database profiles:</span>
               <select
                 value={profileName}
@@ -956,11 +983,11 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                   const found = savedProfiles.find(p => p.name === e.target.value);
                   if (found) handleLoadProfile(found);
                 }}
-                className="bg-transparent border-none text-slate-300 font-mono text-[9px] focus:outline-none cursor-pointer py-0.5 mr-2 max-w-[150px]"
+                className="bg-transparent border-none text-emerald-800 dark:text-slate-300 font-mono text-[9px] focus:outline-none cursor-pointer py-0.5 mr-2 max-w-[150px]"
               >
                 <option value="" disabled className="bg-[#141418] text-slate-500">-- Load stored setup --</option>
                 {savedProfiles.map((p, idx) => (
-                  <option key={idx} value={p.name} className="bg-[#141418] text-slate-200">{p.name}</option>
+                  <option key={idx} value={p.name} className="bg-[#141418] text-emerald-900 dark:text-slate-200">{p.name}</option>
                 ))}
               </select>
               {savedProfiles.length > 1 && (
@@ -1003,7 +1030,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
 
           <button
             onClick={handleExportJSON}
-            className="px-2 py-1.5 rounded bg-[#1c1c24] hover:bg-slate-800 border border-white/5 text-slate-300 font-medium flex items-center transition-all cursor-pointer active:scale-95"
+            className="px-2 py-1.5 rounded bg-[#1c1c24] hover:bg-slate-800 border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 font-medium flex items-center transition-all cursor-pointer active:scale-95"
             title="Download full CAD machine profile (.json)"
           >
             <Share2 className="w-3 h-3 mr-1 text-sky-400" />
@@ -1019,7 +1046,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-2 py-1.5 rounded bg-[#1c1c24] hover:bg-slate-800 border border-white/5 text-slate-300 font-medium flex items-center transition-all cursor-pointer active:scale-95"
+            className="px-2 py-1.5 rounded bg-[#1c1c24] hover:bg-slate-800 border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 font-medium flex items-center transition-all cursor-pointer active:scale-95"
             title="Upload custom machine profile JSON"
           >
             <Upload className="w-3 h-3 mr-1 text-emerald-400" />
@@ -1094,9 +1121,9 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                   <button
                     key={obj.id}
                     onClick={() => addNewObject(obj.id as any)}
-                    className="p-2 text-left bg-[#16161c] hover:bg-[#1a1a24] border border-white/5 rounded text-[8.5.px] text-slate-350 hover:text-white transition-all flex flex-col justify-between cursor-pointer"
+                    className="p-2 text-left bg-[#16161c] hover:bg-[#1a1a24] border border-emerald-300 dark:border-white/5 rounded text-[8.5.px] text-emerald-800 dark:text-slate-350 hover:text-white transition-all flex flex-col justify-between cursor-pointer"
                   >
-                    <span className="font-bold text-slate-300">{obj.label}</span>
+                    <span className="font-bold text-emerald-800 dark:text-slate-300">{obj.label}</span>
                     <span className="text-[7px] text-slate-500 block uppercase font-normal mt-1">Deploy Component</span>
                   </button>
                 ))}
@@ -1104,12 +1131,12 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
 
               {/* Selected CAD Properties Modifier */}
               {selectedCADId ? (
-                <div className="bg-[#15151b] border border-white/5 rounded-xl p-3.5 space-y-3">
-                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                <div className="bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3.5 space-y-3">
+                  <div className="flex justify-between items-center border-b border-emerald-300 dark:border-white/5 pb-2">
                     <span className="text-[9.5px] font-bold text-teal-300 uppercase">Modify Selected</span>
                     <button 
                       onClick={deleteSelectedCAD}
-                      className="p-1 text-slate-400 hover:text-rose-450 hover:bg-rose-500/10 rounded transition-colors cursor-pointer"
+                      className="p-1 text-emerald-700 dark:text-slate-400 hover:text-rose-450 hover:bg-rose-500/10 rounded transition-colors cursor-pointer"
                       title="Remove object from CAD layout"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-rose-400" />
@@ -1128,7 +1155,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             type="text"
                             value={obj.name}
                             onChange={(e) => handleUpdateCADItem("name", e.target.value)}
-                            className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 text-[10px] rounded p-1.5 font-mono focus:border-teal-500 focus:outline-none"
+                            className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 text-[10px] rounded p-1.5 font-mono focus:border-teal-500 focus:outline-none"
                           />
                         </div>
 
@@ -1140,7 +1167,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                               type="number"
                               value={obj.x}
                               onChange={(e) => handleUpdateCADItem("x", parseInt(e.target.value) || 0)}
-                              className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 text-[10px] rounded p-1.5 focus:border-teal-500 focus:outline-none"
+                              className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 text-[10px] rounded p-1.5 focus:border-teal-500 focus:outline-none"
                             />
                           </div>
                           <div className="space-y-1">
@@ -1149,7 +1176,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                               type="number"
                               value={obj.y}
                               onChange={(e) => handleUpdateCADItem("y", parseInt(e.target.value) || 0)}
-                              className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 text-[10px] rounded p-1.5 focus:border-teal-500 focus:outline-none"
+                              className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 text-[10px] rounded p-1.5 focus:border-teal-500 focus:outline-none"
                             />
                           </div>
                         </div>
@@ -1187,10 +1214,10 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-2">
+                        <div className="grid grid-cols-2 gap-2 border-t border-emerald-300 dark:border-white/5 pt-2">
                           <div>
                             <span className="text-[7.5px] uppercase text-slate-500 block">Class Type:</span>
-                            <span className="text-[9px] text-slate-300 font-bold uppercase">{obj.type.replace("_", " ")}</span>
+                            <span className="text-[9px] text-emerald-800 dark:text-slate-300 font-bold uppercase">{obj.type.replace("_", " ")}</span>
                           </div>
                           <div>
                             <span className="text-[7.5px] uppercase text-slate-500 block">Status Node:</span>
@@ -1202,7 +1229,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                   })()}
                 </div>
               ) : (
-                <div className="bg-[#15151b]/45 border border-white/5 border-dashed rounded-xl p-4 text-center">
+                <div className="bg-[#15151b]/45 border border-emerald-300 dark:border-white/5 border-dashed rounded-xl p-4 text-center">
                   <span className="text-[8px] text-slate-500">Click any placed SVG object inside the canvas board to edit layout properties or move.</span>
                 </div>
               )}
@@ -1250,7 +1277,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                     className={`w-full text-left p-2 rounded text-[9px] border transition-all flex items-center justify-between cursor-pointer ${
                       selectedJointId === j.id 
                         ? "bg-teal-950/20 border-teal-500/50 text-teal-300 font-bold"
-                        : "bg-black/30 border-white/5 text-slate-400 hover:bg-black/50"
+                        : "bg-black/30 border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:bg-black/50"
                     }`}
                   >
                     <div className="flex items-center space-x-2">
@@ -1264,8 +1291,8 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
 
               {/* Selected Joint editor */}
               {selectedJointId && (
-                <div className="bg-[#15151b] border border-white/5 rounded-xl p-3.5 space-y-3">
-                  <div className="flex justify-between items-center border-b border-white/5 pb-1.5">
+                <div className="bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3.5 space-y-3">
+                  <div className="flex justify-between items-center border-b border-emerald-300 dark:border-white/5 pb-1.5">
                     <span className="text-[9px] text-teal-350 font-bold uppercase">Joint Segment Specs</span>
                     <button
                       onClick={() => {
@@ -1289,7 +1316,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             type="text"
                             value={j.name}
                             onChange={(e) => setCustomJoints(prev => prev.map(item => item.id === j.id ? { ...item, name: e.target.value } : item))}
-                            className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 p-1 rounded focus:outline-none text-[9.5px]"
+                            className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 p-1 rounded focus:outline-none text-[9.5px]"
                           />
                         </div>
 
@@ -1299,7 +1326,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             <select
                               value={j.type}
                               onChange={(e) => setCustomJoints(prev => prev.map(item => item.id === j.id ? { ...item, type: e.target.value as any } : item))}
-                              className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 p-1 rounded focus:outline-none text-[8.5px]"
+                              className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 p-1 rounded focus:outline-none text-[8.5px]"
                             >
                               <option value="revolute">Revolute (Rot)</option>
                               <option value="prismatic">Prismatic (Lin)</option>
@@ -1311,7 +1338,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             <select
                               value={j.motorType}
                               onChange={(e) => setCustomJoints(prev => prev.map(item => item.id === j.id ? { ...item, motorType: e.target.value as any } : item))}
-                              className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 p-1 rounded focus:outline-none text-[8.5px]"
+                              className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 p-1 rounded focus:outline-none text-[8.5px]"
                             >
                               <option value="servo">Brushless Servo</option>
                               <option value="stepper">Inertial Stepper</option>
@@ -1369,7 +1396,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-2 text-[8px] text-slate-500">
+                        <div className="grid grid-cols-2 gap-2 border-t border-emerald-300 dark:border-white/5 pt-2 text-[8px] text-slate-500">
                           <div>
                             <span>EFF GEAR RATIO:</span>
                             <strong className="block text-purple-300 text-[9.5px]">{j.gearRatio}:1</strong>
@@ -1396,15 +1423,15 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
               </div>
 
               {/* Ladder Register checkboxes */}
-              <div className="bg-[#15151b] border border-white/5 rounded-xl p-3 space-y-2">
-                <div className="text-[8px] text-purple-300 font-bold uppercase tracking-wider mb-1.5 border-b border-white/5 pb-1 flex justify-between">
+              <div className="bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3 space-y-2">
+                <div className="text-[8px] text-purple-300 font-bold uppercase tracking-wider mb-1.5 border-b border-emerald-300 dark:border-white/5 pb-1 flex justify-between">
                   <span>Register State Inputs</span>
                   <span className="text-slate-500">Value (0/1)</span>
                 </div>
                 
                 {Object.keys(plcInputs).map((key) => (
-                  <label key={key} className="flex justify-between items-center bg-black/35 rounded border border-white/5 px-2 py-1.5 text-[9px] hover:bg-black/55 cursor-pointer transition-colors">
-                    <span className="text-slate-350 font-mono font-semibold">{key}</span>
+                  <label key={key} className="flex justify-between items-center bg-black/35 rounded border border-emerald-300 dark:border-white/5 px-2 py-1.5 text-[9px] hover:bg-black/55 cursor-pointer transition-colors">
+                    <span className="text-emerald-800 dark:text-slate-350 font-mono font-semibold">{key}</span>
                     <input
                       type="checkbox"
                       checked={plcInputs[key]}
@@ -1443,8 +1470,8 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
 
               {/* Selected Rung modifier */}
               {selectedRungId && (
-                <div className="bg-[#15151b] border border-white/5 rounded-xl p-3 space-y-2 text-[9px]">
-                  <div className="flex justify-between items-center text-teal-300 border-b border-white/5 pb-1 flex justify-between">
+                <div className="bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3 space-y-2 text-[9px]">
+                  <div className="flex justify-between items-center text-teal-300 border-b border-emerald-300 dark:border-white/5 pb-1 flex justify-between">
                     <span className="font-bold uppercase text-[8.5px]">Rung Parameters ({selectedRungId})</span>
                     <button
                       onClick={() => {
@@ -1469,7 +1496,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             <select
                               value={rng.inputContact1}
                               onChange={(e) => setPlcRungs(prev => prev.map(r => r.id === rng.id ? { ...r, inputContact1: e.target.value as any } : r))}
-                              className="w-full bg-[#0d0d0f] border border-white/5 text-slate-350 p-1 rounded text-[8.5px] cursor-pointer"
+                              className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-350 p-1 rounded text-[8.5px] cursor-pointer"
                             >
                               <option value="normally_open">Normally Open (NO)</option>
                               <option value="normally_closed">Normally Closed (NC)</option>
@@ -1480,7 +1507,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             <select
                               value={rng.inputVar1}
                               onChange={(e) => setPlcRungs(prev => prev.map(r => r.id === rng.id ? { ...r, inputVar1: e.target.value } : r))}
-                              className="w-full bg-[#0d0d0f] border border-white/5 text-slate-350 p-1 rounded text-[8.5px]"
+                              className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-350 p-1 rounded text-[8.5px]"
                             >
                               {Object.keys(plcInputs).map(k => <option key={k} value={k}>{k}</option>)}
                             </select>
@@ -1494,7 +1521,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             type="text"
                             value={rng.outputCoil}
                             onChange={(e) => setPlcRungs(prev => prev.map(r => r.id === rng.id ? { ...r, outputCoil: e.target.value } : r))}
-                            className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 p-1 rounded focus:outline-none text-[9.5px]"
+                            className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 p-1 rounded focus:outline-none text-[9.5px]"
                           />
                         </div>
                       </div>
@@ -1514,7 +1541,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
               </div>
 
               {/* Slider Field of View */}
-              <div className="space-y-2 bg-[#15151b] border border-white/5 rounded-xl p-3.5">
+              <div className="space-y-2 bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3.5">
                 <div className="space-y-1">
                   <div className="flex justify-between text-[8px] uppercase text-slate-500 font-bold">
                     <span>Optical Aperture Field (FOV)</span>
@@ -1546,7 +1573,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                         className={`p-1.5 text-[8px] font-mono border rounded text-center transition-all cursor-pointer truncate ${
                           visionMode === mode.id
                             ? "bg-teal-950/30 border-teal-500 text-teal-300 font-extrabold"
-                            : "bg-black/30 border-white/5 text-slate-400 hover:bg-[#1a1a24]"
+                            : "bg-black/30 border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:bg-[#1a1a24]"
                         }`}
                       >
                         {mode.label}
@@ -1557,12 +1584,12 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
               </div>
 
               {/* Bounding box list */}
-              <div className="bg-[#15151b] border border-white/5 rounded-xl p-3 space-y-2">
-                <span className="text-[8px] text-cyan-400 font-bold block uppercase border-b border-white/5 pb-1">AI Live Inference Outputs</span>
+              <div className="bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3 space-y-2">
+                <span className="text-[8px] text-cyan-400 font-bold block uppercase border-b border-emerald-300 dark:border-white/5 pb-1">AI Live Inference Outputs</span>
                 <div className="space-y-1">
                   {detectedTargets.map((tar, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-[8.5px] font-mono bg-black/40 border border-white/5 p-1.5 rounded">
-                      <span className="text-slate-350">{tar.class}</span>
+                    <div key={idx} className="flex justify-between items-center text-[8.5px] font-mono bg-black/40 border border-emerald-300 dark:border-white/5 p-1.5 rounded">
+                      <span className="text-emerald-800 dark:text-slate-350">{tar.class}</span>
                       <span className="text-emerald-400 font-bold">{(tar.conf * 100).toFixed(1)}% match</span>
                     </div>
                   ))}
@@ -1596,7 +1623,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                       className={`p-1.5 text-[8px] font-bold font-mono border rounded text-center transition-all cursor-pointer ${
                         planningAlgorithm === alg.id
                           ? "bg-teal-950/30 border-teal-500 text-teal-350"
-                          : "bg-black/30 border-white/5 text-slate-400 hover:bg-[#1a1a24]"
+                          : "bg-black/30 border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:bg-[#1a1a24]"
                       }`}
                     >
                       {alg.label}
@@ -1605,8 +1632,8 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                 </div>
 
                 {/* Inverse Kinematic Input Target coordinates */}
-                <div className="bg-[#15151b] border border-white/5 rounded-xl p-3.5 space-y-3">
-                  <span className="text-[8px] text-teal-300 font-bold block uppercase border-b border-white/5 pb-1">IK Coordinate End-Effector Goal</span>
+                <div className="bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3.5 space-y-3">
+                  <span className="text-[8px] text-teal-300 font-bold block uppercase border-b border-emerald-300 dark:border-white/5 pb-1">IK Coordinate End-Effector Goal</span>
                   
                   <div className="grid grid-cols-3 gap-1.5">
                     <div className="space-y-1">
@@ -1624,7 +1651,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             theta3: Math.round((90 - 45) * 10) / 10
                           });
                         }}
-                        className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 p-1.5 rounded focus:outline-none"
+                        className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 p-1.5 rounded focus:outline-none"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1641,7 +1668,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             theta3: Math.round((90 - 45) * 10) / 10
                           });
                         }}
-                        className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 p-1.5 rounded focus:outline-none"
+                        className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 p-1.5 rounded focus:outline-none"
                       />
                     </div>
                     <div className="space-y-1">
@@ -1653,13 +1680,13 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                           const val = parseInt(e.target.value) || 0;
                           setIkTarget(prev => ({ ...prev, z: val }));
                         }}
-                        className="w-full bg-[#0d0d0f] border border-white/5 text-slate-300 p-1.5 rounded focus:outline-none"
+                        className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 text-emerald-800 dark:text-slate-300 p-1.5 rounded focus:outline-none"
                       />
                     </div>
                   </div>
 
                   {/* Math Kinematics equations */}
-                  <div className="bg-black/35 p-2 rounded text-[7.5px] font-mono leading-relaxed text-slate-400 border border-white/5 text-center">
+                  <div className="bg-black/35 p-2 rounded text-[7.5px] font-mono leading-relaxed text-emerald-700 dark:text-slate-400 border border-emerald-300 dark:border-white/5 text-center">
                     <span className="text-teal-400 block uppercase font-bold text-[8px] mb-1">Decoupled analytical solver</span>
                     θ₁ = atan2(y, x) = <strong className="text-amber-300">{calculatedAngles.theta1}°</strong><br/>
                     θ₂ = acos((x² + y² - L₁² - L₂²) / 2L₁L₂) = <strong className="text-amber-300">{calculatedAngles.theta2}°</strong><br/>
@@ -1686,10 +1713,10 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                   { label: "PERFORMANCE EFFICIENCY", value: "95.6%", desc: "Ideal cycle limits vs current actual rates", color: "text-cyan-400" },
                   { label: "QUALITY RUN RATE", value: "99.2%", desc: "Correct workpiece sorting matches", color: "text-amber-400" },
                 ].map((item, idx) => (
-                  <div key={idx} className="bg-[#15151b] border border-white/5 rounded-xl p-3 flex justify-between items-center">
+                  <div key={idx} className="bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3 flex justify-between items-center">
                     <div className="space-y-0.5">
                       <span className="text-[7.5px] text-slate-500 font-bold uppercase tracking-wider block">{item.label}</span>
-                      <span className="text-[7.5px] text-slate-400 block">{item.desc}</span>
+                      <span className="text-[7.5px] text-emerald-700 dark:text-slate-400 block">{item.desc}</span>
                     </div>
                     <span className={`text-base font-black font-mono tracking-tight ${item.color}`}>{item.value}</span>
                   </div>
@@ -1706,21 +1733,21 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                 <p className="text-[8.5px] text-slate-500">Complete AI Vision mapping and strict category sorting missions to earn environment-specific developer badges.</p>
               </div>
 
-              <div className="bg-[#15151b] border border-white/5 rounded-xl p-3.5 space-y-3">
+              <div className="bg-[#15151b] border border-emerald-300 dark:border-white/5 rounded-xl p-3.5 space-y-3">
                 <div className="flex space-x-2.5 items-center">
                   <div className="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/35 flex items-center justify-center text-purple-400 shrink-0">
                     <Award className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[9.5px] text-slate-200 font-bold block uppercase leading-tight">Robot Automation Track</span>
+                    <span className="text-[9.5px] text-emerald-900 dark:text-slate-200 font-bold block uppercase leading-tight">Robot Automation Track</span>
                     <span className="text-[7.5px] text-slate-500">Status: 50% Course requirements complete</span>
                   </div>
                 </div>
 
-                <div className="space-y-2 border-t border-white/5 pt-2.5">
+                <div className="space-y-2 border-t border-emerald-300 dark:border-white/5 pt-2.5">
                   <div className="text-[8px] text-slate-500 uppercase font-bold">Guided Lab Assignments</div>
                   {labs.map((l) => (
-                    <div key={l.id} className="flex justify-between items-center text-[8.5px] p-2 bg-black/40 border border-white/5 rounded">
+                    <div key={l.id} className="flex justify-between items-center text-[8.5px] p-2 bg-black/40 border border-emerald-300 dark:border-white/5 rounded">
                       <div className="flex items-center space-x-2">
                         {l.status === "completed" ? (
                           <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
@@ -1729,7 +1756,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                         ) : (
                           <EyeOff className="w-3.5 h-3.5 text-slate-600" />
                         )}
-                        <span className={l.status === "locked" ? "text-slate-600 truncate max-w-[170px]" : "text-slate-300 font-medium truncate max-w-[170px]"}>{l.title}</span>
+                        <span className={l.status === "locked" ? "text-slate-600 truncate max-w-[170px]" : "text-emerald-800 dark:text-slate-300 font-medium truncate max-w-[170px]"}>{l.title}</span>
                       </div>
                       <span className="text-[6.5px] text-slate-500 font-extrabold uppercase">{l.reward}</span>
                     </div>
@@ -1740,14 +1767,14 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
           )}
 
           {/* LOWER FIXED TELEMETRY LOGS HEADER */}
-          <div className="border-t border-white/5 pt-3 mt-4 space-y-2">
+          <div className="border-t border-emerald-300 dark:border-white/5 pt-3 mt-4 space-y-2">
             <div className="text-[8px] font-bold uppercase text-slate-500 flex justify-between">
               <span>Collision Risk monitor</span>
               <span className={`animate-pulse ${safetyAlertLevel === "nominal" ? "text-emerald-400" : "text-rose-400"}`}>
                 ● {safetyAlertLevel.toUpperCase()}
               </span>
             </div>
-            <div className="bg-black/40 rounded p-2 text-[7.5px] text-slate-400 font-mono space-y-1 max-h-24 overflow-y-auto border border-white/5">
+            <div className="bg-black/40 rounded p-2 text-[7.5px] text-emerald-700 dark:text-slate-400 font-mono space-y-1 max-h-24 overflow-y-auto border border-emerald-300 dark:border-white/5">
               {collisionLog.map((log, idx) => (
                 <div key={idx} className="truncate select-text">
                   <span className="text-slate-550 select-none">[{new Date().toLocaleTimeString().split(" ")[0]}] </span>
@@ -1764,7 +1791,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
           
           {/* Main Visual selection deck */}
           {activeTab === "workspace-cad" && (
-            <div className="absolute top-3 left-3 bg-black/55 border border-white/5 rounded p-1 flex space-x-1 z-10">
+            <div className="absolute top-3 left-3 bg-black/55 border border-emerald-300 dark:border-white/5 rounded p-1 flex space-x-1 z-10">
               {[
                 { id: "top", label: "Top View (Grid Map)" },
                 { id: "front", label: "Front (Clearance)" },
@@ -1777,7 +1804,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                   className={`px-2.5 py-1 text-[8.5px] font-mono rounded select-all cursor-pointer ${
                     cadProjection === proj.id
                       ? "bg-teal-900/40 border border-teal-500/30 text-teal-300 font-bold"
-                      : "text-slate-500 hover:text-slate-300"
+                      : "text-slate-500 hover:text-emerald-800 dark:text-slate-300"
                   }`}
                 >
                   {proj.label}
@@ -1791,7 +1818,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
             
             {/* VIEWBOARD 1: COMPREHENSIVE FACTORY ENVIRONMENT BLUEPRINT MODIFIER */}
             {activeTab === "workspace-cad" && (
-              <div className="relative border border-white/5 bg-[#09090c] rounded-xl shadow-2xl p-2 w-full h-full max-w-4xl flex flex-col justify-between">
+              <div className="relative border border-emerald-300 dark:border-white/5 bg-[#09090c] rounded-xl shadow-2xl p-2 w-full h-full max-w-4xl flex flex-col justify-between">
                 
                 {/* Drag-n-drop interactive SVG scene */}
                 <div className="flex-1 relative w-full h-full border border-teal-500/10 rounded-lg overflow-hidden flex items-center justify-center select-none bg-[radial-gradient(rgba(34,197,94,0.06)_1px,transparent_1px)] [background-size:20px_20px]">
@@ -1834,9 +1861,13 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                     </div>
                   ) : (
                   <svg 
+                    ref={cadSvgRef}
                     viewBox="0 0 500 320" 
-                    className="w-full h-full max-w-2xl max-h-[360px] relative z-10"
+                    className="w-full h-full max-w-2xl max-h-[360px] relative z-10 touch-none"
                     onClick={() => setSelectedCADId(null)}
+                    onPointerMove={handlePointerMoveCAD}
+                    onPointerUp={handlePointerUpCAD}
+                    onPointerLeave={handlePointerUpCAD}
                   >
                     {/* Top Blueprint View */}
                     {cadProjection === "top" && (
@@ -1867,6 +1898,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                             <g 
                               key={obj.id} 
                               transform={`translate(${obj.x}, ${obj.y}) rotate(${obj.rotation})`}
+                              onPointerDown={(e) => handlePointerDownCAD(e, obj.id)}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedCADId(obj.id);
@@ -2034,19 +2066,19 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                 </div>
 
                 {/* Live Sequence Recording Timeline Deck */}
-                <div className="bg-black/45 border border-white/5 rounded-lg p-2 font-mono text-[9px] mt-1.5 mb-1">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 text-slate-300">
+                <div className="bg-black/45 border border-emerald-300 dark:border-white/5 rounded-lg p-2 font-mono text-[9px] mt-1.5 mb-1">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 text-emerald-800 dark:text-slate-300">
                     
                     {/* Viewport & recording triggers */}
                     <div className="flex items-center space-x-3 shrink-0">
-                      <div className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-[#17171e] text-[8px] font-bold text-slate-400">
+                      <div className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-[#17171e] text-[8px] font-bold text-emerald-700 dark:text-slate-400">
                         <Video className={`w-3.5 h-3.5 mr-1 ${isRecordingSim ? "text-rose-500 animate-pulse" : "text-slate-500"}`} />
                         <span>CAMERA SIMULATOR FEED:</span>
                       </div>
                       <select 
                         value={activeCameraView} 
                         onChange={(e) => setActiveCameraView(e.target.value)}
-                        className="bg-[#141416] border border-white/10 text-slate-200 text-[8.5px] py-0.5 px-2 rounded focus:outline-none cursor-pointer"
+                        className="bg-[#141416] border border-emerald-400 dark:border-white/10 text-emerald-900 dark:text-slate-200 text-[8.5px] py-0.5 px-2 rounded focus:outline-none cursor-pointer"
                       >
                         <option value="CCTV-Overhead-01">CCTV-Overhead-01 (Spatial Map)</option>
                         <option value="Arm-Terminal-EndEff">Arm-Terminal-EndEff (Gripper Focus)</option>
@@ -2059,7 +2091,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                         className={`px-2.5 py-1 rounded font-bold transition-all text-[8px] uppercase cursor-pointer flex items-center ${
                           isRecordingSim 
                             ? "bg-rose-950/40 border border-rose-500 text-rose-300" 
-                            : "bg-[#1c1c24] hover:bg-slate-800 border border-white/10 text-slate-200"
+                            : "bg-[#1c1c24] hover:bg-slate-800 border border-emerald-400 dark:border-white/10 text-emerald-900 dark:text-slate-200"
                         }`}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isRecordingSim ? "bg-rose-500 animate-ping" : "bg-rose-600"}`} />
@@ -2096,7 +2128,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                 </div>
 
                 {/* Grid guidelines & tools belt */}
-                <div className="flex justify-between items-center text-[8.5px] border-t border-white/5 pt-2 font-mono text-slate-500">
+                <div className="flex justify-between items-center text-[8.5px] border-t border-emerald-300 dark:border-white/5 pt-2 font-mono text-slate-500">
                   <div className="flex space-x-3">
                     <label className="flex items-center space-x-1.5 cursor-pointer">
                       <input 
@@ -2117,7 +2149,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                       <span>Cones Overlay</span>
                     </label>
                   </div>
-                  <span className="uppercase text-[8px] bg-white/5 px-2 py-0.5 rounded text-slate-400">
+                  <span className="uppercase text-[8px] bg-white/5 px-2 py-0.5 rounded text-emerald-700 dark:text-slate-400">
                     Physics Engine: <b>Bullet-v2.6</b> (Active WebGL Layer)
                   </span>
                 </div>
@@ -2127,8 +2159,8 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
 
             {/* VIEWBOARD 2: ACTUATOR AND LINK LINKAGES SCHEMATIC BUILDER */}
             {activeTab === "robot-builder" && (
-              <div className="border border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
-                <div className="flex justify-between text-[10px] border-b border-white/5 pb-2">
+              <div className="border border-emerald-300 dark:border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
+                <div className="flex justify-between text-[10px] border-b border-emerald-300 dark:border-white/5 pb-2">
                   <span className="text-teal-400 font-extrabold uppercase">Kinematic Skeleton Schematic (Denavit-Hartenberg)</span>
                   <span className="text-slate-500">Total Arm Payload Limits: <b>{customJoints.reduce((sum, j) => sum + j.mass, 0).toFixed(1)}kg</b></span>
                 </div>
@@ -2226,7 +2258,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                   </svg>
                 </div>
 
-                <div className="bg-[#111115] p-2.5 rounded-lg border border-white/5 text-[8px] font-mono leading-relaxed text-slate-400">
+                <div className="bg-[#111115] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5 text-[8px] font-mono leading-relaxed text-emerald-700 dark:text-slate-400">
                   <span className="text-teal-400 block uppercase font-extrabold text-[8.5px] mb-1">Actuation Dynamics Solver Matrix</span>
                   Link lengths parsed into <b>Forward DH kinematics model</b>. Torque bounds calculated via inertial momentum vector equations. Ensure voltage constraints (48V nominal) stay compatible with peak BLDC power draw demands.
                 </div>
@@ -2235,14 +2267,14 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
 
             {/* VIEWBOARD 3: INTERACTIVE PLC LADDER LOGIC & SIGNAL STATE COMPILER */}
             {activeTab === "automation-plc" && (
-              <div className="border border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
-                <div className="flex justify-between text-[10px] border-b border-white/5 pb-2">
+              <div className="border border-emerald-300 dark:border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
+                <div className="flex justify-between text-[10px] border-b border-emerald-300 dark:border-white/5 pb-2">
                   <span className="text-teal-400 font-extrabold uppercase">Interactive IEC 61131 Ladder Diagram (LD)</span>
                   <span className="text-slate-500">Scan Frequency Cycle: <b>20 Hz (Stateful)</b></span>
                 </div>
 
                 {/* Ladder logic board rendering */}
-                <div className="flex-1 w-full min-h-[200px] border border-white/5 rounded-lg bg-black/45 my-2 p-4 select-none relative overflow-y-auto">
+                <div className="flex-1 w-full min-h-[200px] border border-emerald-300 dark:border-white/5 rounded-lg bg-black/45 my-2 p-4 select-none relative overflow-y-auto">
                   {/* Two vertical power rails */}
                   <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-cyan-700/60" title="Hot Rail L1" />
                   <div className="absolute right-4 top-0 bottom-0 w-0.5 bg-slate-700" title="Return Rail L2" />
@@ -2279,35 +2311,35 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                           )}
 
                           {/* Contact symbol 1 */}
-                          <div className="absolute left-10 flex items-center space-x-1 font-mono text-[9px] bg-[#0c0c0f] px-2 border border-white/5 rounded z-10">
+                          <div className="absolute left-10 flex items-center space-x-1 font-mono text-[9px] bg-[#0c0c0f] px-2 border border-emerald-300 dark:border-white/5 rounded z-10">
                             <span className="text-slate-500 font-bold uppercase shrink-0">In1:</span>
                             <span className="text-cyan-400 select-all font-semibold max-w-[100px] truncate">{rung.inputVar1}</span>
                             {/* Visual contact icon */}
                             {rung.inputContact1 === "normally_open" ? (
-                              <span className={`font-bold ml-1 px-1 py-0.2 select-none border rounded text-[8px] ${contact1Closed ? "bg-teal-900 border-teal-500 text-teal-300 font-black" : "bg-black/50 text-slate-500 border-white/5"}`}>---| |---</span>
+                              <span className={`font-bold ml-1 px-1 py-0.2 select-none border rounded text-[8px] ${contact1Closed ? "bg-teal-900 border-teal-500 text-teal-300 font-black" : "bg-black/50 text-slate-500 border-emerald-300 dark:border-white/5"}`}>---| |---</span>
                             ) : (
-                              <span className={`font-bold ml-1 px-1 py-0.2 select-none border rounded text-[8px] ${contact1Closed ? "bg-teal-900 border-teal-500 text-teal-300 font-black" : "bg-black/50 text-slate-500 border-white/5"}`}>---|/|---</span>
+                              <span className={`font-bold ml-1 px-1 py-0.2 select-none border rounded text-[8px] ${contact1Closed ? "bg-teal-900 border-teal-500 text-teal-300 font-black" : "bg-black/50 text-slate-500 border-emerald-300 dark:border-white/5"}`}>---|/|---</span>
                             )}
                           </div>
 
                           {/* Optional Contact symbol 2 */}
                           {rung.inputContact2 !== "none" && (
-                            <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-1 font-mono text-[9px] bg-[#0c0c0f] px-2 border border-white/5 rounded z-10">
+                            <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-1 font-mono text-[9px] bg-[#0c0c0f] px-2 border border-emerald-300 dark:border-white/5 rounded z-10">
                               <span className="text-slate-500 font-bold uppercase shrink-0">In2:</span>
                               <span className="text-cyan-400 font-semibold max-w-[100px] truncate">{rung.inputVar2}</span>
                               {rung.inputContact2 === "normally_open" ? (
-                                <span className={`font-bold ml-1 px-1 py-0.2 select-none border rounded text-[8px] ${contact2Closed ? "bg-teal-900 border-teal-500 text-teal-300 font-black" : "bg-black/50 text-slate-500 border-white/5"}`}>---| |---</span>
+                                <span className={`font-bold ml-1 px-1 py-0.2 select-none border rounded text-[8px] ${contact2Closed ? "bg-teal-900 border-teal-500 text-teal-300 font-black" : "bg-black/50 text-slate-500 border-emerald-300 dark:border-white/5"}`}>---| |---</span>
                               ) : (
-                                <span className={`font-bold ml-1 px-1 py-0.2 select-none border rounded text-[8px] ${contact2Closed ? "bg-teal-900 border-teal-500 text-teal-300 font-black" : "bg-black/50 text-slate-500 border-white/5"}`}>---|/|---</span>
+                                <span className={`font-bold ml-1 px-1 py-0.2 select-none border rounded text-[8px] ${contact2Closed ? "bg-teal-900 border-teal-500 text-teal-300 font-black" : "bg-black/50 text-slate-500 border-emerald-300 dark:border-white/5"}`}>---|/|---</span>
                               )}
                             </div>
                           )}
 
                           {/* Output Coil symbol */}
-                          <div className="absolute right-12 flex items-center space-x-1 bg-[#0c0c0f] border border-white/5 rounded px-2 text-[9px] z-10 font-mono">
+                          <div className="absolute right-12 flex items-center space-x-1 bg-[#0c0c0f] border border-emerald-300 dark:border-white/5 rounded px-2 text-[9px] z-10 font-mono">
                             <span className="text-slate-500 font-bold uppercase shrink-0">Coil:</span>
                             <span className="text-teal-3/10 font-bold uppercase text-[9px] text-[#f472b6] truncate max-w-[110px]">{rung.outputCoil}</span>
-                            <span className={`font-bold ml-1 px-1.5 py-0.2 select-none border rounded-full text-[8px] ${outputCoilOn ? "bg-teal-950 border-teal-500 text-teal-300 font-black animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.5)]" : "bg-black text-slate-500 border-white/5"}`}>( )</span>
+                            <span className={`font-bold ml-1 px-1.5 py-0.2 select-none border rounded-full text-[8px] ${outputCoilOn ? "bg-teal-950 border-teal-500 text-teal-300 font-black animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.5)]" : "bg-black text-slate-500 border-emerald-300 dark:border-white/5"}`}>( )</span>
                           </div>
 
                           {/* Line status tag */}
@@ -2321,20 +2353,20 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
                 </div>
 
                 {/* Automation Log */}
-                <div className="bg-[#111115] p-2.5 rounded-lg border border-white/5">
+                <div className="bg-[#111115] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5">
                   <div className="text-[8px] font-bold uppercase text-slate-500 mb-1 flex items-center space-x-2">
                     <Terminal className="w-3 h-3 text-teal-400" />
                     <span>Structured Text (ST) state loop validation compiler</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[8px] font-mono text-slate-400 leading-normal">
-                    <div className="bg-black/50 rounded p-1.5 border border-white/5 whitespace-pre">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[8px] font-mono text-emerald-700 dark:text-slate-400 leading-normal">
+                    <div className="bg-black/50 rounded p-1.5 border border-emerald-300 dark:border-white/5 whitespace-pre">
 {`IF CONVEYOR_SENSOR AND NOT E_STOP_TRIPPED THEN
   ARM_TRIGGER_READY := TRUE;
 ELSE
   ARM_TRIGGER_READY := FALSE;
 END_IF;`}
                     </div>
-                    <div className="bg-black/50 rounded p-1.5 border border-white/5 h-full overflow-y-auto max-h-16">
+                    <div className="bg-black/50 rounded p-1.5 border border-emerald-300 dark:border-white/5 h-full overflow-y-auto max-h-16">
                       {plcCompileLog.map((log, idx) => <div key={idx}><span className="text-teal-400">►</span> {log}</div>)}
                     </div>
                   </div>
@@ -2344,14 +2376,14 @@ END_IF;`}
 
             {/* VIEWBOARD 4: MACHINE VISION CALIBRATION RADAR LAB */}
             {activeTab === "vision-lab" && (
-              <div className="border border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
-                <div className="flex justify-between text-[10px] border-b border-white/5 pb-2">
+              <div className="border border-emerald-300 dark:border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
+                <div className="flex justify-between text-[10px] border-b border-emerald-300 dark:border-white/5 pb-2">
                   <span className="text-teal-400 font-extrabold uppercase">Optic Inference Neural Sandbox Frame</span>
                   <span className="text-slate-500">Live AI Model: <b>YOLOv9-S (TensorRT Accelerated)</b></span>
                 </div>
 
                 {/* CCTV camera feedback representation with overlay boxes */}
-                <div className="flex-1 border border-white/5 rounded-lg bg-black/40 my-2 select-none relative overflow-hidden flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.15)_0%,transparent_75%)]">
+                <div className="flex-1 border border-emerald-300 dark:border-white/5 rounded-lg bg-black/40 my-2 select-none relative overflow-hidden flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.15)_0%,transparent_75%)]">
                   
                   {/* Camera lens grid overlay */}
                   <div className="absolute inset-x-8 inset-y-6 border border-cyan-500/10 rounded pointer-events-none" />
@@ -2419,7 +2451,7 @@ END_IF;`}
 
                 </div>
 
-                <div className="bg-[#111115] p-2.5 rounded-lg border border-white/5 text-[8.5px] font-mono leading-relaxed text-slate-400">
+                <div className="bg-[#111115] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5 text-[8.5px] font-mono leading-relaxed text-emerald-700 dark:text-slate-400">
                   <span className="text-teal-400 block uppercase font-extrabold text-[8.5px] mb-1">Optical Calibration Diagnostics</span>
                   YOLO v9 Deep Learning classifier bounds humans vs hardware parts. Depth estimates generated from stereo disparity triangulation matrices automatically output safety alarms if field limits are breached.
                 </div>
@@ -2428,14 +2460,14 @@ END_IF;`}
 
             {/* VIEWBOARD 5: MOTION PLANNING PATHFINDING OVERLAY DECK */}
             {activeTab === "motion-planning" && (
-              <div className="border border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
-                <div className="flex justify-between text-[10px] border-b border-white/5 pb-2">
+              <div className="border border-emerald-300 dark:border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
+                <div className="flex justify-between text-[10px] border-b border-emerald-300 dark:border-white/5 pb-2">
                   <span className="text-teal-400 font-extrabold uppercase">Path Planning Algorithms Visualizer</span>
                   <span className="text-slate-500">Method: <b>{planningAlgorithm.replace("_", " ")} Network</b></span>
                 </div>
 
                 {/* Paths finding board mapping with dots and links */}
-                <div className="flex-1 w-full min-h-[220px] border border-white/5 rounded-lg bg-black/45 my-2 p-3 font-mono text-slate-400 select-none relative overflow-hidden flex items-center justify-center">
+                <div className="flex-1 w-full min-h-[220px] border border-emerald-300 dark:border-white/5 rounded-lg bg-black/45 my-2 p-3 font-mono text-emerald-700 dark:text-slate-400 select-none relative overflow-hidden flex items-center justify-center">
                   <svg viewBox="0 0 460 200" className="w-full max-w-xl h-full max-h-[190px]">
                     {/* Grid mesh backdrop */}
                     <g opacity="0.1">
@@ -2527,7 +2559,7 @@ END_IF;`}
                   </svg>
                 </div>
 
-                <div className="bg-[#111115] p-2.5 rounded-lg border border-white/5 text-[8px] font-mono leading-relaxed text-slate-400">
+                <div className="bg-[#111115] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5 text-[8px] font-mono leading-relaxed text-emerald-700 dark:text-slate-400">
                   <span className="text-teal-400 block uppercase font-extrabold text-[8.5px] mb-1">Dynamic Path planning calculations</span>
                   Calculates coordinates through linear trajectory interpolations. Standard splines/bezier math ensures acceleration profile smoothing, eliminating severe physical armature shaking at joint pivot clamps.
                 </div>
@@ -2536,14 +2568,14 @@ END_IF;`}
 
             {/* VIEWBOARD 6: ENTERPRISE ANALYTICS GRAPHS CHART */}
             {activeTab === "analytics-center" && (
-              <div className="border border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
-                <div className="flex justify-between text-[10px] border-b border-white/5 pb-2">
+              <div className="border border-emerald-300 dark:border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
+                <div className="flex justify-between text-[10px] border-b border-emerald-300 dark:border-white/5 pb-2">
                   <span className="text-teal-400 font-extrabold uppercase">Live Factory Power Grid Metrics & OEE Curves</span>
                   <span className="text-slate-500">Telemetry Sampling: <b>Continuous Real-time</b></span>
                 </div>
 
                 {/* Draw custom SVG chart showing efficiency metrics over time */}
-                <div className="flex-1 border border-white/5 rounded-lg bg-black/45 my-2 p-3 font-mono text-slate-400 select-none relative overflow-hidden flex flex-col justify-between">
+                <div className="flex-1 border border-emerald-300 dark:border-white/5 rounded-lg bg-black/45 my-2 p-3 font-mono text-emerald-700 dark:text-slate-400 select-none relative overflow-hidden flex flex-col justify-between">
                   <div className="flex-1 w-full h-full flex items-center justify-center pt-2">
                     <svg viewBox="0 0 420 160" className="w-full max-w-lg h-full max-h-[140px]">
                       {/* Grid lines */}
@@ -2582,7 +2614,7 @@ END_IF;`}
                     </svg>
                   </div>
 
-                  <div className="flex justify-between items-center text-[7.5px] border-t border-white/5 pt-2 text-slate-500 font-mono">
+                  <div className="flex justify-between items-center text-[7.5px] border-t border-emerald-300 dark:border-white/5 pt-2 text-slate-500 font-mono">
                     <div className="flex space-x-3">
                       <span className="flex items-center space-x-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
@@ -2597,7 +2629,7 @@ END_IF;`}
                   </div>
                 </div>
 
-                <div className="bg-[#111115] p-2.5 rounded-lg border border-white/5 text-[8.5px] font-mono leading-relaxed text-slate-400">
+                <div className="bg-[#111115] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5 text-[8.5px] font-mono leading-relaxed text-emerald-700 dark:text-slate-400">
                   <span className="text-teal-400 block font-extrabold uppercase text-[8.5px] mb-1">Predictive Bottleneck Diagnostics</span>
                   OEE curves trace optimal motor utilization vs power factor limits. Integrated AI algorithm forecasts hardware thermal breakdowns 12 days prior to mechanical joint locking fatigue.
                 </div>
@@ -2606,8 +2638,8 @@ END_IF;`}
 
             {/* VIEWBOARD 7: LEARNING ACADEMY COURSE PROGRESS GRAPH */}
             {activeTab === "learning-academy" && (
-              <div className="border border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
-                <div className="flex justify-between text-[10px] border-b border-white/5 pb-2">
+              <div className="border border-emerald-300 dark:border-white/5 bg-[#09090c] rounded-xl p-4 w-full h-full max-w-4xl flex flex-col justify-between">
+                <div className="flex justify-between text-[10px] border-b border-emerald-300 dark:border-white/5 pb-2">
                   <span className="text-teal-400 font-extrabold uppercase">Engineering certification milestones tracker</span>
                   <span className="text-slate-500">Track: <b>Industrial Robotics Architect V2</b></span>
                 </div>
@@ -2625,8 +2657,8 @@ END_IF;`}
                         key={idx} 
                         className={`p-3.5 rounded-xl border flex flex-col items-center justify-between text-center transition-all ${
                           badge.isEarned 
-                            ? "bg-teal-950/20 border-teal-500 text-slate-200 shadow shadow-teal-500/10" 
-                            : "bg-[#111114] border-white/5 text-slate-500"
+                            ? "bg-teal-950/20 border-teal-500 text-emerald-900 dark:text-slate-200 shadow shadow-teal-500/10" 
+                            : "bg-[#111114] border-emerald-300 dark:border-white/5 text-slate-500"
                         }`}
                       >
                         <div className={`w-11 h-11 rounded-full border flex items-center justify-center mb-1.5 font-bold ${
@@ -2648,7 +2680,7 @@ END_IF;`}
                   </div>
                 </div>
 
-                <div className="bg-[#111115] p-2.5 rounded-lg border border-white/5 text-[8.5px] font-mono leading-relaxed text-slate-400">
+                <div className="bg-[#111115] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5 text-[8.5px] font-mono leading-relaxed text-emerald-700 dark:text-slate-400">
                   <span className="text-teal-400 block font-extrabold uppercase text-[8.5px] mb-1">Academic Credentials status</span>
                   Earn digital badges matching accredited technical factory automation courses. Synchronize and test physical scripts to verify full kinematics compliance and secure your official digital engineer resume credentials.
                 </div>

@@ -3,11 +3,12 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Book, FileText, Scale, ChevronRight, Terminal, Menu } from 'lucide-react';
 
-// Eagerly import all Markdown files from the root and Legal folders as raw text
+// Eagerly import all Markdown files from the root, Legal, and public folders as raw text
 const rawDocsRoot = import.meta.glob('../../*.md', { query: '?raw', import: 'default', eager: true });
 const rawDocsLegal = import.meta.glob('../../Legal/*.md', { query: '?raw', import: 'default', eager: true });
+const rawDocsPublic = import.meta.glob('../../public/**/*.md', { query: '?raw', import: 'default', eager: true });
 
-const allDocs = { ...rawDocsRoot, ...rawDocsLegal };
+const allDocs = { ...rawDocsRoot, ...rawDocsLegal, ...rawDocsPublic };
 
 type DocItem = {
   path: string;
@@ -27,6 +28,7 @@ export default function DocsPage() {
         if (name === 'ASCADS_DEVELOPER_VISION') name = 'Developer Vision';
         else if (name === 'ENGIGRAPH_3D_MANUAL') name = 'EngiGraph 3D Manual';
         else if (name === 'veo_license_package (1)') name = 'VEO License Package';
+        else if (name === 'ENGIGRAPH_BUILD_KNOWLEDGE') name = 'EngiGraph Build Knowledge';
         else if (name === 'README') name = 'System README';
         else name = name.replace(/_/g, ' ');
 

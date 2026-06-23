@@ -4,9 +4,10 @@ import { ComponentType, SidebarTab } from '../types';
 import { 
   Component as ComponentIcon, Cpu, Zap, Activity, ToggleLeft, 
   Search, Grid, LayoutGrid, List, Info, ChevronRight, 
-  Terminal, ShieldCheck, Microscope, Layers, Play, StopCircle, RefreshCcw
+  Terminal, ShieldCheck, Microscope, Layers, Play, StopCircle, RefreshCcw, ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import ScopeOverlay from './ScopeOverlay';
 
 interface SidebarProps {
   onAddComponent: (type: ComponentType) => void;
@@ -17,6 +18,7 @@ interface SidebarProps {
   onToggleSimulation: () => void;
   activeTab: SidebarTab;
   setActiveTab: (tab: SidebarTab) => void;
+  scopeHistory?: React.MutableRefObject<{ ch1: number[]; ch2: number[] }>;
 }
 
 const Sidebar = React.memo(({ 
@@ -27,7 +29,8 @@ const Sidebar = React.memo(({
   isSimulating, 
   onToggleSimulation,
   activeTab,
-  setActiveTab
+  setActiveTab,
+  scopeHistory
 }: SidebarProps) => {
   const selectedComponent = design.components.find((c: any) => c.id === selectedComponentId);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -172,6 +175,23 @@ const Sidebar = React.memo(({
                               </button>
                             ))}
                           </div>
+                        ) : key === 'timeBase' ? (
+                          <div className="relative">
+                            <select
+                              value={value as string}
+                              onChange={(e) => {
+                                const newProps = { ...selectedComponent.properties, [key]: e.target.value };
+                                onUpdateProperties(selectedComponent.id, { properties: newProps });
+                              }}
+                              className="w-full bg-slate-950 border border-slate-800 p-3 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500 rounded-xl transition-all appearance-none"
+                            >
+                              <option value="ms">Milliseconds (ms)</option>
+                              <option value="s">Seconds (s)</option>
+                            </select>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-700 pointer-events-none">
+                              <ChevronDown size={12} />
+                            </div>
+                          </div>
                         ) : (
                           <div className="relative">
                              <input
@@ -280,6 +300,8 @@ const Sidebar = React.memo(({
                  <span className="text-[8px] font-black text-indigo-400/60 uppercase tracking-[.25em]">Siyabonga Solver v4.2</span>
                  <p className="text-[9px] text-slate-500 leading-relaxed font-medium italic">"The invisible eye that bridges logic and reality."</p>
               </div>
+
+              {scopeHistory && <ScopeOverlay design={design} scopeHistory={scopeHistory} />}
             </motion.div>
           )}
         </AnimatePresence>

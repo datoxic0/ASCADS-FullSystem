@@ -68,10 +68,18 @@ export function useCircuit(initialDesign?: CircuitDesign) {
   }, [updateStateAndHistory]);
 
   const updateComponent = useCallback((id: string, updates: Partial<Component>) => {
-    updateStateAndHistory(prev => ({
-      ...prev,
-      components: prev.components.map(c => c.id === id ? { ...c, ...updates } : c)
-    }));
+    updateStateAndHistory(prev => {
+      const isMoving = updates.x !== undefined || updates.y !== undefined;
+      return {
+        ...prev,
+        components: prev.components.map(c => c.id === id ? { ...c, ...updates } : c),
+        connections: isMoving 
+          ? prev.connections.map(conn => 
+              (conn.from === id || conn.to === id) ? { ...conn, points: undefined } : conn
+            )
+          : prev.connections
+      };
+    });
   }, [updateStateAndHistory]);
 
   const removeComponent = useCallback((id: string) => {
@@ -82,13 +90,14 @@ export function useCircuit(initialDesign?: CircuitDesign) {
     }));
   }, [updateStateAndHistory]);
 
-  const addConnection = useCallback((from: string, fromPin: number, to: string, toPin: number) => {
+  const addConnection = useCallback((from: string, fromPin: number, to: string, toPin: number, routing?: 'HVH' | 'VHV') => {
     const newConnection: Connection = {
       id: `conn-${Date.now()}`,
       from,
       fromPin,
       to,
-      toPin
+      toPin,
+      routing
     };
 
     updateStateAndHistory(prev => ({
@@ -101,6 +110,13 @@ export function useCircuit(initialDesign?: CircuitDesign) {
     updateStateAndHistory(prev => ({
       ...prev,
       connections: prev.connections.filter(c => c.id !== id)
+    }));
+  }, [updateStateAndHistory]);
+
+  const updateConnection = useCallback((id: string, updates: Partial<Connection>) => {
+    updateStateAndHistory(prev => ({
+      ...prev,
+      connections: prev.connections.map(c => c.id === id ? { ...c, ...updates } : c)
     }));
   }, [updateStateAndHistory]);
 
@@ -153,6 +169,7 @@ export function useCircuit(initialDesign?: CircuitDesign) {
     updateComponent,
     removeComponent,
     addConnection,
+    updateConnection,
     removeConnection,
     clearDesign,
     setDesign,

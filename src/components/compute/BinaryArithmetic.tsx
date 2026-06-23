@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Minus, X, Divide, Layers, RefreshCw, Copy, CheckCircle2 } from 'lucide-react';
+import { Plus, Minus, X, Divide, Layers, RefreshCw, Copy, CheckCircle2, Calculator, Info } from 'lucide-react';
 import {
   addBinary, subBinary, multiplyBinary, divideBinary,
   andBinary, orBinary, xorBinary, nandBinary, norBinary, xnorBinary,
@@ -128,15 +128,22 @@ export default function BinaryArithmetic() {
               </div>
             </div>
           </div>
-        </aside>
-
-        {/* ── Right panel ── */}
-        <section className="lg:col-span-8 space-y-5">
-
-          {/* Inputs */}
+          
+          <div className="bg-cyan-950/20 border border-cyan-900/30 rounded-xl p-4">
+            <h3 className="text-[9px] font-black text-cyan-700 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+              <Info className="w-3 h-3" /> System Notes
+            </h3>
+            <ul className="text-[9px] text-cyan-200/40 space-y-1.5 leading-relaxed">
+              <li>• Arithmetic operations wrap around based on selected bit width</li>
+              <li>• Division by zero returns ERROR state</li>
+              <li>• Bitwise logic is applied bit-by-bit</li>
+              <li>• Negative numbers use Two's Complement representation</li>
+            </ul>
+          </div>
+          {/* Operands */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
             <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operands</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-4">
               {[
                 { label: 'Operand A', val: inputA, set: setInputA },
                 { label: 'Operand B', val: inputB, set: setInputB },
@@ -153,6 +160,42 @@ export default function BinaryArithmetic() {
               ))}
             </div>
           </div>
+        </aside>
+
+        {/* ── Right panel ── */}
+        <section className="lg:col-span-8 space-y-5 relative min-h-[400px]">
+          {(!inputA.trim() || !inputB.trim() || result.binary === 'ERROR') ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-10">
+              <div className="text-center space-y-4 max-w-lg bg-black/40 backdrop-blur-md p-8 rounded-2xl border border-white/5 shadow-2xl">
+                {result.binary === 'ERROR' ? (
+                  <>
+                    <X size={48} className="mx-auto text-red-500 opacity-50 mb-6" />
+                    <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-300 tracking-widest uppercase mb-2">Arithmetic Error</h2>
+                    <p className="text-red-200/70 text-sm leading-relaxed">The requested operation could not be computed. Check your operands.</p>
+                  </>
+                ) : (
+                  <>
+                    <Calculator size={48} className="mx-auto text-violet-500 opacity-50 mb-6" />
+                    <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-300 tracking-widest uppercase mb-2">Binary Arithmetic</h2>
+                    <p className="text-slate-400 text-sm leading-relaxed">
+                      Enter two operands to instantly see the result of the arithmetic or bitwise operation.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 mt-6">
+                      <div className="bg-white/5 border border-white/10 px-4 py-3 rounded-lg text-xs font-mono text-left">
+                        <span className="text-slate-500 block mb-1">Addition (ADD):</span>
+                        <code className="text-emerald-400">0101 + 0011 = 1000</code>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 px-4 py-3 rounded-lg text-xs font-mono text-left">
+                        <span className="text-slate-500 block mb-1">Bitwise AND:</span>
+                        <code className="text-emerald-400">1100 & 1010 = 1000</code>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-5">
 
           {/* Visual operands */}
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
@@ -228,8 +271,10 @@ export default function BinaryArithmetic() {
               </AnimatePresence>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+        )}
+      </section>
     </div>
-  );
+  </div>
+);
 }

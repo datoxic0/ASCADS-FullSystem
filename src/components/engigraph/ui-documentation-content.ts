@@ -155,5 +155,50 @@ export const DocumentationContent = {
             <li><strong>Actuators:</strong> NEMA 17 Stepper motors and SG90 servos.</li>
         </ul>
         <p>All components include metadata for BOM (Bill of Materials) generation and functional ports for simulation.</p>
+    `,
+
+    caseStudies: `
+        <h1>Mechatronics Three Subjects Learning Case Study</h1>
+        <p><strong>Intro to Computers and SPS | Electrotechnology | Mechatronics Systems</strong></p>
+        <p>This section contains the finalized practical assessments and industrial blueprints for the Mechatronics curriculum.</p>
+
+        <div class="tutorial-card" style="margin-top: 20px;">
+            <h2>1. PLC / Function Block Diagram Interpretation</h2>
+            <p><strong>Environment:</strong> Digital Logic Lab > Sequential Presets</p>
+            <p>This demonstrates simplifying physical switching arrangements using Siemens LOGO! logic principles. The FBD drawing uses main variables, interpreting inversion bubbles correctly rather than treating them as separate switches.</p>
+            <div style="margin: 15px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; background: #fff;">
+                <img src="/case-studies/image3.png" alt="FBD Drawing and Explanation" style="width: 100%; height: auto; object-fit: contain; opacity: 1;" />
+            </div>
+            <ul>
+                <li><strong>Logic:</strong> Z = AB + A'B'</li>
+                <li><strong>Inputs:</strong> A, B</li>
+            </ul>
+        </div>
+
+        <div class="tutorial-card" style="margin-top: 20px;">
+            <h2>2. Design: Stop/FWD/REV DC Motor Control</h2>
+            <p><strong>Objective:</strong> Implement bidirectional control using 4 relays (R1–R4) and 3 buttons (PB-STOP, PB-FWD, PB-REV).</p>
+            <div style="margin: 15px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; background: #fff;">
+                <img src="/case-studies/image4.png" alt="DC Motor Control Scheme" style="width: 100%; height: auto; object-fit: contain; opacity: 1;" />
+            </div>
+            <ul>
+                <li><strong>FWD Action:</strong> Pressing PB-FWD energizes R1/R2. R1 connects M+ to supply. R2 NO contacts latch the circuit.</li>
+                <li><strong>REV Action:</strong> PB-REV energizes R3/R4, swapping motor polarity. R4 NO contacts latch the reverse state.</li>
+                <li><strong>Safety Interlock:</strong> The coil for R1/R2 is routed through R3 NC contacts; R3/R4 is routed through R1 NC.</li>
+            </ul>
+        </div>
+
+        <div class="tutorial-card" style="margin-top: 20px;">
+            <h2>3. Electro-Pneumatic Single Cycle Diagram</h2>
+            <p><strong>Behavior:</strong> A single PB trigger must execute: Extension → 1s Dwell at limit → Retraction → Termination at home position.</p>
+            <div style="margin: 15px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; background: #fff;">
+                <img src="/case-studies/image7.png" alt="Pneumatic System Diagram" style="width: 100%; height: auto; object-fit: contain; opacity: 1;" />
+            </div>
+            <ul>
+                <li><strong>Stroke Duration (3–5s):</strong> Regulated via one-way flow control valves in the air lines.</li>
+                <li><strong>Pause Duration (1s):</strong> Regulated by an electrical timer within the control logic.</li>
+                <li><strong>Simplified Logic Path:</strong> PB → K1 (Extension) → S2 Sensor → T1 Timer → T1 Timeout → K2 (Retraction) → S1 (Reset)</li>
+            </ul>
+        </div>
     `
 };

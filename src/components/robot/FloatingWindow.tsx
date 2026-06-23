@@ -141,13 +141,13 @@ export default function FloatingWindow({
   if (isMobile) {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-[110] p-4">
-        <div className="bg-[#16161a] border border-white/10 rounded-t-xl sm:rounded-lg w-full max-h-[85vh] shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-150">
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5 shrink-0 bg-[#0f0f12] rounded-t-xl sm:rounded-t-lg">
+        <div className="bg-[#16161a] border border-emerald-400 dark:border-white/10 rounded-t-xl sm:rounded-lg w-full max-h-[85vh] shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-150">
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-emerald-300 dark:border-white/5 shrink-0 bg-[#0f0f12] rounded-t-xl sm:rounded-t-lg">
             <div className="flex items-center space-x-2">
               {icon && <span className="text-blue-500">{icon}</span>}
-              <span className="font-mono text-xs font-semibold text-slate-200 uppercase tracking-wide">{title}</span>
+              <span className="font-mono text-xs font-semibold text-emerald-900 dark:text-slate-200 uppercase tracking-wide">{title}</span>
             </div>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-100 p-1 rounded-full hover:bg-white/5 cursor-pointer transition-colors">
+            <button onClick={onClose} className="text-emerald-700 dark:text-slate-400 hover:text-slate-100 p-1 rounded-full hover:bg-white/5 cursor-pointer transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -181,17 +181,17 @@ export default function FloatingWindow({
     <div
       style={modalStyle}
       onClick={onFocus}
-      className="bg-[#16161a] border border-white/10 rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col select-none transition-shadow animate-in fade-in zoom-in duration-150"
+      className="bg-[#16161a] border border-emerald-400 dark:border-white/10 rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col select-none transition-shadow animate-in fade-in zoom-in duration-150"
     >
       <div
         onMouseDown={handleHeaderMouseDown}
         onDoubleClick={handleHeaderDoubleSelect}
         style={{ cursor: isMaximized ? "default" : "move" }}
-        className="flex items-center justify-between px-4 py-2 border-b border-white/5 shrink-0 bg-[#0f0f12] rounded-t-lg select-none"
+        className="flex items-center justify-between px-4 py-2 border-b border-emerald-300 dark:border-white/5 shrink-0 bg-[#0f0f12] rounded-t-lg select-none"
       >
         <div className="flex items-center space-x-2">
           {icon && <span className="text-blue-500">{icon}</span>}
-          <span className="font-mono text-[10px] font-semibold text-slate-200 uppercase tracking-widest flex items-center space-x-1">
+          <span className="font-mono text-[10px] font-semibold text-emerald-900 dark:text-slate-200 uppercase tracking-widest flex items-center space-x-1">
             <span>{title}</span>
             {!isMaximized && <Move className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1.5" />}
           </span>
@@ -199,13 +199,13 @@ export default function FloatingWindow({
         <div className="flex items-center space-x-1.5 shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); setIsMaximized(!isMaximized); onFocus(); }}
-            className="text-slate-400 hover:text-slate-200 p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
+            className="text-emerald-700 dark:text-slate-400 hover:text-emerald-900 dark:text-slate-200 p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
           >
             {isMaximized ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onClose(); }}
-            className="text-slate-400 hover:text-slate-200 p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
+            className="text-emerald-700 dark:text-slate-400 hover:text-emerald-900 dark:text-slate-200 p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>

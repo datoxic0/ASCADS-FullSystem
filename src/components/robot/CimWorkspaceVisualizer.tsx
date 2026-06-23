@@ -886,13 +886,13 @@ export default function CimWorkspaceVisualizer({
   return (
     <div
       id="cim-visualizer-card"
-      className={`bg-[#1a1a1e] border border-white/5 rounded overflow-hidden flex flex-col h-full shadow-2xl transition-all duration-300 ${isFullscreen ? "fixed inset-0 z-[100] w-screen h-screen rounded-none" : ""}`}
+      className={`bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded overflow-hidden flex flex-col h-full shadow-2xl transition-all duration-300 ${isFullscreen ? "fixed inset-0 z-[100] w-screen h-screen rounded-none" : ""}`}
     >
       {/* Title block & Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 md:px-4 py-2 bg-[#141417] border-b border-white/5 shrink-0 gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 md:px-4 py-2 bg-[#141417] border-b border-emerald-300 dark:border-white/5 shrink-0 gap-2">
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
           <Activity className="w-4 h-4 text-blue-500 animate-pulse shrink-0" />
-          <span className="font-mono text-xs font-semibold text-slate-200 tracking-tight text-white select-none">
+          <span className="font-mono text-xs font-semibold text-emerald-900 dark:text-slate-200 tracking-tight text-white select-none">
             SYS_VIEW_CIM
           </span>
           <span
@@ -905,7 +905,7 @@ export default function CimWorkspaceVisualizer({
                     ? "bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse"
                     : simulationState.status === "error"
                       ? "bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-[0_0_8px_rgba(239,68,68,0.3)] animate-bounce"
-                      : "bg-[#0d0d0f] text-slate-500 border-white/5"
+                      : "bg-[#0d0d0f] text-slate-500 border-emerald-300 dark:border-white/5"
             }`}
           >
             {simulationState.status.toUpperCase()}
@@ -937,7 +937,7 @@ export default function CimWorkspaceVisualizer({
             className={`flex items-center space-x-1 px-1.5 py-0.5 font-mono text-[9px] font-bold rounded cursor-pointer border transition-all duration-300 shrink-0 ${
               simulationState.dryRunMode
                 ? "bg-amber-950/40 text-amber-400 border-amber-600 shadow-[0_0_8px_rgba(245,158,11,0.2)] animate-pulse"
-                : "bg-slate-900 text-slate-500 border-white/5 hover:border-slate-700 hover:text-slate-300"
+                : "bg-slate-900 text-slate-500 border-emerald-300 dark:border-white/5 hover:border-slate-700 hover:text-emerald-800 dark:text-slate-300"
             }`}
           >
             <ShieldAlert className="w-3 h-3 text-amber-500" />
@@ -970,7 +970,7 @@ export default function CimWorkspaceVisualizer({
             className={`flex items-center space-x-1 px-1.5 py-0.5 font-mono text-[9px] font-bold rounded cursor-pointer border transition-all duration-300 shrink-0 ${
               simulationState.profilingEnabled !== false
                 ? "bg-blue-955/40 text-blue-400 border-blue-600 shadow-[0_0_8px_rgba(59,130,246,0.2)]"
-                : "bg-slate-900 text-slate-500 border-white/5 hover:border-slate-700 hover:text-slate-300"
+                : "bg-slate-900 text-slate-500 border-emerald-300 dark:border-white/5 hover:border-slate-700 hover:text-emerald-800 dark:text-slate-300"
             }`}
           >
             <Sliders className="w-3 h-3 text-blue-500" />
@@ -993,21 +993,21 @@ export default function CimWorkspaceVisualizer({
             <button
               onClick={() => setShowGrid(!showGrid)}
               title="Toggle Grid Lines"
-              className={`p-1 rounded transition-colors ${showGrid ? "text-blue-400 bg-[#0d0d0f]" : "text-slate-600 hover:text-slate-300"}`}
+              className={`p-1 rounded transition-colors ${showGrid ? "text-blue-400 bg-[#0d0d0f]" : "text-slate-600 hover:text-emerald-800 dark:text-slate-300"}`}
             >
               <Eye className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setShowAngles(!showAngles)}
               title="Toggle Angle Guides"
-              className={`p-1 rounded transition-colors ${showAngles ? "text-blue-400 bg-[#0d0d0f]" : "text-slate-600 hover:text-slate-300"}`}
+              className={`p-1 rounded transition-colors ${showAngles ? "text-blue-400 bg-[#0d0d0f]" : "text-slate-600 hover:text-emerald-800 dark:text-slate-300"}`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setShowTerminal(!showTerminal)}
               title="Toggle Terminal HUD"
-              className={`p-1 rounded transition-colors mr-1 cursor-pointer ${showTerminal ? "text-blue-400 bg-[#0d0d0f]" : "text-slate-600 hover:text-slate-300"}`}
+              className={`p-1 rounded transition-colors mr-1 cursor-pointer ${showTerminal ? "text-blue-400 bg-[#0d0d0f]" : "text-slate-600 hover:text-emerald-800 dark:text-slate-300"}`}
             >
               <TerminalIcon className="w-3.5 h-3.5" />
             </button>
@@ -1032,12 +1032,12 @@ export default function CimWorkspaceVisualizer({
       </div>
 
       {/* Primary Simulation Workspace (Always visible, responsive scaling consuming remaining space) */}
-      <div className="relative flex-1 w-full min-h-[250px] sm:min-h-[300px] md:min-h-[380px] bg-[#0d0d0f] flex flex-col items-center justify-center p-1.5 group select-none border-b border-white/5">
+      <div className="relative flex-1 w-full min-h-[250px] sm:min-h-[300px] md:min-h-[380px] bg-[#0d0d0f] flex flex-col items-center justify-center p-1.5 group select-none border-b border-emerald-300 dark:border-white/5">
         {showTerminal && logs && (
-          <div className="absolute top-4 right-4 w-80 max-h-[40%] bg-black/80 backdrop-blur-sm border border-white/10 rounded overflow-hidden flex flex-col z-20 shadow-2xl">
-            <div className="flex items-center space-x-2 px-3 py-1.5 bg-white/5 border-b border-white/5 shrink-0">
+          <div className="absolute top-4 right-4 w-80 max-h-[40%] bg-black/80 backdrop-blur-sm border border-emerald-400 dark:border-white/10 rounded overflow-hidden flex flex-col z-20 shadow-2xl">
+            <div className="flex items-center space-x-2 px-3 py-1.5 bg-white/5 border-b border-emerald-300 dark:border-white/5 shrink-0">
               <TerminalIcon className="w-3 h-3 text-blue-400" />
-              <span className="font-mono text-[9px] font-bold text-slate-300 tracking-wider">EXECUTION LOGS</span>
+              <span className="font-mono text-[9px] font-bold text-emerald-800 dark:text-slate-300 tracking-wider">EXECUTION LOGS</span>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1.5 min-h-0">
               {logs.length === 0 && (
@@ -1061,7 +1061,7 @@ export default function CimWorkspaceVisualizer({
         {viewMode === "3D" ? (
            <div className="w-full h-full bg-[#0a0a0c] rounded">
               <Robot3DCanvas joints={displayJoints} robotDesign={robotDesign} workpieces={workpieces} />
-              <div className="absolute top-4 left-4 bg-black/60 text-[10px] text-white/50 px-2 py-1 rounded font-mono border border-white/5 pointer-events-none z-10">
+              <div className="absolute top-4 left-4 bg-black/60 text-[10px] text-white/50 px-2 py-1 rounded font-mono border border-emerald-300 dark:border-white/5 pointer-events-none z-10">
                  LIVING DIGITAL TWIN RENDERING ENGINE (3D MODE)
               </div>
            </div>
@@ -2310,7 +2310,7 @@ export default function CimWorkspaceVisualizer({
         </svg>
 
         {/* Interactive Tooltip Helper */}
-        <div className="absolute top-2.5 left-2.5 bg-[#1a1a1e]/90 border border-white/5 rounded px-1.5 py-0.5 text-[8.5px] font-mono text-slate-400 capitalize pointer-events-none backdrop-blur-sm shadow">
+        <div className="absolute top-2.5 left-2.5 bg-[#1a1a1e]/90 border border-emerald-300 dark:border-white/5 rounded px-1.5 py-0.5 text-[8.5px] font-mono text-emerald-700 dark:text-slate-400 capitalize pointer-events-none backdrop-blur-sm shadow">
           <span className="text-slate-500 mr-1 font-semibold">T_EFF_LINK:</span>
           <span className="text-slate-100">X={cartesianX}mm</span>,{" "}
           <span className="text-slate-100 font-mono">Y={cartesianY}mm</span>
@@ -2339,13 +2339,13 @@ export default function CimWorkspaceVisualizer({
                 <Box className="w-3.5 h-3.5 text-blue-500 animate-spin-slow" />
                 <span>Interactive Workspace Control Tips</span>
               </h4>
-              <p className="text-[8.5px] text-slate-400 leading-normal mb-2">
+              <p className="text-[8.5px] text-emerald-700 dark:text-slate-400 leading-normal mb-2">
                 Welcome to the VoltLogic PRO simulator sandbox. The active
                 workspace has multiple interactive zones for structural testing
                 and validation:
               </p>
 
-              <ul className="list-disc pl-4 space-y-1.5 text-slate-400 text-[9px] leading-relaxed">
+              <ul className="list-disc pl-4 space-y-1.5 text-emerald-700 dark:text-slate-400 text-[9px] leading-relaxed">
                 <li>
                   <strong className="text-blue-300">Inverse Kinematics:</strong>{" "}
                   Click and drag the{" "}
@@ -2372,7 +2372,7 @@ export default function CimWorkspaceVisualizer({
               </ul>
             </div>
 
-            <div className="bg-[#16161a] border border-white/5 p-2 rounded text-[7.5px] font-mono leading-normal text-slate-500">
+            <div className="bg-[#16161a] border border-emerald-300 dark:border-white/5 p-2 rounded text-[7.5px] font-mono leading-normal text-slate-500">
               * Click the <strong className="text-red-500">Pendant</strong>,{" "}
               <strong className="text-amber-500">Teach/Calib</strong>, or{" "}
               <strong className="text-blue-500">Diagnostics</strong> tabs to
@@ -2459,18 +2459,18 @@ export default function CimWorkspaceVisualizer({
             </div>
 
             {/* Jog Config Controls Bar */}
-            <div className="grid grid-cols-2 gap-3.5 bg-[#141417] p-2.5 rounded-lg border border-white/5">
+            <div className="grid grid-cols-2 gap-3.5 bg-[#141417] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5">
               <div>
                 <label className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block mb-1">
                   Jog Frame Standard
                 </label>
-                <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-white/5">
+                <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-emerald-300 dark:border-white/5">
                   <button
                     onClick={() => setJogMode("CARTESIAN")}
                     className={`flex-1 text-[9px] py-1 rounded transition-colors uppercase ${
                       jogMode === "CARTESIAN"
                         ? "bg-red-600 text-white font-bold"
-                        : "text-slate-400 hover:text-slate-100"
+                        : "text-emerald-700 dark:text-slate-400 hover:text-slate-100"
                     }`}
                   >
                     Cartesian
@@ -2480,7 +2480,7 @@ export default function CimWorkspaceVisualizer({
                     className={`flex-1 text-[9px] py-1 rounded transition-colors uppercase ${
                       jogMode === "JOINT"
                         ? "bg-red-600 text-white font-bold"
-                        : "text-slate-400 hover:text-slate-100"
+                        : "text-emerald-700 dark:text-slate-400 hover:text-slate-100"
                     }`}
                   >
                     Joints
@@ -2492,7 +2492,7 @@ export default function CimWorkspaceVisualizer({
                 <label className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block mb-1">
                   Jog Increment Size
                 </label>
-                <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-white/5 gap-0.5 font-mono text-[9.5px]">
+                <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-emerald-300 dark:border-white/5 gap-0.5 font-mono text-[9.5px]">
                   {[1, 5, 10, 25].map((s) => (
                     <button
                       key={s}
@@ -2500,7 +2500,7 @@ export default function CimWorkspaceVisualizer({
                       className={`flex-1 py-1 rounded transition-colors inline-block ${
                         jogStepSize === s
                           ? "bg-slate-700 text-white font-bold"
-                          : "text-slate-500 hover:text-slate-300"
+                          : "text-slate-500 hover:text-emerald-800 dark:text-slate-300"
                       }`}
                     >
                       {s}
@@ -2511,8 +2511,8 @@ export default function CimWorkspaceVisualizer({
             </div>
 
             {/* Manual Axis Jogging Buttons Grid */}
-            <div className="bg-[#101012] p-2.5 rounded-lg border border-white/5 space-y-2">
-              <div className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 border-b border-white/5 pb-1">
+            <div className="bg-[#101012] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5 space-y-2">
+              <div className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 border-b border-emerald-300 dark:border-white/5 pb-1">
                 <Sliders className="w-3.5 h-3.5 text-red-500" />
                 <span>Link Jogging Actuators ({jogMode} Mode)</span>
               </div>
@@ -2520,8 +2520,8 @@ export default function CimWorkspaceVisualizer({
               {jogMode === "CARTESIAN" ? (
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   {/* Cartesian Jog Row X */}
-                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-white/5">
-                    <span className="font-semibold text-slate-400">
+                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-emerald-300 dark:border-white/5">
+                    <span className="font-semibold text-emerald-700 dark:text-slate-400">
                       Cartesian X
                     </span>
                     <div className="flex gap-1.5">
@@ -2529,7 +2529,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("X", -1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-red-500 font-black cursor-pointer font-mono"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-red-500 font-black cursor-pointer font-mono"
                       >
                         X-
                       </button>
@@ -2537,7 +2537,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("X", 1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-emerald-400 font-black cursor-pointer font-mono"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-emerald-400 font-black cursor-pointer font-mono"
                       >
                         X+
                       </button>
@@ -2545,8 +2545,8 @@ export default function CimWorkspaceVisualizer({
                   </div>
 
                   {/* Cartesian Jog Row Z */}
-                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-white/5">
-                    <span className="font-semibold text-slate-400">
+                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-emerald-300 dark:border-white/5">
+                    <span className="font-semibold text-emerald-700 dark:text-slate-400">
                       Cartesian Z
                     </span>
                     <div className="flex gap-1.5">
@@ -2554,7 +2554,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("Z", -1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-red-500 font-black cursor-pointer font-mono"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-red-500 font-black cursor-pointer font-mono"
                       >
                         Z-
                       </button>
@@ -2562,7 +2562,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("Z", 1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-emerald-400 font-black cursor-pointer font-mono"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-emerald-400 font-black cursor-pointer font-mono"
                       >
                         Z+
                       </button>
@@ -2570,8 +2570,8 @@ export default function CimWorkspaceVisualizer({
                   </div>
 
                   {/* Waist Base Sweep B */}
-                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-white/5">
-                    <span className="font-semibold text-slate-400">
+                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-emerald-300 dark:border-white/5">
+                    <span className="font-semibold text-emerald-700 dark:text-slate-400">
                       Waist (Base B)
                     </span>
                     <div className="flex gap-1.5">
@@ -2579,7 +2579,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("B", -1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-red-500 font-black cursor-pointer font-mono"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-red-500 font-black cursor-pointer font-mono"
                       >
                         B-
                       </button>
@@ -2587,7 +2587,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("B", 1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-emerald-400 font-black cursor-pointer font-mono"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-emerald-400 font-black cursor-pointer font-mono"
                       >
                         B+
                       </button>
@@ -2595,8 +2595,8 @@ export default function CimWorkspaceVisualizer({
                   </div>
 
                   {/* Wrist Pitch Alignment A */}
-                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-white/5">
-                    <span className="font-semibold text-slate-400">
+                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-emerald-300 dark:border-white/5">
+                    <span className="font-semibold text-emerald-700 dark:text-slate-400">
                       Wrist (Pitch A)
                     </span>
                     <div className="flex gap-1.5">
@@ -2604,7 +2604,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("A", -1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-red-500 font-black cursor-pointer font-mono"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-red-500 font-black cursor-pointer font-mono"
                       >
                         A-
                       </button>
@@ -2612,7 +2612,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("A", 1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-emerald-400 font-black cursor-pointer font-mono"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-emerald-400 font-black cursor-pointer font-mono"
                       >
                         A+
                       </button>
@@ -2622,8 +2622,8 @@ export default function CimWorkspaceVisualizer({
               ) : (
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   {/* Joint axis 1 */}
-                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-white/5">
-                    <span className="font-semibold text-slate-400">
+                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-emerald-300 dark:border-white/5">
+                    <span className="font-semibold text-emerald-700 dark:text-slate-400">
                       B (Waist)
                     </span>
                     <div className="flex gap-1.5">
@@ -2631,7 +2631,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("base", -1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-red-500 font-black cursor-pointer"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-red-500 font-black cursor-pointer"
                       >
                         B-
                       </button>
@@ -2639,7 +2639,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("base", 1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-emerald-400 font-black cursor-pointer"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-emerald-400 font-black cursor-pointer"
                       >
                         B+
                       </button>
@@ -2647,8 +2647,8 @@ export default function CimWorkspaceVisualizer({
                   </div>
 
                   {/* Joint axis 2 */}
-                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-white/5">
-                    <span className="font-semibold text-slate-400">
+                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-emerald-300 dark:border-white/5">
+                    <span className="font-semibold text-emerald-700 dark:text-slate-400">
                       J1 (Shoulder)
                     </span>
                     <div className="flex gap-1.5">
@@ -2656,7 +2656,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("shoulder", -1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-red-500 font-black cursor-pointer"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-red-500 font-black cursor-pointer"
                       >
                         J1-
                       </button>
@@ -2664,7 +2664,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("shoulder", 1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-emerald-400 font-black cursor-pointer"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-emerald-400 font-black cursor-pointer"
                       >
                         J1+
                       </button>
@@ -2672,8 +2672,8 @@ export default function CimWorkspaceVisualizer({
                   </div>
 
                   {/* Joint axis 3 */}
-                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-white/5">
-                    <span className="font-semibold text-slate-400">
+                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-emerald-300 dark:border-white/5">
+                    <span className="font-semibold text-emerald-700 dark:text-slate-400">
                       J2 (Elbow)
                     </span>
                     <div className="flex gap-1.5">
@@ -2681,7 +2681,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("elbow", -1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-red-500 font-black cursor-pointer"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-red-500 font-black cursor-pointer"
                       >
                         J2-
                       </button>
@@ -2689,7 +2689,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("elbow", 1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-emerald-400 font-black cursor-pointer"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-emerald-400 font-black cursor-pointer"
                       >
                         J2+
                       </button>
@@ -2697,8 +2697,8 @@ export default function CimWorkspaceVisualizer({
                   </div>
 
                   {/* Joint axis 4 */}
-                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-white/5">
-                    <span className="font-semibold text-slate-400">
+                  <div className="flex items-center justify-between bg-[#141417] p-1.5 rounded border border-emerald-300 dark:border-white/5">
+                    <span className="font-semibold text-emerald-700 dark:text-slate-400">
                       J3 (Wrist)
                     </span>
                     <div className="flex gap-1.5">
@@ -2706,7 +2706,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("wrist", -1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-red-500 font-black cursor-pointer"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-red-500 font-black cursor-pointer"
                       >
                         J3-
                       </button>
@@ -2714,7 +2714,7 @@ export default function CimWorkspaceVisualizer({
                         onClick={() => {
                           jogAxis("wrist", 1);
                         }}
-                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-white/5 rounded text-emerald-400 font-black cursor-pointer"
+                        className="w-8 h-6 bg-[#222226] hover:bg-slate-700 border border-emerald-300 dark:border-white/5 rounded text-emerald-400 font-black cursor-pointer"
                       >
                         J3+
                       </button>
@@ -2725,7 +2725,7 @@ export default function CimWorkspaceVisualizer({
             </div>
 
             {/* Core Hardware Manual Relays Toggles */}
-            <div className="grid grid-cols-2 gap-3 bg-[#101012] p-2.5 rounded-lg border border-white/5">
+            <div className="grid grid-cols-2 gap-3 bg-[#101012] p-2.5 rounded-lg border border-emerald-300 dark:border-white/5">
               <button
                 onClick={() => {
                   const nextState = !simulationState.hasBlock;
@@ -2735,11 +2735,11 @@ export default function CimWorkspaceVisualizer({
                 className={`flex items-center justify-center space-x-2 py-1.5 px-3 rounded text-[9px] font-mono font-bold tracking-tight border uppercase transition-all cursor-pointer ${
                   simulationState.hasBlock
                     ? "bg-red-500/10 text-red-400 border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.15)]"
-                    : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-white/5"
+                    : "bg-slate-800 hover:bg-slate-700 text-emerald-800 dark:text-slate-300 border-emerald-300 dark:border-white/5"
                 }`}
               >
                 <Power
-                  className={`w-3.5 h-3.5 ${simulationState.hasBlock ? "text-red-400 animate-pulse" : "text-slate-400"}`}
+                  className={`w-3.5 h-3.5 ${simulationState.hasBlock ? "text-red-400 animate-pulse" : "text-emerald-700 dark:text-slate-400"}`}
                 />
                 <span>
                   Vacuum Solenoid:{" "}
@@ -2759,11 +2759,11 @@ export default function CimWorkspaceVisualizer({
                 className={`flex items-center justify-center space-x-2 py-1.5 px-3 rounded text-[9px] font-mono font-bold tracking-tight border uppercase transition-all cursor-pointer ${
                   simulationState.conveyorRunning
                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_8px_rgba(34,197,94,0.15)]"
-                    : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-white/5"
+                    : "bg-slate-800 hover:bg-slate-700 text-emerald-800 dark:text-slate-300 border-emerald-300 dark:border-white/5"
                 }`}
               >
                 <Power
-                  className={`w-3.5 h-3.5 ${simulationState.conveyorRunning ? "text-emerald-400 animate-pulse" : "text-slate-400"}`}
+                  className={`w-3.5 h-3.5 ${simulationState.conveyorRunning ? "text-emerald-400 animate-pulse" : "text-emerald-700 dark:text-slate-400"}`}
                 />
                 <span>
                   Conveyor Relay:{" "}
@@ -2773,8 +2773,8 @@ export default function CimWorkspaceVisualizer({
             </div>
 
             {/* Interactive G-Code Command Builder */}
-            <div className="bg-[#141417] p-3 rounded-lg border border-white/5 space-y-3">
-              <div className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1 block">
+            <div className="bg-[#141417] p-3 rounded-lg border border-emerald-300 dark:border-white/5 space-y-3">
+              <div className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5 border-b border-emerald-300 dark:border-white/5 pb-1 block">
                 <Hammer className="w-3.5 h-3.5 text-blue-500" />
                 <span>Teach-In Program Builder Cmd Selector</span>
               </div>
@@ -2801,7 +2801,7 @@ export default function CimWorkspaceVisualizer({
                       className={`py-1 rounded text-center font-bold tracking-tighter uppercase transition-colors border cursor-pointer ${
                         cmdMode === m
                           ? "bg-blue-600 text-white border-blue-500"
-                          : "bg-[#0d0d0f] hover:bg-[#1a1a20] text-slate-400 border-white/5"
+                          : "bg-[#0d0d0f] hover:bg-[#1a1a20] text-emerald-700 dark:text-slate-400 border-emerald-300 dark:border-white/5"
                       }`}
                     >
                       {label}
@@ -2811,7 +2811,7 @@ export default function CimWorkspaceVisualizer({
               </div>
 
               {/* command parameters input based on user selected type */}
-              <div className="bg-[#0b0c0e] p-2 rounded border border-white/5 text-[9px] text-slate-400 min-h-[50px] flex items-center">
+              <div className="bg-[#0b0c0e] p-2 rounded border border-emerald-300 dark:border-white/5 text-[9px] text-emerald-700 dark:text-slate-400 min-h-[50px] flex items-center">
                 {cmdMode === "G01" && (
                   <div className="w-full space-y-2">
                     <div className="flex justify-between items-center text-[8.5px] uppercase">
@@ -2856,7 +2856,7 @@ export default function CimWorkspaceVisualizer({
                         className={`px-3 py-1 text-[8.5px] font-bold rounded border ${
                           suctionState
                             ? "bg-red-500/10 text-red-400 border-red-500/20"
-                            : "bg-[#18181b] text-slate-500 border-white/5"
+                            : "bg-[#18181b] text-slate-500 border-emerald-300 dark:border-white/5"
                         }`}
                       >
                         P1 (HOLD)
@@ -2868,7 +2868,7 @@ export default function CimWorkspaceVisualizer({
                         className={`px-3 py-1 text-[8.5px] font-bold rounded border ${
                           !suctionState
                             ? "bg-slate-700 text-white border-slate-600"
-                            : "bg-[#18181b] text-slate-500 border-white/5"
+                            : "bg-[#18181b] text-slate-500 border-emerald-300 dark:border-white/5"
                         }`}
                       >
                         P0 (RELEASE)
@@ -2888,7 +2888,7 @@ export default function CimWorkspaceVisualizer({
                         className={`px-3 py-1 text-[8.5px] font-bold rounded border ${
                           conveyorState
                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : "bg-[#18181b] text-slate-500 border-white/5"
+                            : "bg-[#18181b] text-slate-500 border-emerald-300 dark:border-white/5"
                         }`}
                       >
                         S1 (RUN)
@@ -2900,7 +2900,7 @@ export default function CimWorkspaceVisualizer({
                         className={`px-3 py-1 text-[8.5px] font-bold rounded border ${
                           !conveyorState
                             ? "bg-slate-700 text-white border-slate-600"
-                            : "bg-[#18181b] text-slate-500 border-white/5"
+                            : "bg-[#18181b] text-slate-500 border-emerald-300 dark:border-white/5"
                         }`}
                       >
                         S0 (HALT)
@@ -2942,7 +2942,7 @@ export default function CimWorkspaceVisualizer({
                   Script Code Generation Line Preview (
                   {activeFile?.name || "*.gcode"})
                 </span>
-                <div className="bg-[#09090b] text-[10px] py-1.5 px-3 rounded font-mono border border-white/5 flex items-center justify-between shadow-inner">
+                <div className="bg-[#09090b] text-[10px] py-1.5 px-3 rounded font-mono border border-emerald-300 dark:border-white/5 flex items-center justify-between shadow-inner">
                   <span className="text-blue-400 font-semibold tracking-wide select-all">
                     {getCommandPreview()}
                   </span>
@@ -2961,7 +2961,7 @@ export default function CimWorkspaceVisualizer({
                 className={`w-full py-2 px-4 rounded font-mono font-bold text-xs flex items-center justify-center space-x-1 border shadow transition-all ${
                   activeFile && onFileChange
                     ? "bg-red-600 hover:bg-red-700 border-red-500 text-white cursor-pointer active:scale-[0.99] hover:shadow-[0_0_12px_rgba(239,68,68,0.2)]"
-                    : "bg-slate-800 text-slate-500 border-white/5 cursor-not-allowed opacity-50"
+                    : "bg-slate-800 text-slate-500 border-emerald-300 dark:border-white/5 cursor-not-allowed opacity-50"
                 }`}
               >
                 <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping mr-2.5" />
@@ -2969,9 +2969,9 @@ export default function CimWorkspaceVisualizer({
               </button>
 
               {/* Manual Joint Micro-sliders inside pendant panel */}
-              <div className="bg-[#121215] border border-white/5 rounded-lg p-2.5 space-y-2 mt-1">
+              <div className="bg-[#121215] border border-emerald-300 dark:border-white/5 rounded-lg p-2.5 space-y-2 mt-1">
                 <div className="flex justify-between items-center">
-                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">
+                  <span className="text-[8px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wider block">
                     Direct Axis Micro-Sliders Control
                   </span>
                   <span className="text-[7px] text-slate-500 font-mono">
@@ -2982,7 +2982,7 @@ export default function CimWorkspaceVisualizer({
                   {joints.slice(1).map((joint) => (
                     <div key={joint.id} className="space-y-0.5">
                       <div className="flex justify-between text-[9px] font-mono">
-                        <span className="text-slate-400 font-medium">
+                        <span className="text-emerald-700 dark:text-slate-400 font-medium">
                           {joint.name}
                         </span>
                         <span className="text-blue-400 font-semibold">
@@ -3029,7 +3029,7 @@ export default function CimWorkspaceVisualizer({
                 <Sliders className="w-3.5 h-3.5 text-amber-500 animate-spin-slow" />
                 <span>Teach Control & Calibration Register Console</span>
               </h4>
-              <p className="text-[8.5px] text-slate-400 leading-normal">
+              <p className="text-[8.5px] text-emerald-700 dark:text-slate-400 leading-normal">
                 Move the robot arm manually (via Pendant Tab or by dragging the
                 visual crosshair) to desired target drop zones. Click{" "}
                 <strong className="text-amber-450 text-white bg-amber-900/40 px-1 rounded font-bold">
@@ -3041,8 +3041,8 @@ export default function CimWorkspaceVisualizer({
             </div>
 
             {/* Calibration Register Grid */}
-            <div className="bg-[#09090b] p-3 rounded-lg border border-white/5 space-y-2 flex-1 overflow-y-auto max-h-[290px] shadow-inner">
-              <div className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider mb-2.5 flex items-center justify-between border-b border-white/5 pb-1">
+            <div className="bg-[#09090b] p-3 rounded-lg border border-emerald-300 dark:border-white/5 space-y-2 flex-1 overflow-y-auto max-h-[290px] shadow-inner">
+              <div className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wider mb-2.5 flex items-center justify-between border-b border-emerald-300 dark:border-white/5 pb-1">
                 <span>Calibration Parameters Registers</span>
                 <span className="text-slate-500 text-[7px] font-normal lowercase select-none">
                   updates are flashed directly to editor
@@ -3058,7 +3058,7 @@ export default function CimWorkspaceVisualizer({
                   return (
                     <div
                       key={reg.varName}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between bg-[#141417] p-2 rounded border border-white/5 gap-2 text-[9.5px]"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between bg-[#141417] p-2 rounded border border-emerald-300 dark:border-white/5 gap-2 text-[9.5px]"
                     >
                       <div className="space-y-0.5">
                         <div className="flex items-center space-x-1.5">
@@ -3086,7 +3086,7 @@ export default function CimWorkspaceVisualizer({
                               updateGcodeVariable(reg.varName, newVal);
                             }
                           }}
-                          className="w-16 bg-[#0c0c0e] text-slate-200 border border-white/10 rounded px-1.5 py-0.5 text-center font-bold font-mono focus:outline-none focus:border-amber-500 text-xs"
+                          className="w-16 bg-[#0c0c0e] text-emerald-900 dark:text-slate-200 border border-emerald-400 dark:border-white/10 rounded px-1.5 py-0.5 text-center font-bold font-mono focus:outline-none focus:border-amber-500 text-xs"
                         />
 
                         {/* Jog TCP button */}
@@ -3137,7 +3137,7 @@ export default function CimWorkspaceVisualizer({
                             }
                           }}
                           title="Jog the tool center point smoothly to this register's values"
-                          className="bg-[#242429] hover:bg-slate-700 hover:text-white border border-white/5 rounded px-2.5 py-1 text-[8px] uppercase font-bold cursor-pointer transition text-slate-400"
+                          className="bg-[#242429] hover:bg-slate-700 hover:text-white border border-emerald-300 dark:border-white/5 rounded px-2.5 py-1 text-[8px] uppercase font-bold cursor-pointer transition text-emerald-700 dark:text-slate-400"
                         >
                           Jog
                         </button>
@@ -3175,7 +3175,7 @@ export default function CimWorkspaceVisualizer({
               </div>
             </div>
 
-            <div className="bg-[#16161a] border border-white/5 p-2 text-[7.5px] font-mono leading-normal rounded text-slate-500">
+            <div className="bg-[#16161a] border border-emerald-300 dark:border-white/5 p-2 text-[7.5px] font-mono leading-normal rounded text-slate-500">
               * Note: Calibration mode automatically updates G-code workspace
               script variables. Always verify spatial alignments in{" "}
               <strong className="text-amber-500 font-bold">DRY RUN MODE</strong>{" "}
@@ -3187,8 +3187,8 @@ export default function CimWorkspaceVisualizer({
           <div className="bg-[#0d0d0f] p-4 space-y-3.5 flex flex-col">
             <div className="grid grid-cols-2 gap-3.5">
               {/* Decoupled 3-Layer Cognitive Architecture Display */}
-              <div className="bg-[#141417] border border-white/5 rounded p-3 col-span-2 space-y-2">
-                <h4 className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest border-b border-white/5 pb-1 flex items-center justify-between">
+              <div className="bg-[#141417] border border-emerald-300 dark:border-white/5 rounded p-3 col-span-2 space-y-2">
+                <h4 className="text-[10px] font-mono font-bold text-emerald-700 dark:text-slate-400 uppercase tracking-widest border-b border-emerald-300 dark:border-white/5 pb-1 flex items-center justify-between">
                   <span>Decoupled 3-Layer System Controller Architecture</span>
                   <span className="text-[7.5px] text-emerald-400 animate-pulse font-normal flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -3205,7 +3205,7 @@ export default function CimWorkspaceVisualizer({
                     <h5 className="text-[8.5px] font-bold text-blue-400 uppercase tracking-tighter">
                       1. Sensing Layer
                     </h5>
-                    <div className="text-[7.5px] text-slate-400 space-y-1">
+                    <div className="text-[7.5px] text-emerald-700 dark:text-slate-400 space-y-1">
                       <div className="flex justify-between">
                         <span>Beam Sensor:</span>
                         <span
@@ -3220,7 +3220,7 @@ export default function CimWorkspaceVisualizer({
                       </div>
                       <div className="flex justify-between">
                         <span>Reflectance Spectrum:</span>
-                        <span className="text-slate-350 select-all">
+                        <span className="text-emerald-800 dark:text-slate-350 select-all">
                           {sensorTriggered
                             ? "R=241 G=34 B=11"
                             : "R=255 G=253 B=255"}
@@ -3243,7 +3243,7 @@ export default function CimWorkspaceVisualizer({
                     <h5 className="text-[8.5px] font-bold text-amber-400 uppercase tracking-tighter">
                       2. Decision Layer
                     </h5>
-                    <div className="text-[7.5px] text-slate-400 space-y-1">
+                    <div className="text-[7.5px] text-emerald-700 dark:text-slate-400 space-y-1">
                       <div className="flex justify-between">
                         <span>Run Interlock:</span>
                         <span
@@ -3260,7 +3260,7 @@ export default function CimWorkspaceVisualizer({
                       </div>
                       <div className="flex justify-between">
                         <span>Register Variables:</span>
-                        <span className="text-slate-350">14 Active Calibr</span>
+                        <span className="text-emerald-800 dark:text-slate-350">14 Active Calibr</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Sync Check:</span>
@@ -3277,7 +3277,7 @@ export default function CimWorkspaceVisualizer({
                     <h5 className="text-[8.5px] font-bold text-purple-400 uppercase tracking-tighter">
                       3. Motion Layer
                     </h5>
-                    <div className="text-[7.5px] text-slate-400 space-y-1">
+                    <div className="text-[7.5px] text-emerald-700 dark:text-slate-400 space-y-1">
                       <div className="flex justify-between">
                         <span>Ramping driver:</span>
                         <span
@@ -3294,7 +3294,7 @@ export default function CimWorkspaceVisualizer({
                       </div>
                       <div className="flex justify-between">
                         <span>Vector feedlimit:</span>
-                        <span className="text-slate-350">
+                        <span className="text-emerald-800 dark:text-slate-350">
                           {feedrate} mm/min
                         </span>
                       </div>
@@ -3308,8 +3308,8 @@ export default function CimWorkspaceVisualizer({
               </div>
 
               {/* Real-time Velocity Profile Sparkline */}
-              <div className="bg-[#1a1a1e] border border-white/5 rounded p-3 col-span-2 space-y-2">
-                <div className="flex justify-between items-center text-[9px] font-mono text-slate-400">
+              <div className="bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded p-3 col-span-2 space-y-2">
+                <div className="flex justify-between items-center text-[9px] font-mono text-emerald-700 dark:text-slate-400">
                   <span className="font-bold uppercase tracking-wider flex items-center space-x-1.5 text-blue-400">
                     <Activity className="w-3.5 h-3.5" />
                     <span>
@@ -3380,7 +3380,7 @@ export default function CimWorkspaceVisualizer({
                   </svg>
 
                   {/* State badges */}
-                  <div className="absolute top-1.5 right-2 bg-slate-900/80 px-1.5 py-0.5 rounded border border-white/5 text-[7px] font-mono text-slate-400">
+                  <div className="absolute top-1.5 right-2 bg-slate-900/80 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-white/5 text-[7px] font-mono text-emerald-700 dark:text-slate-400">
                     {simulationState.profilingEnabled !== false
                       ? "Trapezoidal Ramping Accel/Decel"
                       : "Direct Jump Step Driver"}
@@ -3389,9 +3389,9 @@ export default function CimWorkspaceVisualizer({
               </div>
 
               {/* Torques meters */}
-              <div className="bg-[#1a1a1e] border border-white/5 rounded p-3 flex flex-col justify-between">
+              <div className="bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded p-3 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-[10px] font-mono font-bold text-slate-400 mb-3 flex items-center space-x-1.5 uppercase">
+                  <h4 className="text-[10px] font-mono font-bold text-emerald-700 dark:text-slate-400 mb-3 flex items-center space-x-1.5 uppercase">
                     <Scale className="w-3.5 h-3.5 text-blue-500" />
                     <span>Joint Torque Stress Limits</span>
                   </h4>
@@ -3404,7 +3404,7 @@ export default function CimWorkspaceVisualizer({
                       return (
                         <div key={j.id} className="space-y-1">
                           <div className="flex justify-between text-[9px] font-mono">
-                            <span className="text-slate-505 text-slate-400">
+                            <span className="text-slate-505 text-emerald-700 dark:text-slate-400">
                               {j.name}
                             </span>
                             <span
@@ -3413,7 +3413,7 @@ export default function CimWorkspaceVisualizer({
                                   ? "text-rose-450 font-bold"
                                   : pct > 45
                                     ? "text-amber-440 text-amber-400"
-                                    : "text-slate-300"
+                                    : "text-emerald-800 dark:text-slate-300"
                               }
                             >
                               {jointTorques[i + 1]} N·m ({Math.round(pct)}%)
@@ -3436,7 +3436,7 @@ export default function CimWorkspaceVisualizer({
                     })}
                   </div>
                 </div>
-                <p className="text-[8px] font-mono text-slate-500 pt-2 border-t border-white/5 leading-normal">
+                <p className="text-[8px] font-mono text-slate-500 pt-2 border-t border-emerald-300 dark:border-white/5 leading-normal">
                   Torques computed based on joint projection coordinates and
                   active payload of {robotDesign.payloadWeight} kg.
                 </p>
@@ -3445,7 +3445,7 @@ export default function CimWorkspaceVisualizer({
               {/* Dynamic Diagnostics */}
               <div className="space-y-2.5">
                 {/* Power Watts consumption meter */}
-                <div className="bg-[#1a1a1e] border border-white/5 rounded p-3 flex items-center justify-between">
+                <div className="bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded p-3 flex items-center justify-between">
                   <div>
                     <div className="text-[9px] font-mono text-slate-500">
                       AGGREGATE SYSTEM POWER
@@ -3459,7 +3459,7 @@ export default function CimWorkspaceVisualizer({
                 </div>
 
                 {/* Payload factors info */}
-                <div className="bg-[#1a1a1e] border border-white/5 rounded p-3 flex items-center justify-between">
+                <div className="bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded p-3 flex items-center justify-between">
                   <div>
                     <div className="text-[9px] font-mono text-slate-500">
                       ARM MAX PAYLOAD
@@ -3473,7 +3473,7 @@ export default function CimWorkspaceVisualizer({
                 </div>
 
                  {/* Advanced specifications diagnostics */}
-                 <div className="bg-[#1a1a1e] border border-white/5 rounded p-2.5 text-[9px] font-mono space-y-1 text-slate-400 shadow-inner">
+                 <div className="bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded p-2.5 text-[9px] font-mono space-y-1 text-emerald-700 dark:text-slate-400 shadow-inner">
                    <div className="flex justify-between">
                      <span>Sector / Class:</span>
                      <span className="text-purple-300 font-semibold uppercase">
@@ -3504,9 +3504,9 @@ export default function CimWorkspaceVisualizer({
                        {robotDesign.speedLimit || 1.5} m/s
                      </span>
                    </div>
-                   <div className="border-t border-white/5 my-1.5 pt-1.5 flex justify-between">
+                   <div className="border-t border-emerald-300 dark:border-white/5 my-1.5 pt-1.5 flex justify-between">
                      <span>Tool Armature:</span>
-                     <span className="text-slate-200 uppercase font-semibold">
+                     <span className="text-emerald-900 dark:text-slate-200 uppercase font-semibold">
                        {robotDesign.endEffectorType} (PNEUMATIC)
                      </span>
                    </div>
@@ -3544,7 +3544,7 @@ export default function CimWorkspaceVisualizer({
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
                     <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                    <span className="text-[10px] font-mono font-bold text-slate-200 uppercase tracking-wider">
+                    <span className="text-[10px] font-mono font-bold text-emerald-900 dark:text-slate-200 uppercase tracking-wider">
                       {localStorage.getItem("robot_ai_provider") ===
                       "openrouter"
                         ? "OpenRouter Free Kinematics Assistant"
@@ -3558,13 +3558,13 @@ export default function CimWorkspaceVisualizer({
 
                 {ikResponse ? (
                   <div className="space-y-2">
-                    <div className="bg-[#09090b] text-[10px] font-sans p-3 rounded border border-white/5 overflow-y-auto max-h-[140px] text-slate-300 leading-relaxed select-text markdown-body">
+                    <div className="bg-[#09090b] text-[10px] font-sans p-3 rounded border border-emerald-300 dark:border-white/5 overflow-y-auto max-h-[140px] text-emerald-800 dark:text-slate-300 leading-relaxed select-text markdown-body">
                       <div className="whitespace-pre-wrap">{ikResponse}</div>
                     </div>
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => setIkResponse("")}
-                        className="px-2.5 py-1 bg-[#1d1d22] text-slate-400 hover:text-slate-200 transition-colors rounded text-[9px] font-mono border border-white/5 flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-[#1d1d22] text-emerald-700 dark:text-slate-400 hover:text-emerald-900 dark:text-slate-200 transition-colors rounded text-[9px] font-mono border border-emerald-300 dark:border-white/5 flex items-center gap-1 cursor-pointer"
                       >
                         <RotateCcw className="w-3 h-3" />
                         <span>Clear Solution</span>
@@ -3584,12 +3584,12 @@ export default function CimWorkspaceVisualizer({
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-[#0d0d0f] border border-white/5 rounded p-4 flex flex-col items-center justify-center text-center space-y-2.5">
+                  <div className="bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded p-4 flex flex-col items-center justify-center text-center space-y-2.5">
                     <Cpu
                       className={`w-8 h-8 text-blue-500/40 ${isSolvingIK ? "animate-spin" : ""}`}
                     />
                     <div className="space-y-1">
-                      <p className="text-[10px] font-mono text-slate-300 font-bold uppercase tracking-wide">
+                      <p className="text-[10px] font-mono text-emerald-800 dark:text-slate-300 font-bold uppercase tracking-wide">
                         {localStorage.getItem("robot_ai_provider") ===
                         "openrouter"
                           ? "OpenRouter Kinematics pipeline active"
@@ -3639,12 +3639,12 @@ export default function CimWorkspaceVisualizer({
       {/* CIM Production Control & Metrics Center */}
       <div
         id="cim-production-controller"
-        className="bg-[#101012] border-t border-white/5 p-3 shrink-0"
+        className="bg-[#101012] border-t border-emerald-300 dark:border-white/5 p-3 shrink-0"
       >
         <div className="flex justify-between items-center select-none">
           <button
             onClick={() => setMetricsExpanded(!metricsExpanded)}
-            className="flex items-center space-x-2 font-mono text-[10px] font-bold text-slate-400 hover:text-slate-200 transition-colors uppercase tracking-tight cursor-pointer focus:outline-none"
+            className="flex items-center space-x-2 font-mono text-[10px] font-bold text-emerald-700 dark:text-slate-400 hover:text-emerald-900 dark:text-slate-200 transition-colors uppercase tracking-tight cursor-pointer focus:outline-none"
           >
             <BarChart2 className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
             <span>CIM Workpiece Sorting & Metrics Center Center</span>
@@ -3671,7 +3671,7 @@ export default function CimWorkspaceVisualizer({
                   dropped: 0,
                 });
               }}
-              className="flex items-center space-x-1 font-mono text-[8px] text-slate-500 hover:text-slate-300 transition-colors bg-[#18181b] border border-white/5 px-1.5 py-0.5 rounded cursor-pointer"
+              className="flex items-center space-x-1 font-mono text-[8px] text-slate-500 hover:text-emerald-800 dark:text-slate-300 transition-colors bg-[#18181b] border border-emerald-300 dark:border-white/5 px-1.5 py-0.5 rounded cursor-pointer"
               title="Reset Production Scoring Counters"
             >
               <RotateCcw className="w-2.5 h-2.5" />
@@ -3685,11 +3685,11 @@ export default function CimWorkspaceVisualizer({
             {/* Scoring Statistics Blocks */}
             <div className="grid grid-cols-4 gap-2">
               {/* Box 1: Material Scanned */}
-              <div className="bg-[#09090b] border border-white/5 p-2 rounded flex flex-col space-y-1">
+              <div className="bg-[#09090b] border border-emerald-300 dark:border-white/5 p-2 rounded flex flex-col space-y-1">
                 <div className="text-[8px] font-mono font-bold text-slate-500 uppercase tracking-tight">
                   RAW VOLUMES FEEDED
                 </div>
-                <div className="text-sm font-mono font-bold text-slate-300 tracking-tight">
+                <div className="text-sm font-mono font-bold text-emerald-800 dark:text-slate-300 tracking-tight">
                   {sortingStats.scannedRed +
                     sortingStats.scannedGreen +
                     sortingStats.scannedBlue +
@@ -3711,7 +3711,7 @@ export default function CimWorkspaceVisualizer({
               </div>
 
               {/* Box 2: Correctly Sorted */}
-              <div className="bg-[#09090b] border border-white/5 p-2 rounded flex flex-col space-y-1">
+              <div className="bg-[#09090b] border border-emerald-300 dark:border-white/5 p-2 rounded flex flex-col space-y-1">
                 <div className="text-[8px] font-mono font-bold text-emerald-500/80 uppercase tracking-tight">
                   VERIFIED SORTED
                 </div>
@@ -3737,7 +3737,7 @@ export default function CimWorkspaceVisualizer({
               </div>
 
               {/* Box 3: Sorted Mismatches */}
-              <div className="bg-[#09090b] border border-white/5 p-2 rounded flex flex-col space-y-1">
+              <div className="bg-[#09090b] border border-emerald-300 dark:border-white/5 p-2 rounded flex flex-col space-y-1">
                 <div className="text-[8px] font-mono font-bold text-amber-500/80 uppercase tracking-tight">
                   TRAY MISMATCHES
                 </div>
@@ -3755,7 +3755,7 @@ export default function CimWorkspaceVisualizer({
               </div>
 
               {/* Box 4: Dropped on floor */}
-              <div className="bg-[#09090b] border border-white/5 p-2 rounded flex flex-col space-y-1">
+              <div className="bg-[#09090b] border border-emerald-300 dark:border-white/5 p-2 rounded flex flex-col space-y-1">
                 <div className="text-[8px] font-mono font-bold text-rose-500/80 uppercase tracking-tight">
                   DROP INCIDENTS
                 </div>
@@ -3774,7 +3774,7 @@ export default function CimWorkspaceVisualizer({
             </div>
 
             {/* Material Flow Seeding Controls */}
-            <div className="flex flex-col space-y-1 bg-[#141417]/40 p-2 rounded border border-white/5">
+            <div className="flex flex-col space-y-1 bg-[#141417]/40 p-2 rounded border border-emerald-300 dark:border-white/5">
               <div className="flex justify-between items-center mb-1 text-[8px] font-mono">
                 <span className="text-slate-500 font-bold uppercase">
                   Workpiece Feed Flow Stream Settings
@@ -3792,7 +3792,7 @@ export default function CimWorkspaceVisualizer({
                       className={`flex-1 text-[9px] font-mono py-1 rounded transition-all uppercase cursor-pointer border ${
                         feedMode === mode
                           ? "bg-blue-600 text-white border-blue-500 font-bold shadow-[0_0_8px_rgba(59,130,246,0.2)]"
-                          : "bg-[#0c0c0e] hover:bg-[#141417] text-slate-400 border-white/5"
+                          : "bg-[#0c0c0e] hover:bg-[#141417] text-emerald-700 dark:text-slate-400 border-emerald-300 dark:border-white/5"
                       }`}
                     >
                       {mode === "random" ? "Auto" : `${mode}`}

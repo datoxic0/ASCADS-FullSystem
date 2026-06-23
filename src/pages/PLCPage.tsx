@@ -76,30 +76,9 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const INITIAL_STATE: LadderState = {
-  nodes: [
-    {
-      id: "init-1",
-      type: "contact-no",
-      x: 160,
-      y: RUNG_HEIGHT / 2 - NODE_HEIGHT / 2,
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
-      tag: "START_PB",
-      address: "I:0/1",
-    },
-    {
-      id: "init-2",
-      type: "coil",
-      x: 704,
-      y: RUNG_HEIGHT / 2 - NODE_HEIGHT / 2,
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
-      tag: "MOTOR_RUN",
-      address: "O:0/1",
-    },
-  ],
+  nodes: [],
   wires: [],
-  rungComments: { 0: "START/STOP MOTOR LOGIC" },
+  rungComments: {},
   simulation: {
     isRunning: false,
     forcesEnabled: true,
@@ -127,11 +106,12 @@ const INITIAL_STATE: LadderState = {
 };
 
 import { IOSimulator } from "@/components/plc/IOSimulator";
+import type { AnalogProject } from "@/lib/analog-types";
 
-export default function PLCPage() {
+export default function PLCPage({ project, onProjectChange }: { project?: AnalogProject, onProjectChange?: (p: AnalogProject) => void }) {
   const [state, setState] = useState<LadderState>(() => {
     try {
-      const saved = localStorage.getItem("voltlogic_circuit_v3");
+      const saved = project?.data ? JSON.stringify(project.data) : localStorage.getItem("voltlogic_circuit_v3");
       const parsed = saved ? JSON.parse(saved) : INITIAL_STATE;
 
       // Migration: Ensure all simulation properties exist
@@ -152,6 +132,16 @@ export default function PLCPage() {
 
   const [history, setHistory] = useState<LadderState[]>([]);
   const [future, setFuture] = useState<LadderState[]>([]);
+
+  useEffect(() => {
+    if (project?.data) {
+      setState(project.data);
+      setHistory([]);
+      setFuture([]);
+    } else if (!project) {
+       // if we unmount project or go to raw PLC page, maybe load localstorage?
+    }
+  }, [project?.id]);
 
   const pushToHistory = useCallback(
     (nextState: LadderState) => {
@@ -491,11 +481,16 @@ export default function PLCPage() {
           logs: (simulation.logs || []).slice(-20), // Truncate transient warning logs to save write space
         }
       };
-      localStorage.setItem("voltlogic_circuit_v3", JSON.stringify(sanitizedState));
+      
+      if (project && onProjectChange) {
+        onProjectChange({ ...project, data: sanitizedState });
+      } else {
+        localStorage.setItem("voltlogic_circuit_v3", JSON.stringify(sanitizedState));
+      }
     }, 1500);
 
     return () => clearTimeout(handler);
-  }, [state]);
+  }, [state, project, onProjectChange]);
 
   // Simulation loop
   useEffect(() => {
@@ -781,6 +776,16 @@ export default function PLCPage() {
     [state, pushToHistory],
   );
 
+  const updateWire = useCallback(
+    (id: string, updates: Partial<import('@/lib/plc-types').Wire>) => {
+      pushToHistory({
+        ...state,
+        wires: state.wires.map((w) => w.id === id ? { ...w, ...updates } : w)
+      });
+    },
+    [state, pushToHistory]
+  );
+
   const toggleSimulation = () => {
     const nextRunning = !state.simulation.isRunning;
     setState((prev) => ({
@@ -879,6 +884,7 @@ export default function PLCPage() {
   const handleRungAction = (
     index: number,
     action: "delete" | "edit-comment",
+    newValue?: string
   ) => {
     if (action === "delete") {
       setState((prev) => ({
@@ -895,14 +901,17 @@ export default function PLCPage() {
       }));
       addNotification(`Rung ${index} cleared`, "info");
     } else {
-      const comment = prompt(
-        "Enter Rung Comment:",
-        state.rungComments?.[index] || "",
-      );
-      if (comment !== null) {
+      let comment: string | undefined | null = newValue;
+      if (comment === undefined) {
+        comment = prompt(
+          "Enter Rung Comment:",
+          state.rungComments?.[index] || "",
+        );
+      }
+      if (comment !== null && comment !== undefined) {
         setState((prev) => ({
           ...prev,
-          rungComments: { ...prev.rungComments, [index]: comment },
+          rungComments: { ...prev.rungComments, [index]: comment as string },
         }));
       }
     }
@@ -976,7 +985,7 @@ export default function PLCPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen font-sans overflow-hidden bg-[#07080b] text-slate-200 select-none">
+    <div className="flex flex-col h-full w-full font-sans overflow-hidden bg-[#07080b] text-slate-200 select-none">
       {/* System Status Bar (Topmost) */}
       <div className="h-7 bg-[#090a0d] flex items-center justify-between px-6 text-[10px] font-medium tracking-tight border-b border-white/5 text-zinc-400 shrink-0 z-[60]">
         <div className="flex items-center gap-6">
@@ -1100,6 +1109,29 @@ export default function PLCPage() {
               )}
             >
               Tags
+            </button>
+            <button
+              onClick={() => setCurrentView("mechatronics")}
+              className={cn(
+                "px-4 py-1 rounded text-[10px] uppercase font-bold tracking-wider transition-all",
+                currentView === "mechatronics"
+                  ? "bg-sky-600 text-white shadow-sm font-black"
+                  : "text-zinc-400 hover:text-zinc-200",
+              )}
+            >
+              Mechatronics
+            </button>
+            <div className="w-px h-4 bg-white/10 mx-1 self-center" />
+            <button
+              onClick={() => setShowIOSim(!showIOSim)}
+              className={cn(
+                "px-4 py-1 rounded text-[10px] uppercase font-bold tracking-wider transition-all",
+                showIOSim
+                  ? "bg-amber-600 text-white shadow-sm font-black"
+                  : "text-zinc-400 hover:text-zinc-200",
+              )}
+            >
+              I/O Sim
             </button>
           </div>
 
@@ -1569,6 +1601,83 @@ export default function PLCPage() {
                 onClear={handleClear}
                 onSave={handleExport}
                 onSearch={handleSearch}
+                onImportBridge={() => {
+                  try {
+                    const rawDigital = localStorage.getItem('ascads_bridge_digital_plc');
+                    if (!rawDigital) {
+                      alert('No Bridge logic found from Digital Logic Lab.');
+                      return;
+                    }
+                    const bridge = JSON.parse(rawDigital);
+                    const { rungs } = bridge;
+                    
+                    setState(prev => {
+                      const newNodes = [...prev.nodes];
+                      
+                      let nextY = prev.nodes.length > 0 ? Math.max(...prev.nodes.map(n => n.y)) + RUNG_HEIGHT : RUNG_HEIGHT / 2 - NODE_HEIGHT / 2;
+                      
+                      rungs.forEach((rung: any) => {
+                        let cx = LEFT_RAIL_X + 60;
+                        rung.nodes.forEach((n: any) => {
+                           const isOte = n.type === 'OTE';
+                           newNodes.push({
+                              id: `bridge-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                              type: isOte ? 'coil' : 'contact-no',
+                              x: isOte ? RIGHT_RAIL_X - NODE_WIDTH - 20 : cx,
+                              y: nextY,
+                              width: NODE_WIDTH, height: NODE_HEIGHT,
+                              tag: n.label, address: n.address
+                           });
+                           if (!isOte) cx += NODE_WIDTH + 40;
+                        });
+                        nextY += RUNG_HEIGHT;
+                      });
+                      
+                      return { ...prev, nodes: newNodes };
+                    });
+                    
+                    alert('Bridge Import Successful!');
+                    playSuccess();
+                  } catch (e) {
+                    alert('Failed to parse bridge data.');
+                    console.error(e);
+                  }
+                }}
+                onExportBridge={() => {
+                  const rungsMap = new Map<number, any[]>();
+                  state.nodes.forEach(n => {
+                     if (!rungsMap.has(n.y)) rungsMap.set(n.y, []);
+                     let type = 'XIC';
+                     if (n.type === 'coil') type = 'OTE';
+                     else if (n.type.includes('nc')) type = 'XIO';
+                     rungsMap.get(n.y)!.push({ type, address: n.address || '', label: n.tag || '' });
+                  });
+                  const rungs = Array.from(rungsMap.entries()).sort((a,b) => a[0] - b[0]).map(([y, nodes]) => ({ nodes, comment: `Exported Rung` }));
+                  const tags = Array.from(new Set(state.nodes.map(n => n.address))).map(addr => {
+                    const node = state.nodes.find(n => n.address === addr);
+                    return { address: addr, tag: node?.tag || 'UNNAMED', type: 'BOOL' };
+                  });
+                  // Generate Digital Bridge using the same logic as plcToDigital
+                  const gates: any = {};
+                  const wires: any = {};
+                  let col = 0;
+                  const mapping: any[] = [];
+                  for (const rung of rungs) {
+                    const xicNodes = rung.nodes.filter(n => n.type === 'XIC' || n.type === 'XIO');
+                    const oteNode = rung.nodes.find(n => n.type === 'OTE');
+                    if (xicNodes.length === 0 || !oteNode) continue;
+                    const gateId = `gate_${col}`;
+                    const kind = xicNodes.length > 1 ? 'AND' : 'NOT';
+                    gates[gateId] = { id: gateId, kind, x: 80 + col * 140, y: 80, inputs: xicNodes.length, label: `${oteNode.label} (${kind})` };
+                    mapping.push({ gateId, plcAddress: oteNode.address, logic: `${xicNodes.map(n => n.label).join(' && ')} -> ${oteNode.label}` });
+                    col++;
+                  }
+                  
+                  const bridgeData = { circuit: { gates, wires }, description: 'Exported from PLC', mapping };
+                  localStorage.setItem('ascads_bridge_plc_digital', JSON.stringify(bridgeData));
+                  alert('Exported to Digital Logic Bridge!');
+                  playSuccess();
+                }}
               />
               <div className="flex-1 relative overflow-hidden">
                 <LadderCanvas
@@ -1584,7 +1693,10 @@ export default function PLCPage() {
                   onCanvasClick={handleCanvasClick}
                   onNodeDoubleClick={handleNodeDoubleClick}
                   onRungAction={handleRungAction}
+                  onUpdateTag={(id, tag) => updateNode(id, { tag })}
+                  onUpdateAddress={(id, address) => updateNode(id, { address })}
                   onAddWire={addWire}
+                  onUpdateWire={updateWire}
                   onDeleteWire={deleteWire}
                 />
 

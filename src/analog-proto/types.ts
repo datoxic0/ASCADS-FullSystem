@@ -36,7 +36,8 @@ export type ComponentType =
   | 'NOR_GATE'
   | 'LADDER_CONTACT_NO'
   | 'LADDER_CONTACT_NC'
-  | 'LADDER_COIL';
+  | 'LADDER_COIL'
+  | 'LADDER_TIMER';
 
 export interface Component {
   id: string;
@@ -61,6 +62,9 @@ export interface Connection {
   to: string; // componentId
   toPin: number;
   points?: number[]; // [x1, y1, x2, y2, ...]
+  color?: string;
+  thickness?: number;
+  routing?: 'HVH' | 'VHV';
   netName?: string;
   layer?: 'TOP' | 'BOTTOM';
   // Simulation State

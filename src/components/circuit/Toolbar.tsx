@@ -123,7 +123,7 @@ export function Toolbar({
   useEffect(() => setEditName(circuitName), [circuitName]);
 
   return (
-    <header className="h-14 shrink-0 border-b border-border bg-card/80 backdrop-blur-md px-3 flex items-center gap-2.5 overflow-x-auto overflow-y-hidden whitespace-nowrap [&::-webkit-scrollbar]:hidden">
+    <header className="min-h-14 py-2 shrink-0 border-b border-indigo-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)] bg-slate-950/80 backdrop-blur-md px-3 flex flex-wrap items-center gap-2.5 relative z-50">
       <div className="flex items-center gap-2.5 mr-1 shrink-0">
         <Logo size={28} />
         <div className="flex flex-col -space-y-0.5">

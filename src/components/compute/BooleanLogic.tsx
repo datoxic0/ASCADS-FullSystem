@@ -331,53 +331,73 @@ export default function BooleanLogic() {
         </div>
 
         {/* Right: expressions */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Boolean Expressions</div>
-
-            {[
-              { label: 'Minimized (K-map)', expr: logic.minimized, color: 'emerald', desc: 'Quine-McCluskey reduced' },
-              { label: 'Sum of Products (SOP)', expr: logic.sop, color: 'cyan', desc: 'Canonical minterm form' },
-              { label: 'Product of Sums (POS)', expr: logic.pos, color: 'violet', desc: 'Canonical maxterm form' },
-            ].map(({ label, expr, color, desc }) => (
-              <div key={label} className={cn(`bg-${color}-950/20 border border-${color}-900/30 rounded-lg p-3`)}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className={cn(`text-[9px] font-black uppercase tracking-widest text-${color}-600`)}>{label}</div>
-                  <div className="text-[8px] text-slate-700 italic">{desc}</div>
-                </div>
-                <div className={cn('font-mono text-xs break-all leading-relaxed', `text-${color}-300`)}>
-                  f = {expr}
+        <div className="lg:col-span-5 space-y-4 relative min-h-[400px]">
+          {minterms.length === 0 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-10">
+              <div className="text-center space-y-4 w-full bg-black/40 backdrop-blur-md p-8 rounded-2xl border border-white/5 shadow-2xl">
+                <Zap size={48} className="mx-auto text-emerald-500 opacity-50 mb-6" />
+                <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 tracking-widest uppercase mb-2">Boolean Logic</h2>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Toggle output values in the Truth Table to instantly synthesize Boolean expressions.
+                </p>
+                <div className="bg-white/5 border border-white/10 p-3 rounded-lg mt-4 text-xs font-mono text-left text-slate-400">
+                  <span className="block mb-2 text-emerald-400 text-center">Available Outputs:</span>
+                  • Minimized (K-map)<br/>
+                  • Sum of Products (SOP)<br/>
+                  • Product of Sums (POS)<br/>
+                  • Interactive Logic Circuit
                 </div>
               </div>
-            ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Boolean Expressions</div>
 
-            <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3 space-y-2">
-              <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Minterms</div>
-              <div className="flex flex-wrap gap-1.5">
-                {minterms.map(m => (
-                  <span key={m} className="px-2 py-0.5 bg-cyan-950/40 border border-cyan-900/30 rounded text-[10px] font-mono text-cyan-400">m({m})</span>
+                {[
+                  { label: 'Minimized (K-map)', expr: logic.minimized, color: 'emerald', desc: 'Quine-McCluskey reduced' },
+                  { label: 'Sum of Products (SOP)', expr: logic.sop, color: 'cyan', desc: 'Canonical minterm form' },
+                  { label: 'Product of Sums (POS)', expr: logic.pos, color: 'violet', desc: 'Canonical maxterm form' },
+                ].map(({ label, expr, color, desc }) => (
+                  <div key={label} className={cn(`bg-${color}-950/20 border border-${color}-900/30 rounded-lg p-3`)}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className={cn(`text-[9px] font-black uppercase tracking-widest text-${color}-600`)}>{label}</div>
+                      <div className="text-[8px] text-slate-700 italic">{desc}</div>
+                    </div>
+                    <div className={cn('font-mono text-xs break-all leading-relaxed', `text-${color}-300`)}>
+                      f = {expr}
+                    </div>
+                  </div>
                 ))}
-                {minterms.length === 0 && <span className="text-[10px] text-slate-700">No minterms (all outputs = 0)</span>}
+
+                <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3 space-y-2">
+                  <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Minterms</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {minterms.map(m => (
+                      <span key={m} className="px-2 py-0.5 bg-cyan-950/40 border border-cyan-900/30 rounded text-[10px] font-mono text-cyan-400">m({m})</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Statistics</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'Variables', value: numVars },
+                    { label: 'Rows', value: rows },
+                    { label: 'Minterms', value: minterms.length },
+                    { label: 'Maxterms', value: rows - minterms.length },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-center">
+                      <div className="text-[8px] text-slate-600 uppercase font-black tracking-widest mb-0.5">{label}</div>
+                      <div className="font-mono font-black text-cyan-400 text-sm">{value}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Statistics</div>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: 'Variables', value: numVars },
-                { label: 'Rows', value: rows },
-                { label: 'Minterms', value: minterms.length },
-                { label: 'Maxterms', value: rows - minterms.length },
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-center">
-                  <div className="text-[8px] text-slate-600 uppercase font-black tracking-widest mb-0.5">{label}</div>
-                  <div className="font-mono font-black text-cyan-400 text-sm">{value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -1402,19 +1402,19 @@ export default function RobotWorkspaceIDE({
   }, [simulationState.conveyorRunning, feedMode, conveyorSpeed, sensorPositionX, setWorkpieces, setSortingStats, setSimulationState]);
 
   return (
-    <div id="workspace-ide-card" className="h-full flex flex-col bg-[#1a1a1e] border border-white/5 rounded overflow-hidden shadow-2xl">
+    <div id="workspace-ide-card" className="h-full flex flex-col bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded overflow-hidden shadow-2xl">
       
       {/* Top IDE Toolbar */}
-      <div className="flex items-center justify-between px-3.5 py-2 bg-[#141417] border-b border-white/5 shrink-0">
+      <div className="flex items-center justify-between px-3.5 py-2 bg-[#141417] border-b border-emerald-300 dark:border-white/5 shrink-0">
         <div className="flex items-center space-x-3.5">
           {/* Collapse/Expand Sidebar button */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 hover:bg-[#1e1e23] hover:text-white rounded text-slate-300 font-mono text-[10px] flex items-center space-x-1 cursor-pointer transition-colors"
+            className="p-1 hover:bg-[#1e1e23] hover:text-white rounded text-emerald-800 dark:text-slate-300 font-mono text-[10px] flex items-center space-x-1 cursor-pointer transition-colors"
             title={sidebarOpen ? "Hide File Explorer" : "Show File Explorer"}
           >
-            {sidebarOpen ? <ChevronLeft className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
-            <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-wide text-slate-200">EXPLORER</span>
+            {sidebarOpen ? <ChevronLeft className="w-4 h-4 text-emerald-700 dark:text-slate-400" /> : <ChevronRight className="w-4 h-4 text-emerald-700 dark:text-slate-400" />}
+            <span className="hidden sm:inline-block text-[10px] font-extrabold uppercase tracking-wide text-emerald-900 dark:text-slate-200">EXPLORER</span>
           </button>
           
           <div className="flex items-center">
@@ -1439,7 +1439,7 @@ export default function RobotWorkspaceIDE({
           {/* Reference Modal button as a clean circular-feel question mark square button */}
           <button
             onClick={() => setShowHelpModal(true)}
-            className="h-7 w-7 bg-[#0d0d0f] hover:bg-[#1a1a24] border border-white/5 hover:border-white/10 rounded-md flex items-center justify-center cursor-pointer transition-all shrink-0 text-blue-400 hover:text-blue-300"
+            className="h-7 w-7 bg-[#0d0d0f] hover:bg-[#1a1a24] border border-emerald-300 dark:border-white/5 hover:border-emerald-400 dark:border-white/10 rounded-md flex items-center justify-center cursor-pointer transition-all shrink-0 text-blue-400 hover:text-blue-300"
             title="Open G-Code Command Reference Guide"
             aria-label="Open G-Code Reference Manual"
           >
@@ -1447,25 +1447,25 @@ export default function RobotWorkspaceIDE({
           </button>
 
           {/* Simulation Speed Dropdown Selector */}
-          <div className="flex items-center bg-[#0d0d0f] border border-white/5 hover:border-white/10 rounded-md px-1.5 h-7 select-none shrink-0 transition-all">
+          <div className="flex items-center bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 hover:border-emerald-400 dark:border-white/10 rounded-md px-1.5 h-7 select-none shrink-0 transition-all">
             <select
               value={simulationSpeed}
               onChange={(e) => setSimulationSpeed(Number(e.target.value))}
               disabled={simulationState.isRunning}
-              className="bg-transparent text-slate-200 font-mono text-[9px] font-bold focus:outline-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-55 py-0.5"
+              className="bg-transparent text-emerald-900 dark:text-slate-200 font-mono text-[9px] font-bold focus:outline-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-55 py-0.5"
               title="Execution step speed interval"
               aria-label="Simulation speed factor"
             >
-              <option value="2000" className="bg-[#141417] text-slate-200">0.5x</option>
-              <option value="1500" className="bg-[#141417] text-slate-200">0.75x</option>
-              <option value="1000" className="bg-[#141417] text-slate-200">1.0x (Calibrated)</option>
-              <option value="500" className="bg-[#141417] text-slate-200">2.0x (Fast)</option>
-              <option value="250" className="bg-[#141417] text-slate-200">4.0x (Turbo)</option>
+              <option value="2000" className="bg-[#141417] text-emerald-900 dark:text-slate-200">0.5x</option>
+              <option value="1500" className="bg-[#141417] text-emerald-900 dark:text-slate-200">0.75x</option>
+              <option value="1000" className="bg-[#141417] text-emerald-900 dark:text-slate-200">1.0x (Calibrated)</option>
+              <option value="500" className="bg-[#141417] text-emerald-900 dark:text-slate-200">2.0x (Fast)</option>
+              <option value="250" className="bg-[#141417] text-emerald-900 dark:text-slate-200">4.0x (Turbo)</option>
             </select>
           </div>
 
           {/* UNIFIED INTERACTIVE SIMULATION CONTROL SUITE */}
-          <div className="flex bg-[#0b0b0d] border border-white/10 rounded-md p-0.5 gap-0.5 items-center shrink-0">
+          <div className="flex bg-[#0b0b0d] border border-emerald-400 dark:border-white/10 rounded-md p-0.5 gap-0.5 items-center shrink-0">
             {/* 1. FLASH PROGRAM & RUN */}
             <button
               onClick={handleCompileAndRun}
@@ -1513,7 +1513,7 @@ export default function RobotWorkspaceIDE({
               aria-label="Pause or Resume G-Code Simulation"
               className={`flex items-center justify-center w-7 h-7 text-[8px] font-extrabold rounded cursor-pointer border transition-all duration-300 shadow-sm shrink-0 ${
                 !simulationState.isCompiled 
-                  ? "bg-[#18181b]/50 text-slate-500 border-white/5 hover:bg-[#18181b]/80 hover:text-slate-350"
+                  ? "bg-[#18181b]/50 text-slate-500 border-emerald-300 dark:border-white/5 hover:bg-[#18181b]/80 hover:text-emerald-800 dark:text-slate-350"
                   : simulationState.status === "running"
                   ? "bg-amber-600/10 text-amber-400 border-amber-600/30 hover:bg-amber-600/20"
                   : "bg-emerald-600/10 text-emerald-400 border-emerald-600/30 hover:bg-emerald-600/20"
@@ -1546,7 +1546,7 @@ export default function RobotWorkspaceIDE({
               className={`flex items-center justify-center w-7 h-7 text-[8px] font-extrabold rounded border transition-all duration-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-25 shrink-0 ${
                 simulationState.isCompiled && (simulationState.status === "paused" || simulationState.status === "idle")
                   ? "bg-sky-600/10 text-sky-400 border-sky-500/25 hover:bg-sky-600/20"
-                  : "bg-[#141417]/80 text-slate-600 border-white/5"
+                  : "bg-[#141417]/80 text-slate-600 border-emerald-300 dark:border-white/5"
               }`}
             >
               <ChevronRight className="w-4 h-4 text-sky-400 shrink-0" />
@@ -1580,7 +1580,7 @@ export default function RobotWorkspaceIDE({
       </div>
 
       {/* Main IDE grid layout */}
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row border-b border-white/5 md:overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row border-b border-emerald-300 dark:border-white/5 md:overflow-hidden">
         
         {/* Workspace Explorer column (Left sidebar) - Collapsible */}
         {sidebarOpen && (
@@ -1595,7 +1595,7 @@ export default function RobotWorkspaceIDE({
                   setNewFileName("");
                   setShowAddFile(true);
                 }}
-                className="hover:text-white transition-colors bg-[#0d0d0f] hover:bg-[#1a1a20] rounded p-0.5 border border-white/5 cursor-pointer"
+                className="hover:text-white transition-colors bg-[#0d0d0f] hover:bg-[#1a1a20] rounded p-0.5 border border-emerald-300 dark:border-white/5 cursor-pointer"
                 title="Add New File"
               >
                 <Plus className="w-3 h-3" />
@@ -1618,7 +1618,7 @@ export default function RobotWorkspaceIDE({
                       );
                     }}
                     className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer font-mono text-[11px] transition-colors ${
-                      isActive ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "text-slate-400 hover:text-slate-205 hover:bg-white/5"
+                      isActive ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "text-emerald-700 dark:text-slate-400 hover:text-slate-205 hover:bg-white/5"
                     }`}
                   >
                     <div className="flex items-center space-x-1.5 truncate">
@@ -1643,23 +1643,23 @@ export default function RobotWorkspaceIDE({
             </div>
 
             {/* Active board hardware specs block */}
-            <div className="bg-[#0d0d0f] border border-white/5 rounded p-2 mt-3 space-y-1.5">
+            <div className="bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded p-2 mt-3 space-y-1.5">
               <div className="flex items-center space-x-1 px-0.5">
                 <Cpu className="w-3 h-3 text-blue-400" />
-                <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">SYSTEM UNIT</span>
+                <span className="text-[9px] font-mono text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wider">SYSTEM UNIT</span>
               </div>
               <div className="space-y-0.5 text-[9px] font-mono text-slate-500">
                 <div className="flex justify-between">
                   <span>MCU:</span>
-                  <span className="text-slate-300 font-semibold truncate max-w-[80px] text-right" title={activeBoard.name}>{activeBoard.name}</span>
+                  <span className="text-emerald-800 dark:text-slate-300 font-semibold truncate max-w-[80px] text-right" title={activeBoard.name}>{activeBoard.name}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Core:</span>
-                  <span className="text-slate-300 truncate max-w-[80px] text-right" title={activeBoard.processor}>{activeBoard.processor}</span>
+                  <span className="text-emerald-800 dark:text-slate-300 truncate max-w-[80px] text-right" title={activeBoard.processor}>{activeBoard.processor}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>SRAM/ROM:</span>
-                  <span className="text-slate-300">{activeBoard.ramSize} / {activeBoard.romSize}</span>
+                  <span className="text-emerald-800 dark:text-slate-300">{activeBoard.ramSize} / {activeBoard.romSize}</span>
                 </div>
                 <div className="flex justify-between text-blue-500 font-bold">
                   <span>State:</span>
@@ -1702,7 +1702,7 @@ export default function RobotWorkspaceIDE({
                   className={`flex items-center space-x-1 px-3.5 py-2 border-r border-[#1e1e23] font-mono text-[11px] leading-none shrink-0 transition-all cursor-pointer ${
                     isActive
                       ? "bg-[#1e1e23] text-blue-400 font-bold border-t-2 border-t-blue-500"
-                      : "text-slate-500 hover:text-slate-350 hover:bg-[#121215]/80"
+                      : "text-slate-500 hover:text-emerald-800 dark:text-slate-350 hover:bg-[#121215]/80"
                   }`}
                 >
                   <FileCode className={`w-3.5 h-3.5 ${isActive ? "text-blue-400" : "text-slate-500"}`} />
@@ -1735,7 +1735,7 @@ export default function RobotWorkspaceIDE({
             </button>
           </div>
           {/* Editor Header controls */}
-          <div className="flex items-center justify-between px-2.5 py-1.5 bg-[#141417] border-b border-white/5 shrink-0">
+          <div className="flex items-center justify-between px-2.5 py-1.5 bg-[#141417] border-b border-emerald-300 dark:border-white/5 shrink-0">
             <span className="font-mono text-[9px] text-slate-500 font-semibold tracking-wider uppercase">
               main_code // {activeFile.name}
             </span>
@@ -1743,7 +1743,7 @@ export default function RobotWorkspaceIDE({
               <button
                 onClick={handleDownloadCode}
                 title="Download current file"
-                className="px-2 py-0.5 bg-[#0d0d0f] border border-white/5 rounded text-[9px] font-mono text-slate-400 hover:text-white inline-flex items-center space-x-1 cursor-pointer transition-colors"
+                className="px-2 py-0.5 bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded text-[9px] font-mono text-emerald-700 dark:text-slate-400 hover:text-white inline-flex items-center space-x-1 cursor-pointer transition-colors"
               >
                 <Download className="w-3 h-3" />
                 <span>Export</span>
@@ -1752,7 +1752,7 @@ export default function RobotWorkspaceIDE({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 title="Import local project"
-                className="px-2 py-0.5 bg-[#0d0d0f] border border-white/5 rounded text-[9px] font-mono text-slate-400 hover:text-white inline-flex items-center space-x-1 cursor-pointer transition-colors"
+                className="px-2 py-0.5 bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded text-[9px] font-mono text-emerald-700 dark:text-slate-400 hover:text-white inline-flex items-center space-x-1 cursor-pointer transition-colors"
               >
                 <Upload className="w-3 h-3" />
                 <span>Import</span>
@@ -1791,7 +1791,7 @@ export default function RobotWorkspaceIDE({
               <textarea
                 value={activeFile.content}
                 onChange={(e) => onFileChange(e.target.value)}
-                className="w-full h-full bg-[#1e1e23] text-slate-200 p-3 leading-5 font-mono focus:outline-none resize-none overflow-y-auto selection:bg-blue-500/20 text-[12px] lg:text-[13px]"
+                className="w-full h-full bg-[#1e1e23] text-emerald-900 dark:text-slate-200 p-3 leading-5 font-mono focus:outline-none resize-none overflow-y-auto selection:bg-blue-500/20 text-[12px] lg:text-[13px]"
                 style={{ tabSize: 2 }}
                 placeholder="// Enter code here..."
               />
@@ -1817,7 +1817,7 @@ export default function RobotWorkspaceIDE({
       {/* Compiler logs Console & Output (Bottom bar) */}
       <div 
         style={{ height: isTerminalCollapsed ? "32px" : `${terminalHeight}px` }} 
-        className="bg-[#141417] border-t border-white/5 flex flex-col shrink-0 relative transition-transform duration-200"
+        className="bg-[#141417] border-t border-emerald-300 dark:border-white/5 flex flex-col shrink-0 relative transition-transform duration-200"
       >
         {/* Dynamic horizontal resizer handle for terminal */}
         {!isTerminalCollapsed && (
@@ -1829,7 +1829,7 @@ export default function RobotWorkspaceIDE({
             <div className="h-0.5 w-full bg-white/5 group-hover:bg-blue-500/50 transition-colors pointer-events-none" />
           </div>
         )}
-        <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#141417] border-b border-white/5 select-none">
+        <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#141417] border-b border-emerald-300 dark:border-white/5 select-none">
           <div className="flex items-center space-x-2 text-[10px] font-mono text-slate-500 font-bold uppercase tracking-wider">
             <Terminal className="w-3.5 h-3.5 text-slate-500 animate-pulse" />
             <span>Serial Flash Terminal Output</span>
@@ -1843,14 +1843,14 @@ export default function RobotWorkspaceIDE({
             {!isTerminalCollapsed && (
               <button
                 onClick={() => setLogs([])}
-                className="text-[9px] font-mono text-slate-600 hover:text-slate-300 uppercase transition-colors"
+                className="text-[9px] font-mono text-slate-600 hover:text-emerald-800 dark:text-slate-300 uppercase transition-colors"
               >
                 Clear
               </button>
             )}
             <button
               onClick={() => setIsTerminalCollapsed(!isTerminalCollapsed)}
-              className="text-[9px] font-mono text-slate-400 hover:text-white uppercase transition-colors flex items-center space-x-1"
+              className="text-[9px] font-mono text-emerald-700 dark:text-slate-400 hover:text-white uppercase transition-colors flex items-center space-x-1"
               title={isTerminalCollapsed ? "Expand Terminal Logs" : "Collapse Terminal Logs"}
             >
               {isTerminalCollapsed ? (
@@ -1881,7 +1881,7 @@ export default function RobotWorkspaceIDE({
                     log.type === "success" ? "text-[#22c55e] font-semibold" :
                     log.type === "warn" ? "text-amber-400" :
                     log.type === "error" ? "text-rose-400 font-bold" :
-                    "text-slate-350"
+                    "text-emerald-800 dark:text-slate-350"
                   }`}>
                     {log.text}
                   </span>
@@ -1906,15 +1906,15 @@ export default function RobotWorkspaceIDE({
         minWidth={280}
         minHeight={200}
       >
-        <div className="space-y-4 font-mono text-xs text-slate-300">
+        <div className="space-y-4 font-mono text-xs text-emerald-800 dark:text-slate-300">
           <div className="space-y-3">
-            <label className="block text-[10px] uppercase font-bold text-slate-400">Script Name:</label>
+            <label className="block text-[10px] uppercase font-bold text-emerald-700 dark:text-slate-400">Script Name:</label>
             <input
               type="text"
               value={newFileName}
               onChange={(e) => setNewFileName(e.target.value)}
               placeholder="e.g. pick_and_place"
-              className="w-full bg-[#0d0d0f] border border-white/10 text-slate-200 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-[#0d0d0f] border border-emerald-400 dark:border-white/10 text-emerald-900 dark:text-slate-200 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-500 transition-colors"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleCreateFile();
@@ -1925,10 +1925,10 @@ export default function RobotWorkspaceIDE({
             </p>
           </div>
           
-          <div className="flex justify-end space-x-2 pt-3 border-t border-white/5">
+          <div className="flex justify-end space-x-2 pt-3 border-t border-emerald-300 dark:border-white/5">
             <button
               onClick={() => setShowAddFile(false)}
-              className="px-3 py-1.5 bg-[#0d0d0f] border border-white/5 hover:bg-[#141417] rounded text-xs text-slate-400 cursor-pointer"
+              className="px-3 py-1.5 bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 hover:bg-[#141417] rounded text-xs text-emerald-700 dark:text-slate-400 cursor-pointer"
             >
               Cancel
             </button>
@@ -1953,15 +1953,15 @@ export default function RobotWorkspaceIDE({
         minWidth={400}
         minHeight={340}
       >
-        <div className="space-y-4 text-xs leading-relaxed font-mono text-slate-350 pr-1 max-h-[480px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+        <div className="space-y-4 text-xs leading-relaxed font-mono text-emerald-800 dark:text-slate-350 pr-1 max-h-[480px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
           
           {/* Section 1: Decoupled Cognitive Architecture */}
-          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+          <div className="space-y-1 bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 p-3 rounded">
             <div className="text-blue-400 font-bold text-[10px] uppercase tracking-wider">1. Decoupled 3-Layer Cognitive Architecture</div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
+            <p className="text-emerald-700 dark:text-slate-400 text-[11px] leading-relaxed">
               To guarantee consistent latency and jitter-free motion paths, the controller firmware decouples execution into three sequential, non-blocking layers:
             </p>
-            <ul className="list-disc pl-4 space-y-1 text-slate-400 text-[10.5px] mt-1.5">
+            <ul className="list-disc pl-4 space-y-1 text-emerald-700 dark:text-slate-400 text-[10.5px] mt-1.5">
               <li><span className="text-slate-205 font-bold">Sensing Layer:</span> Constantly queries breakbeam sensors, encoder registers (<code className="text-teal-400">#122</code>-<code className="text-teal-400">#151</code>), and color scans.</li>
               <li><span className="text-slate-205 font-bold">Decision Layer:</span> Matches parts to destination bins, processes error states, and updates state vectors.</li>
               <li><span className="text-slate-205 font-bold">Motion Profiler:</span> Translates goals into step pulses using kinematics solvers, maintaining smooth paths.</li>
@@ -1969,35 +1969,35 @@ export default function RobotWorkspaceIDE({
           </div>
 
           {/* Section 2: Kinematic Classes */}
-          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+          <div className="space-y-1 bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 p-3 rounded">
             <div className="text-emerald-400 font-bold text-[10px] uppercase tracking-wider">2. System Kinematics & Coordinate Planes</div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
+            <p className="text-emerald-700 dark:text-slate-400 text-[11px] leading-relaxed">
               The controller compiles high-level coordinates into actuator joint-space configuration targets depending on the selected hardware class:
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
-              <div className="bg-black/35 p-2 rounded border border-white/5">
-                <span className="text-slate-200 font-bold text-[9.5px]">Articulated 4-DOF:</span>
+              <div className="bg-black/35 p-2 rounded border border-emerald-300 dark:border-white/5">
+                <span className="text-emerald-900 dark:text-slate-200 font-bold text-[9.5px]">Articulated 4-DOF:</span>
                 <p className="text-slate-500 text-[9px] mt-1">Multi-planar revolute joints. Translates spherical coordinates into J1/J2/J3 absolute angles.</p>
               </div>
-              <div className="bg-black/35 p-2 rounded border border-white/5">
-                <span className="text-slate-200 font-bold text-[9.5px]">Planar SCARA:</span>
+              <div className="bg-black/35 p-2 rounded border border-emerald-300 dark:border-white/5">
+                <span className="text-emerald-900 dark:text-slate-200 font-bold text-[9.5px]">Planar SCARA:</span>
                 <p className="text-slate-500 text-[9px] mt-1">High-response horizontal pick. Revolute J1/J2 sweep on parallel planes with a linear J3 quill plunger.</p>
               </div>
-              <div className="bg-black/35 p-2 rounded border border-white/5">
-                <span className="text-slate-200 font-bold text-[9.5px]">Cartesian Gantry:</span>
+              <div className="bg-black/35 p-2 rounded border border-emerald-300 dark:border-white/5">
+                <span className="text-emerald-900 dark:text-slate-200 font-bold text-[9.5px]">Cartesian Gantry:</span>
                 <p className="text-slate-500 text-[9px] mt-1">Overhead linear rails. Orthogonal X/Y axis sliders matched with a vertical physical quill.</p>
               </div>
             </div>
           </div>
 
           {/* Section 3: Calibration Registers */}
-          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+          <div className="space-y-1 bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 p-3 rounded">
             <div className="text-amber-400 font-bold text-[10px] uppercase tracking-wider">3. Teach Calibration & Volatile Parameter Registers</div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
+            <p className="text-emerald-700 dark:text-slate-400 text-[11px] leading-relaxed">
               Robot target landing coordinates and safety heights are soft-referenced to volatile macro variables. Change these via active UI Sliders under the 
               <span className="text-white"> "Factory Simulator"</span> tab or programmatically in scripts without rewriting kinematics logic:
             </p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 bg-black/45 p-2 rounded mt-2 text-[9.5px] font-mono leading-relaxed border border-white/5">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 bg-black/45 p-2 rounded mt-2 text-[9.5px] font-mono leading-relaxed border border-emerald-300 dark:border-white/5">
               <div><span className="text-amber-400">#122 / #123</span>: Conveyor Pick Pt (X/Y)</div>
               <div><span className="text-amber-400">#130 / #131</span>: Red Sort Box Target</div>
               <div><span className="text-amber-400">#132 / #133</span>: Green Sort Box Target</div>
@@ -2010,24 +2010,24 @@ export default function RobotWorkspaceIDE({
           </div>
 
           {/* Section 4: Motion Profiling */}
-          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+          <div className="space-y-1 bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 p-3 rounded">
             <div className="text-teal-400 font-bold text-[10px] uppercase tracking-wider">4. Motion Profiling & Acceleration Control</div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
+            <p className="text-emerald-700 dark:text-slate-400 text-[11px] leading-relaxed">
               Actuators do not perform instantaneous step jumps. Paths are computed using a motion profile:
             </p>
-            <ul className="list-disc pl-4 space-y-1 text-slate-400 text-[10px] mt-1">
+            <ul className="list-disc pl-4 space-y-1 text-emerald-700 dark:text-slate-400 text-[10px] mt-1">
               <li><span className="text-slate-205 font-bold">Inter-Joint Interpolation:</span> Damped step movements are solved dynamically via real-time damping coefficients inside the workspace physics solver.</li>
               <li><span className="text-slate-205 font-bold">Feedrate Limits:</span> The G-code parameter <code className="text-teal-400 font-bold">F[value]</code> defines peak speeds; deceleration curves are generated as targets near extreme limits.</li>
             </ul>
           </div>
 
           {/* Section 5: Interlocking & Safeties */}
-          <div className="space-y-1 bg-[#0d0d0f] border border-white/5 p-3 rounded">
+          <div className="space-y-1 bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 p-3 rounded">
             <div className="text-rose-400 font-bold text-[10px] uppercase tracking-wider">5. System Safeties & Interlocking</div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
+            <p className="text-emerald-700 dark:text-slate-400 text-[11px] leading-relaxed">
               Industrial cells are guided by interlocking triggers to prevent physical collisions:
             </p>
-            <ul className="list-disc pl-4 space-y-1 text-slate-400 text-[10px] mt-1">
+            <ul className="list-disc pl-4 space-y-1 text-emerald-700 dark:text-slate-400 text-[10px] mt-1">
               <li><span className="text-slate-210 font-bold">Dry-Run Simulation:</span> Activating dry-run disables vacuum/gripper actuators, running virtual motions so coordinates and collisions can be detected safely.</li>
               <li><span className="text-slate-210 font-bold">Breakbeam Interlock (<code className="text-teal-450 uppercase">M66</code>):</span> Halts routine progression until a physical part registers, avoiding empty pickups.</li>
               <li><span className="text-slate-210 font-bold">Containment Safety Barrier:</span> Setting the obstacle height maps a physical intrusion boundary. Paths must climb over <code className="text-teal-400">#105</code> to clear the hazard.</li>
@@ -2036,43 +2036,43 @@ export default function RobotWorkspaceIDE({
 
           {/* Section 6: Syntax Guide */}
           <div>
-            <div className="text-blue-400 font-bold border-b border-white/5 pb-1 mb-2 uppercase text-[10px] tracking-wider">6. Controller Instruction Cheat Sheet</div>
+            <div className="text-blue-400 font-bold border-b border-emerald-300 dark:border-white/5 pb-1 mb-2 uppercase text-[10px] tracking-wider">6. Controller Instruction Cheat Sheet</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] leading-normal">
-              <div className="space-y-1.5 bg-black/20 p-2 rounded border border-white/5">
-                <div className="text-slate-200 font-bold text-[9px] uppercase tracking-wider">Standard G-Codes</div>
+              <div className="space-y-1.5 bg-black/20 p-2 rounded border border-emerald-300 dark:border-white/5">
+                <div className="text-emerald-900 dark:text-slate-200 font-bold text-[9px] uppercase tracking-wider">Standard G-Codes</div>
                 <div>
                   <code className="text-emerald-400 font-bold">G00 X.. Y.. Z..</code>
-                  <p className="text-slate-400 text-[9.5px]">Rapid move at max rate.</p>
+                  <p className="text-emerald-700 dark:text-slate-400 text-[9.5px]">Rapid move at max rate.</p>
                 </div>
                 <div>
                   <code className="text-emerald-400 font-bold">G01 X.. Y.. Z.. F[rate]</code>
-                  <p className="text-slate-400 text-[9.5px]">Linear feedrate coordinated motion.</p>
+                  <p className="text-emerald-700 dark:text-slate-400 text-[9.5px]">Linear feedrate coordinated motion.</p>
                 </div>
                 <div>
                   <code className="text-emerald-400 font-bold">G90 / G21</code>
-                  <p className="text-slate-400 text-[9.5px]">Absolute coordinate mode / Metric units (mm).</p>
+                  <p className="text-emerald-700 dark:text-slate-400 text-[9.5px]">Absolute coordinate mode / Metric units (mm).</p>
                 </div>
               </div>
               
-              <div className="space-y-1.5 bg-black/20 p-2 rounded border border-white/5">
-                <div className="text-slate-200 font-bold text-[9px] uppercase tracking-wider">Standard M-Codes</div>
+              <div className="space-y-1.5 bg-black/20 p-2 rounded border border-emerald-300 dark:border-white/5">
+                <div className="text-emerald-900 dark:text-slate-200 font-bold text-[9px] uppercase tracking-wider">Standard M-Codes</div>
                 <div>
                   <code className="text-blue-400 font-bold">M03 S1 / S0</code>
-                  <p className="text-slate-400 text-[9.5px]">Conveyor Belt Run / Halt.</p>
+                  <p className="text-emerald-700 dark:text-slate-400 text-[9.5px]">Conveyor Belt Run / Halt.</p>
                 </div>
                 <div>
                   <code className="text-blue-400 font-bold">M05 P1 / P0</code>
-                  <p className="text-slate-400 text-[9.5px]">Actuator Tool Grab / Release.</p>
+                  <p className="text-emerald-700 dark:text-slate-400 text-[9.5px]">Actuator Tool Grab / Release.</p>
                 </div>
                 <div>
                   <code className="text-blue-400 font-bold">M66 P1 L3 Q5</code>
-                  <p className="text-slate-400 text-[9.5px]">Sensor breakpoint sync interlock hook.</p>
+                  <p className="text-emerald-700 dark:text-slate-400 text-[9.5px]">Sensor breakpoint sync interlock hook.</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end pt-3 border-t border-white/5">
+          <div className="flex justify-end pt-3 border-t border-emerald-300 dark:border-white/5">
             <button
               onClick={() => setShowHelpModal(false)}
               className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs text-white font-bold transition-colors cursor-pointer"

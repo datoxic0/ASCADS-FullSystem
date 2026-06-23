@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, Layers, Grid, Plus, MousePointer2, Move, Save, Trash2 } from 'lucide-react';
 import { RobotDesignConfig } from './types';
 
@@ -21,6 +21,35 @@ interface EnvObject {
 
 export default function EnvironmentBuilder({ robotDesign, setRobotDesign, objects, setObjects }: Props) {
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
+  const [draggingObjId, setDraggingObjId] = useState<string | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedObjectId(id);
+    setDraggingObjId(id);
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!draggingObjId) return;
+    setObjects(prev => prev.map(obj => {
+      if (obj.id !== draggingObjId) return obj;
+      return { ...obj, x: obj.x + e.movementX, y: obj.y + e.movementY };
+    }));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (draggingObjId) {
+      setObjects(prev => prev.map(obj => {
+        if (obj.id !== draggingObjId) return obj;
+        return { ...obj, x: Math.round(obj.x / 20) * 20, y: Math.round(obj.y / 20) * 20 };
+      }));
+      setDraggingObjId(null);
+      try {
+        (e.target as Element).releasePointerCapture(e.pointerId);
+      } catch (err) {}
+    }
+  };
 
   const handleAddObject = (type: EnvObject['type']) => {
     const newObj: EnvObject = {
@@ -37,10 +66,10 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
   };
 
   return (
-    <div className="flex w-full h-full bg-[#0a0a0c] text-slate-300">
+    <div className="flex w-full h-full bg-[#0a0a0c] text-emerald-800 dark:text-slate-300">
       {/* Sidebar Tools */}
-      <div className="w-64 border-r border-white/5 bg-[#141418] flex flex-col">
-        <div className="p-4 border-b border-white/5 bg-[#1a1a1e]">
+      <div className="w-64 border-r border-emerald-300 dark:border-white/5 bg-[#141418] flex flex-col">
+        <div className="p-4 border-b border-emerald-300 dark:border-white/5 bg-[#1a1a1e]">
           <h2 className="text-xs font-bold text-white uppercase tracking-wider flex items-center">
             <Layers className="w-4 h-4 mr-2 text-blue-400" />
             Environment Builder
@@ -54,30 +83,30 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
             <select
               value={robotDesign.category}
               onChange={(e) => setRobotDesign({ ...robotDesign, category: e.target.value as any })}
-              className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-500/50"
+              className="w-full bg-black/40 border border-emerald-400 dark:border-white/10 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-blue-500/50"
             >
               <option value="industrial">Industrial Factory (Heavy Duty)</option>
               <option value="domestic">Domestic Home (Mobile)</option>
             </select>
           </div>
 
-          <div className="pt-4 border-t border-white/5 space-y-2">
+          <div className="pt-4 border-t border-emerald-300 dark:border-white/5 space-y-2">
             <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Add Structures</label>
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => handleAddObject('wall')} className="flex flex-col items-center justify-center p-3 bg-black/20 hover:bg-black/40 border border-white/5 hover:border-blue-500/30 rounded cursor-pointer transition-colors">
-                <Box className="w-6 h-6 text-slate-400 mb-1" />
+              <button onClick={() => handleAddObject('wall')} className="flex flex-col items-center justify-center p-3 bg-black/20 hover:bg-black/40 border border-emerald-300 dark:border-white/5 hover:border-blue-500/30 rounded cursor-pointer transition-colors">
+                <Box className="w-6 h-6 text-emerald-700 dark:text-slate-400 mb-1" />
                 <span className="text-[9px] font-bold">Wall/Barrier</span>
               </button>
-              <button onClick={() => handleAddObject('table')} className="flex flex-col items-center justify-center p-3 bg-black/20 hover:bg-black/40 border border-white/5 hover:border-blue-500/30 rounded cursor-pointer transition-colors">
-                <Box className="w-6 h-6 text-slate-400 mb-1" />
+              <button onClick={() => handleAddObject('table')} className="flex flex-col items-center justify-center p-3 bg-black/20 hover:bg-black/40 border border-emerald-300 dark:border-white/5 hover:border-blue-500/30 rounded cursor-pointer transition-colors">
+                <Box className="w-6 h-6 text-emerald-700 dark:text-slate-400 mb-1" />
                 <span className="text-[9px] font-bold">Table</span>
               </button>
-              <button onClick={() => handleAddObject('cnc')} className="flex flex-col items-center justify-center p-3 bg-black/20 hover:bg-black/40 border border-white/5 hover:border-blue-500/30 rounded cursor-pointer transition-colors">
-                <Box className="w-6 h-6 text-slate-400 mb-1" />
+              <button onClick={() => handleAddObject('cnc')} className="flex flex-col items-center justify-center p-3 bg-black/20 hover:bg-black/40 border border-emerald-300 dark:border-white/5 hover:border-blue-500/30 rounded cursor-pointer transition-colors">
+                <Box className="w-6 h-6 text-emerald-700 dark:text-slate-400 mb-1" />
                 <span className="text-[9px] font-bold">CNC Machine</span>
               </button>
-              <button onClick={() => handleAddObject('conveyor')} className="flex flex-col items-center justify-center p-3 bg-black/20 hover:bg-black/40 border border-white/5 hover:border-blue-500/30 rounded cursor-pointer transition-colors">
-                <Box className="w-6 h-6 text-slate-400 mb-1" />
+              <button onClick={() => handleAddObject('conveyor')} className="flex flex-col items-center justify-center p-3 bg-black/20 hover:bg-black/40 border border-emerald-300 dark:border-white/5 hover:border-blue-500/30 rounded cursor-pointer transition-colors">
+                <Box className="w-6 h-6 text-emerald-700 dark:text-slate-400 mb-1" />
                 <span className="text-[9px] font-bold">Conveyor</span>
               </button>
             </div>
@@ -86,7 +115,13 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
       </div>
 
       {/* Main Canvas Workspace */}
-      <div className="flex-1 relative overflow-hidden bg-[#0d0d0f]">
+      <div 
+        className="flex-1 relative overflow-hidden bg-[#0d0d0f] touch-none"
+        onClick={() => setSelectedObjectId(null)}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      >
         {/* Grid Background */}
         <div 
           className="absolute inset-0 pointer-events-none opacity-20"
@@ -106,7 +141,8 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
         {objects.map((obj) => (
           <div
             key={obj.id}
-            onClick={() => setSelectedObjectId(obj.id)}
+            onPointerDown={(e) => handlePointerDown(e, obj.id)}
+            onClick={(e) => { e.stopPropagation(); setSelectedObjectId(obj.id); }}
             className={`absolute cursor-move transition-shadow ${selectedObjectId === obj.id ? 'ring-2 ring-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : ''}`}
             style={{
               left: `${obj.x}px`,
@@ -138,7 +174,7 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
 
       {/* Right Properties Panel */}
       {selectedObjectId && (
-        <div className="w-64 border-l border-white/5 bg-[#141418] flex flex-col p-4">
+        <div className="w-64 border-l border-emerald-300 dark:border-white/5 bg-[#141418] flex flex-col p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xs font-bold text-white uppercase">Properties</h3>
             <button onClick={() => {
@@ -152,7 +188,7 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
           {objects.filter(o => o.id === selectedObjectId).map(obj => (
              <div key={obj.id} className="space-y-4">
                <div>
-                  <label className="text-[10px] text-slate-400">Position X</label>
+                  <label className="text-[10px] text-emerald-700 dark:text-slate-400">Position X</label>
                   <input 
                     type="range" min="0" max="800" value={obj.x}
                     onChange={(e) => setObjects(objects.map(o => o.id === obj.id ? { ...o, x: parseInt(e.target.value) } : o))}
@@ -160,7 +196,7 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
                   />
                </div>
                <div>
-                  <label className="text-[10px] text-slate-400">Position Y</label>
+                  <label className="text-[10px] text-emerald-700 dark:text-slate-400">Position Y</label>
                   <input 
                     type="range" min="0" max="600" value={obj.y}
                     onChange={(e) => setObjects(objects.map(o => o.id === obj.id ? { ...o, y: parseInt(e.target.value) } : o))}
@@ -168,7 +204,7 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
                   />
                </div>
                <div>
-                  <label className="text-[10px] text-slate-400">Rotation</label>
+                  <label className="text-[10px] text-emerald-700 dark:text-slate-400">Rotation</label>
                   <input 
                     type="range" min="0" max="360" value={obj.rotation}
                     onChange={(e) => setObjects(objects.map(o => o.id === obj.id ? { ...o, rotation: parseInt(e.target.value) } : o))}
@@ -176,7 +212,7 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
                   />
                </div>
                <div>
-                  <label className="text-[10px] text-slate-400">Width / Length</label>
+                  <label className="text-[10px] text-emerald-700 dark:text-slate-400">Width / Length</label>
                   <input 
                     type="range" min="10" max="400" value={obj.width}
                     onChange={(e) => setObjects(objects.map(o => o.id === obj.id ? { ...o, width: parseInt(e.target.value) } : o))}

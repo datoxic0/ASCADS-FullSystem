@@ -1,19 +1,24 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, Binary, Table, Layers, BookOpen, ArrowRightLeft } from 'lucide-react';
+import { Calculator, Binary, Table, Layers, BookOpen, ArrowRightLeft, Zap, Sigma } from 'lucide-react';
 import BaseConverter from '@/components/compute/BaseConverter';
 import BinaryArithmetic from '@/components/compute/BinaryArithmetic';
 import BooleanLogic from '@/components/compute/BooleanLogic';
 import NumberFormats from '@/components/compute/NumberFormats';
 import ReferenceTable from '@/components/compute/ReferenceTable';
+import Electrotechnology from '@/components/compute/Electrotechnology';
 
-type ComputeTab = 'base' | 'arith' | 'logic' | 'formats' | 'ref';
+import AdvancedMaths from '@/components/compute/AdvancedMaths';
+
+type ComputeTab = 'base' | 'arith' | 'logic' | 'formats' | 'ref' | 'electro' | 'adv_math';
 
 const TABS: { id: ComputeTab; label: string; icon: any; desc: string; color: string }[] = [
   { id: 'base',    label: 'Base Converter',    icon: ArrowRightLeft, desc: 'Dec·Bin·Oct·Hex + Signed',    color: 'cyan'    },
   { id: 'arith',   label: 'Binary Arithmetic', icon: Calculator,     desc: 'ADD·SUB·MUL·DIV·Bitwise',    color: 'violet'  },
   { id: 'logic',   label: 'Boolean Logic',     icon: Binary,         desc: 'Truth table·SOP·POS·Circuit', color: 'emerald' },
   { id: 'formats', label: 'Number Formats',    icon: Layers,         desc: 'IEEE 754·Gray·BCD·Hamming',   color: 'amber'   },
+  { id: 'adv_math',label: 'Advanced Maths',    icon: Sigma,          desc: 'Complex·Matrix·Fourier',      color: 'indigo'  },
+  { id: 'electro', label: 'Electrotechnology', icon: Zap,            desc: 'RLC·Ohm Law·Power·Impedance', color: 'blue'    },
   { id: 'ref',     label: 'Reference Table',   icon: BookOpen,       desc: 'ASCII / conversion lookup',   color: 'rose'    },
 ];
 
@@ -68,6 +73,8 @@ export default function ComputeTools() {
             {tab === 'arith'   && <BinaryArithmetic />}
             {tab === 'logic'   && <BooleanLogic />}
             {tab === 'formats' && <NumberFormats />}
+            {tab === 'adv_math'&& <AdvancedMaths />}
+            {tab === 'electro' && <Electrotechnology />}
             {tab === 'ref'     && <ReferenceTable />}
           </motion.div>
         </AnimatePresence>

@@ -318,5 +318,13 @@ export const COMPONENT_DEFINITIONS: Record<ComponentType, ComponentDefinition> =
     defaultProperties: { tag: 'Q0.0' },
     width: 40,
     height: 40
+  },
+  LADDER_TIMER: {
+    type: 'LADDER_TIMER',
+    name: 'Timer',
+    pins: [{ x: 0, y: 20 }, { x: 40, y: 20 }],
+    defaultProperties: { tag: 'T4:0', preset: 1000, timeBase: 'ms' },
+    width: 60,
+    height: 40
   }
 };

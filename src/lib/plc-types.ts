@@ -20,11 +20,16 @@ export type NodeType =
   | 'compare-ne'
   | 'compare-lt'
   | 'compare-gt'
+  | 'compare-le'
+  | 'compare-ge'
   | 'math-add'
   | 'math-sub'
   | 'math-mul'
   | 'math-div'
   | 'math-mov'
+  | 'math-mod'
+  | 'math-abs'
+  | 'math-sqrt'
   | 'math-sin'
   | 'math-cos'
   | 'math-tan'
@@ -49,6 +54,7 @@ export interface LadderNode {
   description?: string; // Optional description
   params?: {
     preset?: number;
+    timeBase?: 'ms' | 's';
     accum?: number;
     sourceA?: string | number;
     sourceB?: string | number;
@@ -90,6 +96,9 @@ export interface Wire {
   toId: string;
   toSide: 'left' | 'right';
   points: number[];
+  waypoints?: { x: number, y: number }[];
+  color?: string;
+  thickness?: number;
 }
 
 export interface LadderState {

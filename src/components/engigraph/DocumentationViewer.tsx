@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Book, FileText, Briefcase, Info, Compass } from 'lucide-react';
-import { DocumentationContent } from '../../../public/engigraph/ui-documentation-content';
+import { DocumentationContent } from './ui-documentation-content';
 
 interface Props {
   isOpen: boolean;
@@ -19,6 +19,7 @@ export default function DocumentationViewer({ isOpen, onClose }: Props) {
     { id: 'standards', icon: <Briefcase size={16} />, label: 'Engineering Standards' },
     { id: 'math', icon: <FileText size={16} />, label: 'Computational Math' },
     { id: 'mechatronics', icon: <FileText size={16} />, label: 'Mechatronics' },
+    { id: 'caseStudies', icon: <Briefcase size={16} />, label: 'Case Studies' },
   ] as const;
 
   return (

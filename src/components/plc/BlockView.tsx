@@ -522,12 +522,12 @@ export function BlockView({ state, onNodeClick, onToggleAddress, onForceIO }: Bl
                               <div className="mt-1.5 pt-1 border-t border-dashed border-white/5 space-y-1 bg-black/20 p-1 rounded">
                                 <div className="flex justify-between text-amber-500/90 font-bold">
                                   <span>PRE:</span>
-                                  <span>{output.params?.preset || 0}</span>
+                                  <span>{output.params?.preset || 0}{output.type.startsWith('timer') ? (output.params?.timeBase === 'ms' ? 'ms' : 's') : ''}</span>
                                 </div>
                                 <div className="flex justify-between text-cyan-400 font-bold">
                                   <span>ACC:</span>
                                   <span>
-                                    {state.simulation.values[`${output.address}_ACC`] || 0}
+                                    {output.type.startsWith('timer') ? (output.params?.timeBase === 'ms' ? (state.simulation.values[`${output.address}_ACC`] || 0) : (Number(state.simulation.values[`${output.address}_ACC`] || 0) / 1000).toFixed(1)) : (state.simulation.values[`${output.address}_ACC`] || 0)}
                                   </span>
                                 </div>
                               </div>

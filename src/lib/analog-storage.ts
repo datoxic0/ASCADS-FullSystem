@@ -1,4 +1,5 @@
 import type { AnalogProject, Sheet, Commit } from './analog-types';
+import { getCaseStudyProjects } from './analog-presets';
 
 const STORAGE_KEY = 'ascads_projects_v2';
 const ACTIVE_KEY = 'ascads_active_v2';
@@ -29,13 +30,24 @@ function migrateProjects(projects: AnalogProject[]): AnalogProject[] {
   }));
 }
 
+
+
 export function loadProjects(): AnalogProject[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
+    let parsed: AnalogProject[] = raw ? JSON.parse(raw) : [];
+    
+    // Inject case study presets if they don't exist
+    const presets = getCaseStudyProjects();
+    presets.forEach(preset => {
+      if (!parsed.find(p => p.id === preset.id)) {
+        parsed.push(preset);
+      }
+    });
+
     return migrateProjects(parsed);
   } catch {
-    return [];
+    return migrateProjects(getCaseStudyProjects());
   }
 }
 
@@ -43,7 +55,7 @@ export function saveProjects(projects: AnalogProject[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 }
 
-export function createProject(name: string): AnalogProject {
+export function createProject(name: string, type: 'analog' | 'plc' | 'digital' | 'robot' = 'analog', data: any = null): AnalogProject {
   const defaultSheet: Sheet = {
     id: generateId(),
     name: 'Sheet_1',
@@ -57,11 +69,24 @@ export function createProject(name: string): AnalogProject {
     message: 'Initial commit',
     timestamp: Date.now(),
   };
+
+  let initialData = data;
+  let initialSheets = [defaultSheet];
+  let activeSheetId = defaultSheet.id;
+
+  if (data && data.sheets && Array.isArray(data.sheets)) {
+    initialSheets = data.sheets;
+    activeSheetId = initialSheets[0]?.id || defaultSheet.id;
+    initialData = data.data; // Pass any additional generic payload if provided
+  }
+
   return {
     id: generateId(),
     name,
-    sheets: [defaultSheet],
-    activeSheetId: defaultSheet.id,
+    type,
+    data: initialData,
+    sheets: initialSheets,
+    activeSheetId,
     history: [initCommit],
     createdAt: Date.now(),
     updatedAt: Date.now(),

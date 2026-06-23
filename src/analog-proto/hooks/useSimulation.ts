@@ -238,19 +238,40 @@ export function useSimulation(design: CircuitDesign) {
 function canPropagate(from: Component | undefined, to: Component | undefined, conn: Connection, activeIds: Set<string>, design: CircuitDesign): boolean {
     if (!from || !to) return false;
 
+    // Ground is 0V reference, it never receives or propagates "active/high" state
+    if (to.type === 'GROUND' || from.type === 'GROUND') return false;
+
+    // Batteries only propagate power out of their positive terminal (pin 0)
+    if (from.type === 'BATTERY') {
+        const outPin = conn.from === from.id ? conn.fromPin : conn.toPin;
+        if (outPin === 1) return false;
+    }
+
+    const isSwitchOpen = (comp: Component | undefined) => {
+        if (!comp) return false;
+        if (['SWITCH', 'TOGGLE_SWITCH', 'PUSH_BUTTON', 'LADDER_CONTACT_NO'].includes(comp.type)) {
+            const open = comp.properties.state !== 'Closed' && comp.properties.state !== 'Active';
+            console.log(`[canPropagate] ${comp.id} (${comp.type}) state='${comp.properties.state}' -> isSwitchOpen=${open}`);
+            return open;
+        }
+        if (comp.type === 'LADDER_CONTACT_NC') {
+            return comp.properties.state === 'Closed' || comp.properties.state === 'Active';
+        }
+        return false;
+    };
+
+    if (isSwitchOpen(from)) {
+        return false;
+    }
+
     // Passive components usually propagate in both directions
-    if (['RESISTOR', 'CAPACITOR', 'INDUCTOR', 'LED', 'DIODE', 'BATTERY', 'GROUND'].includes(to.type)) {
+    if (['RESISTOR', 'CAPACITOR', 'INDUCTOR', 'LED', 'DIODE', 'BATTERY', 'GROUND', 'LADDER_COIL'].includes(to.type)) {
         if (to.type === 'DIODE') {
             // Simplistic diode polarity check
             const isForward = conn.to === to.id && conn.toPin === 0;
             return isForward;
         }
         return true;
-    }
-
-    // Switches and Buttons
-    if (['SWITCH', 'TOGGLE_SWITCH', 'PUSH_BUTTON'].includes(to.type)) {
-        return to.properties.state === 'Closed';
     }
 
     // Logic Gates
@@ -261,15 +282,22 @@ function canPropagate(from: Component | undefined, to: Component | undefined, co
         if (inPin === outPin) return false; // Gates don't propagate backwards from output
 
         // Logic gates need all/some inputs to be active
-        const inputs = design.connections.filter(c => c.to === to.id && c.toPin !== outPin);
-        const inputStates = inputs.map(c => activeIds.has(c.from));
+        // Find all connections to this gate that are NOT on the output pin
+        const inputs = design.connections.filter(c => 
+            (c.to === to.id && c.toPin !== outPin) || 
+            (c.from === to.id && c.fromPin !== outPin)
+        );
+        
+        const inputStates = inputs.map(c => 
+            c.to === to.id ? activeIds.has(c.from) : activeIds.has(c.to)
+        );
 
         switch (to.type) {
             case 'LOGIC_AND': return inputStates.length >= 2 && inputStates.every(v => v);
             case 'LOGIC_OR': return inputStates.some(v => v);
-            case 'LOGIC_NOT': return !inputStates[0];
+            case 'LOGIC_NOT': return inputStates.length > 0 && !inputStates[0];
             case 'XOR_GATE': return inputStates.filter(v => v).length % 2 !== 0;
-            case 'XNOR_GATE': return inputStates.filter(v => v).length % 2 === 0;
+            case 'XNOR_GATE': return inputStates.length > 0 && inputStates.filter(v => v).length % 2 === 0;
             case 'NAND_GATE': return !(inputStates.length >= 2 && inputStates.every(v => v));
             case 'NOR_GATE': return !(inputStates.some(v => v));
             default: return true;

@@ -233,8 +233,20 @@ export function PropertyInspector({ selectedNode, values, history, onUpdate, onD
                <div className="p-3 bg-blue-500/5 border border-blue-500/15 rounded-lg space-y-2.5">
                   <div className="space-y-1">
                      <div className="flex justify-between items-center">
-                        <label className="text-[7.5px] font-black text-blue-400/60 uppercase tracking-widest pl-0.5">
-                          {selectedNode.type.startsWith('timer') ? 'Preset Delay (ms)' : 'Target Terminal Count'}
+                        <label className="text-[7.5px] font-black text-blue-400/60 uppercase tracking-widest pl-0.5 flex gap-2 items-center">
+                          {selectedNode.type.startsWith('timer') ? 'Preset Delay' : 'Target Terminal Count'}
+                          {selectedNode.type.startsWith('timer') && (
+                            <select 
+                              value={selectedNode.params?.timeBase || 's'}
+                              onChange={(e) => onUpdate(selectedNode.id, {
+                                params: { ...selectedNode.params, timeBase: e.target.value as 'ms' | 's' }
+                              })}
+                              className="bg-black/40 border border-blue-500/30 text-blue-400 rounded px-1 outline-none font-mono text-[8px]"
+                            >
+                              <option value="s">Sec</option>
+                              <option value="ms">ms</option>
+                            </select>
+                          )}
                         </label>
                         <Clock size={10} className="text-blue-500/30" />
                      </div>
@@ -595,7 +607,7 @@ export function PropertyInspector({ selectedNode, values, history, onUpdate, onD
                 </div>
                 <div className="text-xl font-black text-blue-500 font-mono tracking-tighter drop-shadow-[0_0_12px_rgba(59,130,246,0.35)]">
                   {selectedNode.type.startsWith('timer') 
-                    ? (Number(values[`${selectedNode.address}_ACC`] || 0) / 1000).toFixed(1) 
+                    ? (selectedNode.params?.timeBase === 'ms' ? Number(values[`${selectedNode.address}_ACC`] || 0) : (Number(values[`${selectedNode.address}_ACC`] || 0) / 1000).toFixed(1)) 
                     : (values[`${selectedNode.address}_ACC`] !== undefined 
                         ? values[`${selectedNode.address}_ACC`] 
                         : (values[selectedNode.params?.dest || selectedNode.address] || 0))}

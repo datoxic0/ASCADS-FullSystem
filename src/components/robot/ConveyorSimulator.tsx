@@ -319,7 +319,7 @@ export function ConveyorSimulator({ simState, onUpdateSim, onAddLog }: Props) {
       <div className="flex-1 relative bg-[#06080d] overflow-hidden">
         <canvas ref={canvasRef} className="w-full h-full" />
       </div>
-      <div className="h-10 bg-[#0a0c12] border-t border-white/5 flex items-center px-4 gap-6 text-[9px] font-mono shrink-0">
+      <div className="h-10 bg-[#0a0c12] border-t border-emerald-300 dark:border-white/5 flex items-center px-4 gap-6 text-[9px] font-mono shrink-0">
         <span className="text-zinc-400 font-bold">Conveyor:</span>
         <span className={simState.isRunning ? 'text-emerald-400' : 'text-zinc-500'}>{simState.isRunning ? 'RUNNING' : 'STOPPED'}</span>
         <span className="text-zinc-400 font-bold">Vision:</span>

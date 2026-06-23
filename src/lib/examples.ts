@@ -27,7 +27,7 @@ function build(
 export type Example = {
   name: string;
   description: string;
-  category: "Basics" | "Memory" | "Arithmetic" | "Sequential";
+  category: "Basics" | "Memory" | "Arithmetic" | "Sequential" | "Case Studies";
   build: () => Circuit;
 };
 
@@ -317,4 +317,56 @@ export const EXAMPLES: Example[] = [
         ],
       ),
   },
+  /* ─────────────────────── Case Studies ──────────────────────── */
+  {
+    name: "Industrial Motor Interlock (FBD Case Study)",
+    category: "Case Studies",
+    description: "Function Block Diagram representing a safety interlock logic. Uses AND/OR/NOT blocks equivalent to a real PLC FBD. Documentation link: /engigraph/ui-documentation-content.ts",
+    build: () =>
+      build(
+        [
+          { id: "start", kind: "INPUT", x: 80, y: 100, inputs: 0, label: "START_PB", on: false },
+          { id: "stop", kind: "INPUT", x: 80, y: 180, inputs: 0, label: "STOP_PB", on: true },
+          { id: "overload", kind: "INPUT", x: 80, y: 260, inputs: 0, label: "THERMAL_OL", on: false },
+          { id: "not_stop", kind: "NOT", x: 220, y: 180, inputs: 1 },
+          { id: "not_ol", kind: "NOT", x: 220, y: 260, inputs: 1 },
+          { id: "or_latch", kind: "OR", x: 260, y: 120, inputs: 2 },
+          { id: "and_safety", kind: "AND", x: 420, y: 150, inputs: 3 },
+          { id: "motor_run", kind: "OUTPUT", x: 600, y: 160, inputs: 0, label: "MOTOR_COIL" },
+        ],
+        [
+          { id: "w1", from: { gateId: "stop", pinIndex: 0 }, to: { gateId: "not_stop", pinIndex: 0 } },
+          { id: "w2", from: { gateId: "overload", pinIndex: 0 }, to: { gateId: "not_ol", pinIndex: 0 } },
+          { id: "w3", from: { gateId: "start", pinIndex: 0 }, to: { gateId: "or_latch", pinIndex: 0 } },
+          { id: "w4", from: { gateId: "motor_run", pinIndex: 0 }, to: { gateId: "or_latch", pinIndex: 1 } }, // Feedback loop for latch
+          { id: "w5", from: { gateId: "or_latch", pinIndex: 2 }, to: { gateId: "and_safety", pinIndex: 0 } },
+          { id: "w6", from: { gateId: "not_stop", pinIndex: 1 }, to: { gateId: "and_safety", pinIndex: 1 } },
+          { id: "w7", from: { gateId: "not_ol", pinIndex: 1 }, to: { gateId: "and_safety", pinIndex: 2 } },
+          { id: "w8", from: { gateId: "and_safety", pinIndex: 3 }, to: { gateId: "motor_run", pinIndex: 0 } },
+        ],
+      ),
+  },
+  {
+    name: "Pneumatic Clamp Logic (FBD Case Study)",
+    category: "Case Studies",
+    description: "Function Block Diagram for a pneumatic clamping fixture. Requires two-hand safety activation (AND gate) to trigger the cylinder extension. Documentation link: /engigraph/ui-documentation-content.ts",
+    build: () =>
+      build(
+        [
+          { id: "sw1", kind: "INPUT", x: 80, y: 100, inputs: 0, label: "LEFT_HAND_PB", on: false },
+          { id: "sw2", kind: "INPUT", x: 80, y: 180, inputs: 0, label: "RIGHT_HAND_PB", on: false },
+          { id: "guard", kind: "INPUT", x: 80, y: 260, inputs: 0, label: "GUARD_CLOSED", on: true },
+          { id: "and_two_hand", kind: "AND", x: 260, y: 130, inputs: 2 },
+          { id: "and_final", kind: "AND", x: 440, y: 190, inputs: 2 },
+          { id: "solenoid", kind: "OUTPUT", x: 620, y: 200, inputs: 0, label: "SOL_EXTEND" },
+        ],
+        [
+          { id: "w1", from: { gateId: "sw1", pinIndex: 0 }, to: { gateId: "and_two_hand", pinIndex: 0 } },
+          { id: "w2", from: { gateId: "sw2", pinIndex: 0 }, to: { gateId: "and_two_hand", pinIndex: 1 } },
+          { id: "w3", from: { gateId: "and_two_hand", pinIndex: 2 }, to: { gateId: "and_final", pinIndex: 0 } },
+          { id: "w4", from: { gateId: "guard", pinIndex: 0 }, to: { gateId: "and_final", pinIndex: 1 } },
+          { id: "w5", from: { gateId: "and_final", pinIndex: 2 }, to: { gateId: "solenoid", pinIndex: 0 } },
+        ],
+      ),
+  }
 ];

@@ -98,56 +98,56 @@
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  --background: 220 25% 97%;
-  --foreground: 222 35% 12%;
+  --background: 152 25% 96%;
+  --foreground: 152 35% 12%;
 
-  --border: 220 15% 86%;
+  --border: 152 15% 84%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 222 35% 12%;
-  --card-border: 220 15% 86%;
+  --card: 152 10% 98%;
+  --card-foreground: 152 35% 12%;
+  --card-border: 152 15% 84%;
 
-  --sidebar: 220 25% 95%;
-  --sidebar-foreground: 222 35% 12%;
-  --sidebar-border: 220 15% 86%;
-  --sidebar-primary: 189 78% 38%;
+  --sidebar: 152 25% 93%;
+  --sidebar-foreground: 152 35% 12%;
+  --sidebar-border: 152 15% 84%;
+  --sidebar-primary: 152 78% 38%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 25% 90%;
-  --sidebar-accent-foreground: 222 35% 12%;
-  --sidebar-ring: 189 78% 38%;
+  --sidebar-accent: 152 25% 88%;
+  --sidebar-accent-foreground: 152 35% 12%;
+  --sidebar-ring: 152 78% 38%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 35% 12%;
-  --popover-border: 220 15% 86%;
+  --popover: 152 10% 98%;
+  --popover-foreground: 152 35% 12%;
+  --popover-border: 152 15% 84%;
 
-  --primary: 189 78% 38%;
+  --primary: 152 78% 38%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 220 25% 92%;
-  --secondary-foreground: 222 35% 14%;
+  --secondary: 152 25% 90%;
+  --secondary-foreground: 152 35% 14%;
 
-  --muted: 220 25% 94%;
-  --muted-foreground: 220 10% 42%;
+  --muted: 152 25% 92%;
+  --muted-foreground: 152 10% 42%;
 
   --accent: 35 92% 50%;
-  --accent-foreground: 222 35% 12%;
+  --accent-foreground: 152 35% 12%;
 
   --destructive: 0 75% 50%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 15% 84%;
-  --ring: 189 78% 38%;
+  --input: 152 15% 82%;
+  --ring: 152 78% 38%;
 
-  --chart-1: 189 78% 45%;
+  --chart-1: 152 78% 45%;
   --chart-2: 35 92% 50%;
   --chart-3: 145 65% 42%;
   --chart-4: 280 65% 55%;
   --chart-5: 340 75% 55%;
 
   --signal-high: 145 80% 42%;
-  --signal-low: 220 12% 55%;
+  --signal-low: 152 12% 55%;
   --signal-unknown: 35 92% 52%;
-  --grid: 220 15% 90%;
+  --grid: 152 15% 88%;
 
   --app-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --app-font-serif: Georgia, serif;

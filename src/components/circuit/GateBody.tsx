@@ -249,6 +249,7 @@ function BoxBody({
         fill={fill}
         stroke={stroke}
         strokeWidth={sw}
+        style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 10px rgba(59, 130, 246, 0.1))" }}
       />
       <text
         x={w / 2}
@@ -393,6 +394,7 @@ function AnsiGateShape({
           stroke={stroke}
           strokeWidth={sw}
           strokeLinejoin="round"
+          style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.5))" }}
         />
         {isNegated && (
           <circle cx={bubbleX} cy={cy} r={bubbleR} fill={fill} stroke={stroke} strokeWidth={sw} />
@@ -416,6 +418,7 @@ function AnsiGateShape({
         stroke={stroke}
         strokeWidth={sw}
         strokeLinejoin="round"
+        style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.5))" }}
       />
       {isXor && (
         <path
@@ -468,6 +471,7 @@ function IecGateShape({
         fill={fill}
         stroke={stroke}
         strokeWidth={sw}
+        style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 10px rgba(59, 130, 246, 0.1))" }}
       />
       <text
         x={bx + bw / 2}

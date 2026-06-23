@@ -254,7 +254,9 @@ export default function Robot3DCanvas({ joints, robotDesign, workpieces }: Robot
         <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow />
         <spotLight position={[-20, 50, 10]} angle={0.15} penumbra={1} intensity={2} castShadow />
         
-        <Environment preset="city" />
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[10, 10, 5]} intensity={1.2} castShadow />
+        <directionalLight position={[-10, 10, -5]} intensity={0.5} />
 
         {/* The Floor / Grid */}
         <Grid 
@@ -316,14 +318,14 @@ export default function Robot3DCanvas({ joints, robotDesign, workpieces }: Robot
               {/* HUD / Holographic UI (Attached to the base or shoulder link) */}
               <Html position={[-150, 150, 0]} center transform sprite zIndexRange={[100, 0]}>
                 <div className="bg-black/80 backdrop-blur border border-blue-500/30 rounded p-3 font-mono text-[10px] text-blue-400 w-48 shadow-[0_0_15px_rgba(59,130,246,0.3)] pointer-events-none select-none">
-                  <div className="text-white border-b border-white/10 pb-1 mb-1 font-bold">DIGITAL TWIN HUD</div>
+                  <div className="text-white border-b border-emerald-400 dark:border-white/10 pb-1 mb-1 font-bold">DIGITAL TWIN HUD</div>
                   {activeJoints.map(j => (
                     <div key={j.id} className="flex justify-between">
                       <span>{j.name.substring(0,3).toUpperCase()}:</span>
                       <span className="text-emerald-400">{j.angle.toFixed(1)}°</span>
                     </div>
                   ))}
-                  <div className="mt-2 pt-1 border-t border-white/10 text-slate-500 flex justify-between">
+                  <div className="mt-2 pt-1 border-t border-emerald-400 dark:border-white/10 text-slate-500 flex justify-between">
                     <span>TOOL:</span>
                     <span className="text-white">{endEffectorType.toUpperCase()}</span>
                   </div>

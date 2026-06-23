@@ -23,6 +23,11 @@ export class LogicAnalyzer {
     const rowCount = Math.pow(2, inputs.length);
     const table: TruthTableRow[] = [];
 
+    const outputExprs: Record<string, string> = {};
+    outputs.forEach(o => {
+        outputExprs[o.id] = this.getExpression(design, o.id);
+    });
+
     for (let i = 0; i < rowCount; i++) {
       const inputStates: Record<string, boolean> = {};
       inputs.forEach((input, inputIdx) => {
@@ -31,7 +36,7 @@ export class LogicAnalyzer {
 
       const outputStates: Record<string, boolean> = {};
       outputs.forEach(output => {
-        outputStates[output.label || output.id] = this.evaluateNode(design, output.id, inputStates);
+        outputStates[output.label || output.id] = this.evaluateExpression(outputExprs[output.id], inputStates);
       });
 
       table.push({ inputs: inputStates, outputs: outputStates });
@@ -41,7 +46,7 @@ export class LogicAnalyzer {
   }
 
   /**
-   * Generates an adjacency matrix for the logic graph.
+   * Generates an adjacency matrix for the logic graph, tracing through passive nodes.
    */
   static generateAdjacencyMatrix(design: CircuitDesign): { labels: string[], matrix: number[][] } {
     const nodes = design.components.filter(c => 
@@ -53,48 +58,123 @@ export class LogicAnalyzer {
     const size = nodes.length;
     const matrix = Array.from({ length: size }, () => Array(size).fill(0));
 
+    // Build an undirected adjacency list for the entire graph
+    const graph: Record<string, string[]> = {};
     design.connections.forEach(conn => {
-      const fromIdx = nodes.findIndex(n => n.id === conn.from);
-      const toIdx = nodes.findIndex(n => n.id === conn.to);
-      if (fromIdx !== -1 && toIdx !== -1) {
-        matrix[fromIdx][toIdx] = 1;
+      if (!graph[conn.from]) graph[conn.from] = [];
+      if (!graph[conn.to]) graph[conn.to] = [];
+      graph[conn.from].push(conn.to);
+      graph[conn.to].push(conn.from);
+    });
+
+    // BFS from each logic node to find reachable logic nodes
+    nodes.forEach((startNode, startIdx) => {
+      const queue = [startNode.id];
+      const visited = new Set<string>([startNode.id]);
+      
+      while (queue.length > 0) {
+        const curr = queue.shift()!;
+        
+        for (const neighbor of (graph[curr] || [])) {
+          if (visited.has(neighbor)) continue;
+          visited.add(neighbor);
+          
+          const neighborIdx = nodes.findIndex(n => n.id === neighbor);
+          if (neighborIdx !== -1) {
+            matrix[startIdx][neighborIdx] = 1;
+            // Stop traversing through logic nodes
+          } else {
+            // Traverse through passive components (wires, junctions, etc)
+            queue.push(neighbor);
+          }
+        }
       }
     });
 
     return { labels, matrix };
   }
 
-  private static evaluateNode(design: CircuitDesign, nodeId: string, inputStates: Record<string, boolean>, visited = new Set<string>()): boolean {
-    if (visited.has(nodeId)) return false; // Cycle detection
-    visited.add(nodeId);
+  static evaluateExpression(expr: string, inputStates: Record<string, boolean>): boolean {
+    if (!expr || expr === '0' || expr === '?') return false;
+    if (expr === '1') return true;
 
-    const comp = design.components.find(c => c.id === nodeId);
-    if (!comp) return false;
+    let safeExpr = expr
+        .replace(/¬/g, '!')
+        .replace(/⋅/g, '&')
+        .replace(/\+/g, '|')
+        .replace(/⊕/g, '^');
 
-    // Check if it's an input we already have a state for
-    const label = comp.label || comp.id;
-    if (inputStates.hasOwnProperty(label)) {
-      return inputStates[label];
+    const keys = Object.keys(inputStates).sort((a, b) => b.length - a.length);
+    for (const key of keys) {
+        const escapedKey = key.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+        const regex = new RegExp(`\\b${escapedKey}\\b`, 'g');
+        safeExpr = safeExpr.replace(regex, inputStates[key] ? '1' : '0');
     }
 
-    // Trace connections back
-    const incoming = design.connections.filter(conn => conn.to === nodeId);
-    const inputValues = incoming.map(conn => this.evaluateNode(design, conn.from, inputStates, new Set(visited)));
-
-    switch (comp.type) {
-      case 'LOGIC_AND': return inputValues.length >= 2 && inputValues.every(v => v);
-      case 'LOGIC_OR': return inputValues.some(v => v);
-      case 'LOGIC_NOT': return inputValues.length > 0 && !inputValues[0];
-      case 'NAND_GATE': return !(inputValues.length >= 2 && inputValues.every(v => v));
-      case 'NOR_GATE': return !(inputValues.some(v => v));
-      case 'XOR_GATE': return inputValues.filter(v => v).length % 2 !== 0;
-      case 'XNOR_GATE': return inputValues.filter(v => v).length % 2 === 0;
-      case 'LED':
-      case 'BUZZER':
-      case 'SPEAKER':
-        return inputValues.some(v => v);
-      default: return false;
+    try {
+        return new Function(`return !!(${safeExpr});`)();
+    } catch (e) {
+        return false;
     }
+  }
+
+  static extractTopologicalExpression(design: CircuitDesign, targetId: string): string {
+    const paths: string[][] = [];
+    
+    const findPaths = (currentNodeId: string, currentPath: string[], visited: Set<string>) => {
+      if (visited.has(currentNodeId)) return;
+      
+      const comp = design.components.find(c => c.id === currentNodeId);
+      if (!comp) return;
+
+      const isSwitch = ['SWITCH', 'PUSH_BUTTON', 'TOGGLE_SWITCH', 'RELAY', 'REED_RELAY', 'LADDER_CONTACT_NO', 'LADDER_CONTACT_NC'].includes(comp.type);
+      
+      const newPath = [...currentPath];
+      if (isSwitch) {
+        let label = comp.label || comp.id.slice(0, 4);
+        if (comp.type === 'LADDER_CONTACT_NC') label = `¬${label}`;
+        newPath.push(label);
+      }
+
+      const connectedIds = design.connections
+        .filter(conn => conn.to === currentNodeId || conn.from === currentNodeId)
+        .map(conn => conn.from === currentNodeId ? conn.to : conn.from)
+        .filter(id => id !== currentNodeId);
+
+      const unvisitedConnected = connectedIds.filter(id => !visited.has(id));
+      const newVisited = new Set(visited);
+      newVisited.add(currentNodeId);
+
+      let isSource = false;
+      if (comp.type === 'BATTERY' || comp.type === 'GROUND') {
+          isSource = true;
+      } else if (isSwitch && unvisitedConnected.length === 0) {
+          isSource = true;
+      }
+
+      if (isSource) {
+         if (newPath.length > 0) paths.push(newPath);
+         return;
+      }
+
+      unvisitedConnected.forEach(nextId => {
+        findPaths(nextId, newPath, newVisited);
+      });
+    };
+
+    findPaths(targetId, [], new Set());
+
+    if (paths.length === 0) return '0';
+
+    const terms = paths.map(path => {
+       const uniqueSwitches = Array.from(new Set(path));
+       if (uniqueSwitches.length === 1) return uniqueSwitches[0];
+       return `(${uniqueSwitches.join(' ⋅ ')})`;
+    });
+
+    const uniqueTerms = Array.from(new Set(terms));
+    if (uniqueTerms.length === 1) return uniqueTerms[0];
+    return `(${uniqueTerms.join(' + ')})`;
   }
 
   /**
@@ -111,8 +191,40 @@ export class LogicAnalyzer {
       return comp.label || comp.id.slice(0, 4);
     }
 
-    const incoming = design.connections.filter(conn => conn.to === nodeId);
-    const inputExprs = incoming.map(conn => this.getExpression(design, conn.from, new Set(visited)));
+    const isIncomingConnection = (conn: Connection) => {
+      // For endpoints, any connection is an input
+      if (['LED', 'BUZZER', 'SPEAKER', 'LADDER_COIL'].includes(comp.type)) {
+          return conn.to === nodeId || conn.from === nodeId;
+      }
+      
+      // For gates, inputs are all pins except the last one (which is output)
+      const def = COMPONENT_DEFINITIONS[comp.type as ComponentType];
+      if (!def) return conn.to === nodeId;
+      
+      const outPin = def.pins.length - 1;
+      if (conn.to === nodeId) return conn.toPin !== outPin;
+      if (conn.from === nodeId) return conn.fromPin !== outPin;
+      return false;
+    };
+
+    const incoming = design.connections.filter(isIncomingConnection);
+
+    if (['LED', 'BUZZER', 'SPEAKER', 'LADDER_COIL'].includes(comp.type)) {
+        const isAnalogDriven = incoming.some(conn => {
+            const connectedId = conn.from === nodeId ? conn.to : conn.from;
+            const c = design.components.find(x => x.id === connectedId);
+            return c && !c.type.startsWith('LOGIC_') && !c.type.includes('GATE');
+        });
+
+        if (isAnalogDriven) {
+            return this.extractTopologicalExpression(design, nodeId);
+        }
+    }
+
+    const inputExprs = incoming.map(conn => {
+        const connectedId = conn.from === nodeId ? conn.to : conn.from;
+        return this.getExpression(design, connectedId, new Set(visited));
+    });
 
     if (inputExprs.length === 0) return '0';
 

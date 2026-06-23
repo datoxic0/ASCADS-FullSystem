@@ -182,20 +182,20 @@ export default function ResizableModal({
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-[110] p-4">
         <div 
-          className="bg-[#16161a] border border-white/10 rounded-t-xl sm:rounded-lg w-full max-h-[85vh] shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-150"
+          className="bg-[#16161a] border border-emerald-400 dark:border-white/10 rounded-t-xl sm:rounded-lg w-full max-h-[85vh] shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-150"
           id="mobile-modal"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5 shrink-0 bg-[#0f0f12] rounded-t-xl sm:rounded-t-lg">
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-emerald-300 dark:border-white/5 shrink-0 bg-[#0f0f12] rounded-t-xl sm:rounded-t-lg">
             <div className="flex items-center space-x-2">
               {icon && <span className="text-blue-500">{icon}</span>}
-              <span className="font-mono text-xs font-semibold text-slate-200 uppercase tracking-wide">
+              <span className="font-mono text-xs font-semibold text-emerald-900 dark:text-slate-200 uppercase tracking-wide">
                 {title}
               </span>
             </div>
             <button 
               onClick={onClose} 
-              className="text-slate-400 hover:text-slate-100 p-1 rounded-full hover:bg-white/5 cursor-pointer transition-colors"
+              className="text-emerald-700 dark:text-slate-400 hover:text-slate-100 p-1 rounded-full hover:bg-white/5 cursor-pointer transition-colors"
               aria-label="Close modal"
               id="mobile-close-btn"
             >
@@ -242,7 +242,7 @@ export default function ResizableModal({
       <div
         ref={containerRef}
         style={modalStyle}
-        className="bg-[#16161a] border border-white/10 rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col select-none transition-shadow animate-in fade-in zoom-in duration-150"
+        className="bg-[#16161a] border border-emerald-400 dark:border-white/10 rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col select-none transition-shadow animate-in fade-in zoom-in duration-150"
         id={`resizable-modal-${title.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
       >
         {/* Drag Handle Header */}
@@ -250,11 +250,11 @@ export default function ResizableModal({
           onMouseDown={handleHeaderMouseDown}
           onDoubleClick={handleHeaderDoubleSelect}
           style={{ cursor: isMaximized ? "default" : "move" }}
-          className="flex items-center justify-between px-4 py-3 border-b border-white/5 shrink-0 bg-[#0f0f12] rounded-t-lg select-none"
+          className="flex items-center justify-between px-4 py-3 border-b border-emerald-300 dark:border-white/5 shrink-0 bg-[#0f0f12] rounded-t-lg select-none"
         >
           <div className="flex items-center space-x-2">
             {icon && <span className="text-blue-500">{icon}</span>}
-            <span className="font-mono text-xs font-semibold text-slate-200 uppercase tracking-widest flex items-center space-x-1">
+            <span className="font-mono text-xs font-semibold text-emerald-900 dark:text-slate-200 uppercase tracking-widest flex items-center space-x-1">
               <span>{title}</span>
               {!isMaximized && (
                 <Move className="w-3.5 h-3.5 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity ml-1.5" />
@@ -266,7 +266,7 @@ export default function ResizableModal({
             {/* Maximize Button */}
             <button
               onClick={() => setIsMaximized(!isMaximized)}
-              className="text-slate-400 hover:text-slate-200 p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
+              className="text-emerald-700 dark:text-slate-400 hover:text-emerald-900 dark:text-slate-200 p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
               title={isMaximized ? "Restore" : "Maximize"}
               id="maximize-modal-btn"
             >
@@ -276,7 +276,7 @@ export default function ResizableModal({
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
+              className="text-emerald-700 dark:text-slate-400 hover:text-emerald-900 dark:text-slate-200 p-1 hover:bg-white/5 rounded transition-colors cursor-pointer"
               title="Close"
               id="close-modal-btn"
             >

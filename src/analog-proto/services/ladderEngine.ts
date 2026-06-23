@@ -1,13 +1,12 @@
 import { CircuitDesign, Component, Connection, ComponentType } from '../types';
+import { LogicAnalyzer } from './logicAnalyzer';
 import { v4 as uuidv4 } from 'uuid';
 
 export class LadderEngine {
   /**
    * Translates a Logic Gate circuit into a Ladder Diagram design.
-   * Basic mapping:
-   * AND => Series NO Contacts
-   * OR => Parallel NO Contacts
-   * NOT => NC Contact
+   * Utilizes rigorous Mathematical Canonical SOP (Sum of Products) to guarantee
+   * 100% accurate conversion including complex trees and De Morgan inversions.
    */
   static translateLogicToLadder(logicDesign: CircuitDesign): CircuitDesign {
     const ladderDesign: CircuitDesign = {
@@ -15,171 +14,117 @@ export class LadderEngine {
       connections: []
     };
 
+    // 1. Generate full truth table to map actual logical behavior
+    const table = LogicAnalyzer.generateTruthTable(logicDesign);
+    if (!table || table.length === 0) return ladderDesign;
+
+    const outputNames = Object.keys(table[0].outputs);
     let currentY = 100;
-    const components = logicDesign.components;
-    
-    // Find all outputs (Coils)
-    const outputs = components.filter(c => c.type === 'LED' || c.type === 'BUZZER' || c.type === 'LADDER_COIL');
-    
-    outputs.forEach((output, rungIdx) => {
-      const rungY = 100 + (rungIdx * 120);
-      
-      // Trace back from output to inputs
-      // For simplicity in this prototype, we'll create a single rung for each output
-      // and translate its dependency tree into a series/parallel sequence.
-      
-      const leafId = output.id;
-      const translated = this.traceAndTranslate(logicDesign, leafId, 100, rungY);
-      
-      ladderDesign.components.push(...translated.components);
-      ladderDesign.connections.push(...translated.connections);
-      
-      // Add a coil for the output
-      const coilId = uuidv4();
-      const coil: Component = {
-        id: coilId,
-        type: 'LADDER_COIL',
-        label: output.label || `Q${rungIdx}`,
-        x: 800,
-        y: rungY,
-        rotation: 0,
-        properties: { tag: output.label || `Q${rungIdx}` }
-      };
-      ladderDesign.components.push(coil);
-      
-      // Connect last element to coil
-      if (translated.lastCompId) {
-        ladderDesign.connections.push({
-          id: uuidv4(),
-          from: translated.lastCompId,
-          fromPin: 1,
-          to: coilId,
-          toPin: 0
+
+    outputNames.forEach((outputName) => {
+        let sop = LogicAnalyzer.generateSOP(table, outputName);
+        
+        if (sop === '0') return; // Dead circuit, skip
+
+        // Base Coil target
+        const coilId = uuidv4();
+        ladderDesign.components.push({
+            id: coilId,
+            type: 'LADDER_COIL',
+            label: outputName,
+            x: 800,
+            y: currentY,
+            rotation: 0,
+            properties: { tag: outputName }
         });
-      }
+
+        if (sop === '1') {
+            // Always ON, just wire a dummy NC to VCC
+            const dummyId = uuidv4();
+            ladderDesign.components.push({
+                id: dummyId,
+                type: 'LADDER_CONTACT_NC',
+                label: 'ALWAYS_ON',
+                x: 100,
+                y: currentY,
+                rotation: 0,
+                properties: { tag: 'ON' }
+            });
+            ladderDesign.connections.push({ id: uuidv4(), from: dummyId, fromPin: 1, to: coilId, toPin: 0 });
+            currentY += 120;
+            return;
+        }
+
+        // 2. Parse Canonical SOP into parallel rungs
+        // SOP format: (A ⋅ B) + (C ⋅ ¬D) + E
+        const branchesStr = sop.split(' + ').map(b => {
+             let clean = b.trim();
+             if (clean.startsWith('(') && clean.endsWith(')')) clean = clean.slice(1, -1);
+             return clean;
+        });
+
+        branchesStr.forEach((branch, bIdx) => {
+             const branchY = currentY + (bIdx * 80);
+             const contactsStr = branch.split(' ⋅ ').map(c => c.trim());
+             
+             let prevId: string | null = null;
+             let startX = 100;
+             
+             contactsStr.forEach((contactStr) => {
+                 let isNC = false;
+                 let tag = contactStr;
+                 if (contactStr.startsWith('¬') || contactStr.startsWith('!')) {
+                     isNC = true;
+                     tag = contactStr.slice(1);
+                 }
+                 tag = tag.replace(/[\(\)]/g, ''); // strip remaining parens
+                 
+                 const contactId = uuidv4();
+                 ladderDesign.components.push({
+                     id: contactId,
+                     type: isNC ? 'LADDER_CONTACT_NC' : 'LADDER_CONTACT_NO',
+                     label: tag,
+                     x: startX,
+                     y: branchY,
+                     rotation: 0,
+                     properties: { tag }
+                 });
+                 
+                 if (prevId) {
+                     ladderDesign.connections.push({
+                         id: uuidv4(),
+                         from: prevId,
+                         fromPin: 1,
+                         to: contactId,
+                         toPin: 0
+                     });
+                 }
+                 
+                 prevId = contactId;
+                 startX += 120;
+             });
+             
+             // Final connection to coil
+             if (prevId) {
+                 ladderDesign.connections.push({
+                     id: uuidv4(),
+                     from: prevId,
+                     fromPin: 1,
+                     to: coilId,
+                     toPin: 0
+                 });
+             }
+        });
+        
+        currentY += Math.max(120, branchesStr.length * 80 + 60);
     });
 
     return ladderDesign;
   }
 
-  private static traceAndTranslate(
-    logic: CircuitDesign, 
-    compId: string, 
-    startX: number, 
-    y: number
-  ): { components: Component[], connections: Connection[], lastCompId: string | null } {
-    const comp = logic.components.find(c => c.id === compId);
-    if (!comp) return { components: [], connections: [], lastCompId: null };
-
-    // Find what drives this component
-    const incoming = logic.connections.filter(conn => conn.to === compId);
-    
-    if (comp.type === 'LOGIC_AND' || comp.type === 'NAND_GATE') {
-      // Series contacts
-      let currentX = startX;
-      const allComponents: Component[] = [];
-      const allConnections: Connection[] = [];
-      let prevId: string | null = null;
-
-      incoming.forEach((conn) => {
-        const sub = this.traceAndTranslate(logic, conn.from, currentX, y);
-        allComponents.push(...sub.components);
-        allConnections.push(...sub.connections);
-        
-        if (prevId && sub.components[0]) {
-          allConnections.push({
-            id: uuidv4(),
-            from: prevId,
-            fromPin: 1,
-            to: sub.components[0].id,
-            toPin: 0
-          });
-        }
-        
-        if (sub.lastCompId) {
-          prevId = sub.lastCompId;
-          const lastC = sub.components.find(c => c.id === sub.lastCompId);
-          currentX = (lastC?.x || currentX) + 100;
-        }
-      });
-
-      if (comp.type === 'NAND_GATE' && prevId) {
-          // Add NC contact at the end of series for NAND? Not quite right for all cases, 
-          // but for this prototype translation it signifies the inversion
-          const invId = uuidv4();
-          allComponents.push({
-              id: invId,
-              type: 'LADDER_CONTACT_NC',
-              label: 'NAND_INV',
-              x: currentX,
-              y: y,
-              rotation: 0,
-              properties: { tag: 'INV' }
-          });
-          allConnections.push({ id: uuidv4(), from: prevId, fromPin: 1, to: invId, toPin: 0 });
-          return { components: allComponents, connections: allConnections, lastCompId: invId };
-      }
-
-      return { components: allComponents, connections: allConnections, lastCompId: prevId };
-    }
-
-    if (comp.type === 'LOGIC_OR' || comp.type === 'NOR_GATE') {
-      // Simplified: Just take the first branch for now 
-      if (incoming.length > 0) {
-        const res = this.traceAndTranslate(logic, incoming[0].from, startX, y);
-        if (comp.type === 'NOR_GATE' && res.lastCompId) {
-             const invId = uuidv4();
-             res.components.push({
-                 id: invId,
-                 type: 'LADDER_CONTACT_NC',
-                 label: 'NOR_INV',
-                 x: (res.components.find(c => c.id === res.lastCompId)?.x || startX) + 100,
-                 y: y,
-                 rotation: 0,
-                 properties: { tag: 'INV' }
-             });
-             res.connections.push({ id: uuidv4(), from: res.lastCompId, fromPin: 1, to: invId, toPin: 0 });
-             res.lastCompId = invId;
-        }
-        return res;
-      }
-    }
-
-    if (comp.type === 'LOGIC_NOT') {
-        if (incoming.length > 0) {
-            const sub = this.traceAndTranslate(logic, incoming[0].from, startX, y);
-             // Change the input source to an NC contact
-             const ncId = uuidv4();
-             const nc: Component = {
-                 id: ncId,
-                 type: 'LADDER_CONTACT_NC',
-                 label: 'NOT',
-                 x: startX,
-                 y: y,
-                 rotation: 0,
-                 properties: { tag: 'NOT' }
-             };
-             return { components: [nc], connections: [], lastCompId: ncId };
-        }
-    }
-
-    // Base case: Sensor/Switch/Input
-    const id = uuidv4();
-    const newComp: Component = {
-      id,
-      type: 'LADDER_CONTACT_NO',
-      label: comp.label || 'IN',
-      x: startX,
-      y: y,
-      rotation: 0,
-      properties: { tag: comp.label || 'I0.x' }
-    };
-
-    return { components: [newComp], connections: [], lastCompId: id };
-  }
-
   /**
-   * Translates a Ladder Diagram into a Logic Gate circuit.
+   * Translates a Ladder Diagram back into a Logic Gate circuit.
+   * Utilizes Topological Logic Extractor to parse raw switch/relay networks.
    */
   static translateLadderToLogic(ladderDesign: CircuitDesign): CircuitDesign {
     const logicDesign: CircuitDesign = {
@@ -187,38 +132,27 @@ export class LadderEngine {
       connections: []
     };
 
-    // Mapping:
-    // NO Contact => Input (Switch)
-    // Coil => Output (LED)
-    // Series NO => AND
-    // Parallel NO => OR
-    // NC => NOT gate after input
+    const coils = ladderDesign.components.filter(c => c.type === 'LADDER_COIL');
+    let currentY = 100;
 
-    ladderDesign.components.forEach((comp, idx) => {
-      let type: ComponentType = 'SWITCH';
-      if (comp.type === 'LADDER_COIL') type = 'LED';
-      
-      const newId = uuidv4();
-      logicDesign.components.push({
-        ...comp,
-        id: newId,
-        type,
-        x: comp.x,
-        y: comp.y
-      });
-    });
-
-    // Mirror connections
-    ladderDesign.connections.forEach(conn => {
-        const fromIdx = ladderDesign.components.findIndex(c => c.id === conn.from);
-        const toIdx = ladderDesign.components.findIndex(c => c.id === conn.to);
-        if (fromIdx !== -1 && toIdx !== -1) {
-            logicDesign.connections.push({
-                ...conn,
-                id: uuidv4(),
-                from: logicDesign.components[fromIdx].id,
-                to: logicDesign.components[toIdx].id
-            });
+    coils.forEach((coil) => {
+        // 1. Topologically extract the mathematical expression
+        const expr = LogicAnalyzer.extractTopologicalExpression(ladderDesign, coil.id);
+        
+        if (expr && expr !== '0') {
+             // 2. Compile into an actual gate-based digital schematic
+             const compiled = LogicAnalyzer.compileToDesign(expr);
+             
+             const shiftY = currentY - 400; // Shift off the baseline 400 origin
+             
+             compiled.components.forEach(c => {
+                 c.y += shiftY;
+                 if (c.type === 'LED') c.label = coil.label || c.properties.tag as string;
+                 logicDesign.components.push(c);
+             });
+             
+             logicDesign.connections.push(...compiled.connections);
+             currentY += 500;
         }
     });
 

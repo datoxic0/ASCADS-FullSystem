@@ -1092,10 +1092,10 @@ def calculate_ramp(distance, feedrate):
   const sandboxIsSingular = Math.abs(sandboxJacobianDeterminant) < 1500;
 
   return (
-    <div id="right-control-panel-deck" className="bg-[#1a1a1e] border border-white/5 rounded overflow-hidden flex flex-col h-full shadow-2xl relative">
+    <div id="right-control-panel-deck" className="bg-[#1a1a1e] border border-emerald-300 dark:border-white/5 rounded overflow-hidden flex flex-col h-full shadow-2xl relative">
       
       {/* Tab bar header switcher */}
-      <div className="flex bg-[#121215] border-b border-white/5 shrink-0 overflow-x-auto scrollbar-none select-none">
+      <div className="flex bg-[#121215] border-b border-emerald-300 dark:border-white/5 shrink-0 overflow-x-auto scrollbar-none select-none">
         {[
           { id: "copilot", label: "Copilot", icon: Sparkles, color: "text-cyan-400 hover:text-cyan-300" },
           { id: "pendant", label: "Pendant", icon: Sliders, color: "text-rose-400 hover:text-rose-350" },
@@ -1112,7 +1112,7 @@ def calculate_ramp(distance, feedrate):
               className={`flex-1 flex items-center justify-center space-x-1.5 py-4 px-3 border-b-2 font-mono text-[10px] uppercase font-bold tracking-wider transition-all duration-150 cursor-pointer text-center outline-none shrink-0 ${
                 isActive
                   ? "border-blue-500 text-white bg-[#1a1a1e] shadow-inner"
-                  : "border-transparent text-slate-500 hover:text-slate-350 hover:bg-white/5"
+                  : "border-transparent text-slate-500 hover:text-emerald-800 dark:text-slate-350 hover:bg-white/5"
               }`}
             >
               <Icon className={`w-3.5 h-3.5 ${isActive ? tab.color : "text-slate-500"}`} />
@@ -1125,7 +1125,7 @@ def calculate_ramp(distance, feedrate):
           <button
             onClick={onCollapse}
             title="Collapse Right Deck"
-            className="text-slate-600 hover:text-rose-400 transition-colors p-3 hover:bg-white/5 border-l border-white/5 cursor-pointer ml-auto shrink-0 flex items-center"
+            className="text-slate-600 hover:text-rose-400 transition-colors p-3 hover:bg-white/5 border-l border-emerald-300 dark:border-white/5 cursor-pointer ml-auto shrink-0 flex items-center"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -1142,10 +1142,10 @@ def calculate_ramp(distance, feedrate):
           <div className="flex flex-col h-full space-y-4">
             
             {/* Context bar with calibration setting access */}
-            <div className="flex items-center justify-between bg-[#151518] border border-white/5 p-3 rounded-lg relative overflow-hidden select-none shadow">
+            <div className="flex items-center justify-between bg-[#151518] border border-emerald-300 dark:border-white/5 p-3 rounded-lg relative overflow-hidden select-none shadow">
               <div className="flex items-center space-x-2">
                 <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
-                <span className="font-mono text-[9.5px] font-bold text-slate-300 uppercase tracking-tight">
+                <span className="font-mono text-[9.5px] font-bold text-emerald-800 dark:text-slate-300 uppercase tracking-tight">
                   {apiProvider === "openrouter" ? "OpenRouter Copilot Portal" : "Gemini Intelligent Agent v3"}
                 </span>
               </div>
@@ -1154,7 +1154,7 @@ def calculate_ramp(distance, feedrate):
                 className={`p-1.5 rounded cursor-pointer border transition-all text-[9px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 ${
                   showAISettings 
                     ? "text-cyan-400 border-cyan-500/20 bg-cyan-500/10" 
-                    : "text-slate-500 hover:text-slate-200 border-white/5 hover:border-white/10"
+                    : "text-slate-500 hover:text-emerald-900 dark:text-slate-200 border-emerald-300 dark:border-white/5 hover:border-emerald-400 dark:border-white/10"
                 }`}
               >
                 <Settings className="w-3.5 h-3.5" />
@@ -1164,21 +1164,21 @@ def calculate_ramp(distance, feedrate):
 
             {/* AI Config expander */}
             {showAISettings && (
-              <div className="bg-[#141417] border border-white/5 rounded-lg p-3.5 space-y-3 font-mono text-[10px] text-slate-300 select-none shadow-md">
-                <div className="flex justify-between items-center border-b border-white/5 pb-1 select-none">
-                  <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
+              <div className="bg-[#141417] border border-emerald-300 dark:border-white/5 rounded-lg p-3.5 space-y-3 font-mono text-[10px] text-emerald-800 dark:text-slate-300 select-none shadow-md">
+                <div className="flex justify-between items-center border-b border-emerald-300 dark:border-white/5 pb-1 select-none">
+                  <span className="text-[9px] uppercase font-bold text-emerald-700 dark:text-slate-400 tracking-wider flex items-center gap-1">
                     🛠️ LLM Calibration Panel
                   </span>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[8px] font-bold uppercase tracking-wider text-slate-500 block">Service Provider</label>
-                  <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-white/5 gap-0.5">
+                  <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-emerald-300 dark:border-white/5 gap-0.5">
                     <button
                       type="button"
                       onClick={() => handleProviderChange("gemini")}
                       className={`flex-1 py-1 rounded text-[9.5px] text-center font-bold tracking-tight block transition-all uppercase cursor-pointer ${
-                        apiProvider === "gemini" ? "bg-blue-600/95 text-white" : "text-slate-500 hover:text-slate-200"
+                        apiProvider === "gemini" ? "bg-blue-600/95 text-white" : "text-slate-500 hover:text-emerald-900 dark:text-slate-200"
                       }`}
                     >
                       Gemini (Standard)
@@ -1187,7 +1187,7 @@ def calculate_ramp(distance, feedrate):
                       type="button"
                       onClick={() => handleProviderChange("openrouter")}
                       className={`flex-1 py-1 rounded text-[9.5px] text-center font-bold tracking-tight block transition-all uppercase cursor-pointer ${
-                        apiProvider === "openrouter" ? "bg-purple-650/95 text-white" : "text-slate-500 hover:text-slate-200"
+                        apiProvider === "openrouter" ? "bg-purple-650/95 text-white" : "text-slate-500 hover:text-emerald-900 dark:text-slate-200"
                       }`}
                     >
                       OpenRouter (Free Tiers)
@@ -1203,21 +1203,21 @@ def calculate_ramp(distance, feedrate):
                       setSelectedModel(e.target.value);
                       saveSetting("robot_ai_model", e.target.value);
                     }}
-                    className="w-full bg-[#0d0d0f] border border-white/5 rounded px-2.5 py-1.5 text-[10.5px] text-slate-200 focus:outline-none focus:border-blue-500/30 cursor-pointer font-mono"
+                    className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded px-2.5 py-1.5 text-[10.5px] text-emerald-900 dark:text-slate-200 focus:outline-none focus:border-blue-500/30 cursor-pointer font-mono"
                   >
                     {apiProvider === "gemini" ? (
                       <>
-                        <option value="gemini-3.5-flash" className="bg-[#141417] text-slate-200">gemini-3.5-flash (Fast & Accurate - Default)</option>
-                        <option value="gemini-3.1-flash-lite" className="bg-[#141417] text-slate-200">gemini-3.1-flash-lite (Cost Efficient)</option>
-                        <option value="gemini-2.5-flash" className="bg-[#141417] text-slate-200">gemini-2.5-flash (Standard)</option>
-                        <option value="gemini-2.5-pro" className="bg-[#141417] text-slate-200">gemini-2.5-pro (Creative Reasoning)</option>
+                        <option value="gemini-3.5-flash" className="bg-[#141417] text-emerald-900 dark:text-slate-200">gemini-3.5-flash (Fast & Accurate - Default)</option>
+                        <option value="gemini-3.1-flash-lite" className="bg-[#141417] text-emerald-900 dark:text-slate-200">gemini-3.1-flash-lite (Cost Efficient)</option>
+                        <option value="gemini-2.5-flash" className="bg-[#141417] text-emerald-900 dark:text-slate-200">gemini-2.5-flash (Standard)</option>
+                        <option value="gemini-2.5-pro" className="bg-[#141417] text-emerald-900 dark:text-slate-200">gemini-2.5-pro (Creative Reasoning)</option>
                       </>
                     ) : (
                       <>
-                        <option value="openrouter/free" className="bg-[#141417] text-slate-200">openrouter/free (Auto-Free Model Routing)</option>
-                        <option value="google/gemini-2.5-flash" className="bg-[#141417] text-slate-200">google/gemini-2.5-flash (Gemini 2.5 Flash)</option>
-                        <option value="google/gemini-2.5-pro" className="bg-[#141417] text-slate-200">google/gemini-2.5-pro (Gemini 2.5 Pro)</option>
-                        <option value="deepseek/deepseek-r1" className="bg-[#141417] text-slate-200">deepseek/deepseek-r1 (DeepSeek R1 Reasoning)</option>
+                        <option value="openrouter/free" className="bg-[#141417] text-emerald-900 dark:text-slate-200">openrouter/free (Auto-Free Model Routing)</option>
+                        <option value="google/gemini-2.5-flash" className="bg-[#141417] text-emerald-900 dark:text-slate-200">google/gemini-2.5-flash (Gemini 2.5 Flash)</option>
+                        <option value="google/gemini-2.5-pro" className="bg-[#141417] text-emerald-900 dark:text-slate-200">google/gemini-2.5-pro (Gemini 2.5 Pro)</option>
+                        <option value="deepseek/deepseek-r1" className="bg-[#141417] text-emerald-900 dark:text-slate-200">deepseek/deepseek-r1 (DeepSeek R1 Reasoning)</option>
                       </>
                     )}
                   </select>
@@ -1248,14 +1248,14 @@ def calculate_ramp(distance, feedrate):
                       }
                     }}
                     placeholder="Leave blank to fallback to system credentials..."
-                    className="w-full bg-[#0d0d0f] border border-white/5 rounded px-2.5 py-1.5 text-[9.5px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500/30 font-mono select-text"
+                    className="w-full bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 rounded px-2.5 py-1.5 text-[9.5px] text-emerald-900 dark:text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500/30 font-mono select-text"
                   />
                 </div>
               </div>
             )}
 
             {/* Chat Messages Frame */}
-            <div className="flex-1 bg-[#09090b] border border-white/5 rounded-lg p-3 space-y-3.5 min-h-[200px] flex flex-col justify-end">
+            <div className="flex-1 bg-[#09090b] border border-emerald-300 dark:border-white/5 rounded-lg p-3 space-y-3.5 min-h-[200px] flex flex-col justify-end">
               <div className="flex-1 overflow-y-auto space-y-3.5 pr-1.5 scrollbar-thin">
                 {messages.map((m, idx) => (
                   <div
@@ -1263,10 +1263,10 @@ def calculate_ramp(distance, feedrate):
                     className={`flex flex-col space-y-1.5 p-3 rounded-lg border max-w-[94%] shadow-sm ${
                       m.role === "user"
                         ? "bg-blue-600/10 border-blue-500/20 self-end ml-auto text-blue-100"
-                        : "bg-[#121215]/90 border-white/5 self-start mr-auto text-slate-300"
+                        : "bg-[#121215]/90 border-emerald-300 dark:border-white/5 self-start mr-auto text-emerald-800 dark:text-slate-300"
                     }`}
                   >
-                    <div className="flex items-center space-x-1 border-b border-white/5 pb-1 select-none">
+                    <div className="flex items-center space-x-1 border-b border-emerald-300 dark:border-white/5 pb-1 select-none">
                       <span className="text-[8px] font-mono tracking-wider font-bold uppercase opacity-35">
                         {m.role === "user" ? "USER CLIENT" : "CO-PILOT AI ENGINE"}
                       </span>
@@ -1289,9 +1289,9 @@ def calculate_ramp(distance, feedrate):
                 ))}
 
                 {isLoading && (
-                  <div className="flex items-center space-x-2.5 p-3 bg-[#121215]/50 border border-white/5 rounded-lg self-start mr-auto max-w-[85%]">
+                  <div className="flex items-center space-x-2.5 p-3 bg-[#121215]/50 border border-emerald-300 dark:border-white/5 rounded-lg self-start mr-auto max-w-[85%]">
                     <Cpu className="w-4 h-4 text-cyan-400 animate-spin" />
-                    <span className="text-[10px] font-mono text-slate-400 animate-pulse font-bold uppercase">Trajectory Planner Compiling...</span>
+                    <span className="text-[10px] font-mono text-emerald-700 dark:text-slate-400 animate-pulse font-bold uppercase">Trajectory Planner Compiling...</span>
                   </div>
                 )}
 
@@ -1317,7 +1317,7 @@ def calculate_ramp(distance, feedrate):
                   <button
                     key={i}
                     onClick={() => handleSendMessage(p.prompt)}
-                    className="text-[9px] font-mono bg-[#141417] hover:bg-[#1a1a1f] border border-white/5 text-slate-400 hover:text-white px-2.5 py-1 rounded transition-colors text-left font-medium cursor-pointer"
+                    className="text-[9px] font-mono bg-[#141417] hover:bg-[#1a1a1f] border border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400 hover:text-white px-2.5 py-1 rounded transition-colors text-left font-medium cursor-pointer"
                   >
                     {p.label}
                   </button>
@@ -1334,14 +1334,14 @@ def calculate_ramp(distance, feedrate):
             {/* Input form */}
             <form
               onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-              className="flex items-center bg-[#121215] border border-white/5 rounded-lg p-1.5"
+              className="flex items-center bg-[#121215] border border-emerald-300 dark:border-white/5 rounded-lg p-1.5"
             >
               <input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder={`Ask Copilot... (${activeLanguage.name})`}
-                className="flex-1 bg-transparent border-none text-slate-200 focus:outline-none px-3 py-1.5 text-[11.5px] font-mono placeholder-slate-700 select-text"
+                className="flex-1 bg-transparent border-none text-emerald-900 dark:text-slate-200 focus:outline-none px-3 py-1.5 text-[11.5px] font-mono placeholder-slate-700 select-text"
               />
               <button
                 type="submit"
@@ -1361,9 +1361,9 @@ def calculate_ramp(distance, feedrate):
           <div className="space-y-4 font-mono select-none">
             
             {/* Title Block with status bar */}
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
+            <div className="flex justify-between items-center border-b border-emerald-300 dark:border-white/5 pb-2">
               <div>
-                <h3 className="text-[11px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-[11px] font-bold text-emerald-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                   <Sliders className="w-4 h-4 text-rose-500 animate-pulse" />
                   <span>Manual Teach Pendant Console</span>
                 </h3>
@@ -1421,12 +1421,12 @@ def calculate_ramp(distance, feedrate):
             </div>
 
             {/* Jog settings */}
-            <div className="grid grid-cols-2 gap-3.5 bg-[#141417] p-3 rounded-lg border border-white/5">
+            <div className="grid grid-cols-2 gap-3.5 bg-[#141417] p-3 rounded-lg border border-emerald-300 dark:border-white/5">
               <div>
                 <label className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block mb-1.5">
                   Jog Frame Standard
                 </label>
-                <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-white/5">
+                <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-emerald-300 dark:border-white/5">
                   {(["CARTESIAN", "JOINT"] as const).map((mode) => (
                     <button
                       key={mode}
@@ -1434,7 +1434,7 @@ def calculate_ramp(distance, feedrate):
                       className={`flex-1 text-[9px] py-1 rounded transition-all uppercase cursor-pointer ${
                         jogMode === mode
                           ? "bg-rose-600 text-white font-bold shadow-md"
-                          : "text-slate-400 hover:text-slate-100"
+                          : "text-emerald-700 dark:text-slate-400 hover:text-slate-100"
                       }`}
                     >
                       {mode}
@@ -1447,7 +1447,7 @@ def calculate_ramp(distance, feedrate):
                 <label className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block mb-1.5">
                   Step Increment Scale
                 </label>
-                <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-white/5">
+                <div className="flex bg-[#0d0d0f] p-0.5 rounded border border-emerald-300 dark:border-white/5">
                   {([1, 5, 10, 25] as const).map((stepVal) => (
                     <button
                       key={stepVal}
@@ -1455,7 +1455,7 @@ def calculate_ramp(distance, feedrate):
                       className={`flex-1 text-[9px] py-1 rounded transition-colors font-bold cursor-pointer ${
                         jogStepSize === stepVal
                           ? "bg-rose-600 text-white"
-                          : "text-slate-500 hover:text-slate-200"
+                          : "text-slate-500 hover:text-emerald-900 dark:text-slate-200"
                       }`}
                     >
                       {stepVal}
@@ -1466,15 +1466,15 @@ def calculate_ramp(distance, feedrate):
             </div>
 
             {/* Micro-alignment angle sliders nested here with space! */}
-            <div className="bg-[#141417] p-3 rounded-lg border border-white/5 space-y-3">
-              <span className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wide block">
+            <div className="bg-[#141417] p-3 rounded-lg border border-emerald-300 dark:border-white/5 space-y-3">
+              <span className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wide block">
                 Manual Joint micro-alignment sliders
               </span>
               <div className="grid grid-cols-2 gap-x-4 gap-y-3 pb-1">
                 {joints.slice(1).map((joint) => (
                   <div key={joint.id} className="space-y-1">
                     <div className="flex justify-between text-[9.5px]">
-                      <span className="text-slate-400 font-semibold uppercase">{joint.name}</span>
+                      <span className="text-emerald-700 dark:text-slate-400 font-semibold uppercase">{joint.name}</span>
                       <span className="text-blue-400 font-bold">{joint.angle}°</span>
                     </div>
                     <input
@@ -1501,9 +1501,9 @@ def calculate_ramp(distance, feedrate):
             </div>
 
              {/* Direct coordinate jogging switches (Jog Jaws) */}
-            <div className="bg-[#141417] p-3 rounded-lg border border-white/5 space-y-3 select-none">
+            <div className="bg-[#141417] p-3 rounded-lg border border-emerald-300 dark:border-white/5 space-y-3 select-none">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wide block">
+                <span className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wide block">
                   Active {jogMode} axes jogging buttons
                 </span>
                 <span className="text-[7px] font-mono text-slate-500 uppercase">Interactive Pendant Live</span>
@@ -1515,11 +1515,11 @@ def calculate_ramp(distance, feedrate):
                     <div className="space-y-1.5">
                       <span className="text-[7.5px] text-slate-505 block uppercase text-center font-bold">X-Axis Linear</span>
                       <div className="flex gap-1.5">
-                        <button onClick={() => jogAxis("X", -1)} className="flex-1 bg-[#1c1c22] hover:bg-rose-950/40 border border-white/5 py-2 rounded text-[10.5px] font-bold uppercase transition-colors cursor-pointer text-slate-350 hover:text-rose-400 hover:border-rose-500/20 text-center flex flex-col items-center justify-center">
+                        <button onClick={() => jogAxis("X", -1)} className="flex-1 bg-[#1c1c22] hover:bg-rose-950/40 border border-emerald-300 dark:border-white/5 py-2 rounded text-[10.5px] font-bold uppercase transition-colors cursor-pointer text-emerald-800 dark:text-slate-350 hover:text-rose-400 hover:border-rose-500/20 text-center flex flex-col items-center justify-center">
                           <span>X- Jog ({jogStepSize})</span>
                           <span className="text-[6.5px] font-mono text-slate-500 font-medium">KEY [←]</span>
                         </button>
-                        <button onClick={() => jogAxis("X", 1)} className="flex-1 bg-[#1c1c22] hover:bg-[#1f2937]/40 border border-white/5 py-2 rounded text-[10.5px] font-bold uppercase transition-colors cursor-pointer text-slate-350 hover:text-blue-400 hover:border-blue-500/20 text-center flex flex-col items-center justify-center">
+                        <button onClick={() => jogAxis("X", 1)} className="flex-1 bg-[#1c1c22] hover:bg-[#1f2937]/40 border border-emerald-300 dark:border-white/5 py-2 rounded text-[10.5px] font-bold uppercase transition-colors cursor-pointer text-emerald-800 dark:text-slate-350 hover:text-blue-400 hover:border-blue-500/20 text-center flex flex-col items-center justify-center">
                           <span>X+ Jog ({jogStepSize})</span>
                           <span className="text-[6.5px] font-mono text-slate-500 font-medium">KEY [→]</span>
                         </button>
@@ -1529,11 +1529,11 @@ def calculate_ramp(distance, feedrate):
                     <div className="space-y-1.5">
                       <span className="text-[7.5px] text-slate-505 block uppercase text-center font-bold">Z-Axis Plunge</span>
                       <div className="flex gap-1.5">
-                        <button onClick={() => jogAxis("Z", -1)} className="flex-1 bg-[#1c1c22] hover:bg-rose-950/40 border border-[#2b1717] py-2 rounded text-[10.5px] font-bold uppercase transition-colors cursor-pointer text-slate-350 hover:text-rose-400 hover:border-rose-500/20 text-center flex flex-col items-center justify-center">
+                        <button onClick={() => jogAxis("Z", -1)} className="flex-1 bg-[#1c1c22] hover:bg-rose-950/40 border border-[#2b1717] py-2 rounded text-[10.5px] font-bold uppercase transition-colors cursor-pointer text-emerald-800 dark:text-slate-350 hover:text-rose-400 hover:border-rose-500/20 text-center flex flex-col items-center justify-center">
                           <span>Z- Jog ({jogStepSize})</span>
                           <span className="text-[6.5px] font-mono text-slate-500 font-medium">KEY [↓]</span>
                         </button>
-                        <button onClick={() => jogAxis("Z", 1)} className="flex-1 bg-[#1c1c22] hover:bg-[#1f2937]/40 border border-[#1e293b] py-2 rounded text-[10.5px] font-bold uppercase transition-colors cursor-pointer text-slate-350 hover:text-blue-400 hover:border-blue-500/20 text-center flex flex-col items-center justify-center">
+                        <button onClick={() => jogAxis("Z", 1)} className="flex-1 bg-[#1c1c22] hover:bg-[#1f2937]/40 border border-[#1e293b] py-2 rounded text-[10.5px] font-bold uppercase transition-colors cursor-pointer text-emerald-800 dark:text-slate-350 hover:text-blue-400 hover:border-blue-500/20 text-center flex flex-col items-center justify-center">
                           <span>Z+ Jog ({jogStepSize})</span>
                           <span className="text-[6.5px] font-mono text-slate-500 font-medium">KEY [↑]</span>
                         </button>
@@ -1542,7 +1542,7 @@ def calculate_ramp(distance, feedrate):
                   </div>
 
                   {/* Rotary linear joint keys helper */}
-                  <div className="grid grid-cols-2 gap-2 p-1.5 bg-black/20 border border-white/5 rounded text-[7.2px] text-slate-400 font-mono">
+                  <div className="grid grid-cols-2 gap-2 p-1.5 bg-black/20 border border-emerald-300 dark:border-white/5 rounded text-[7.2px] text-emerald-700 dark:text-slate-400 font-mono">
                     <div className="flex justify-between px-1">
                       <span>Base Spin:</span>
                       <span className="text-cyan-400 font-black">[A] / [D]</span>
@@ -1560,14 +1560,14 @@ def calculate_ramp(distance, feedrate):
                     const keyMinus = index * 2 + 1;
                     const keyPlus = (index * 2 + 2) % 10;
                     return (
-                      <div key={j.id} className="space-y-1.5 bg-black/20 p-2 rounded border border-white/5">
-                        <span className="text-[7.5px] text-slate-400 block uppercase tracking-tight font-semibold">{j.name} Joint</span>
+                      <div key={j.id} className="space-y-1.5 bg-black/20 p-2 rounded border border-emerald-300 dark:border-white/5">
+                        <span className="text-[7.5px] text-emerald-700 dark:text-slate-400 block uppercase tracking-tight font-semibold">{j.name} Joint</span>
                         <div className="flex gap-1">
-                          <button onClick={() => jogAxis(j.id, -1)} className="flex-1 bg-[#1c1c22] text-slate-300 hover:bg-[#282830] hover:text-white border border-white/5 py-1 rounded text-[9px] font-semibold tracking-tighter cursor-pointer flex flex-col items-center justify-center">
+                          <button onClick={() => jogAxis(j.id, -1)} className="flex-1 bg-[#1c1c22] text-emerald-800 dark:text-slate-300 hover:bg-[#282830] hover:text-white border border-emerald-300 dark:border-white/5 py-1 rounded text-[9px] font-semibold tracking-tighter cursor-pointer flex flex-col items-center justify-center">
                             <span>Minus (-)</span>
                             <span className="text-[6.2px] font-mono text-slate-500">KEY [{keyMinus}]</span>
                           </button>
-                          <button onClick={() => jogAxis(j.id, 1)} className="flex-1 bg-[#1c1c22] text-slate-300 hover:bg-[#282830] hover:text-white border border-white/5 py-1 rounded text-[9px] font-semibold tracking-tighter cursor-pointer flex flex-col items-center justify-center">
+                          <button onClick={() => jogAxis(j.id, 1)} className="flex-1 bg-[#1c1c22] text-emerald-800 dark:text-slate-300 hover:bg-[#282830] hover:text-white border border-emerald-300 dark:border-white/5 py-1 rounded text-[9px] font-semibold tracking-tighter cursor-pointer flex flex-col items-center justify-center">
                             <span>Plus (+)</span>
                             <span className="text-[6.2px] font-mono text-slate-500">KEY [{keyPlus}]</span>
                           </button>
@@ -1579,26 +1579,26 @@ def calculate_ramp(distance, feedrate):
               )}
 
               {/* Dynamic pendant configuration hotkeys cheatsheet */}
-              <div className="flex flex-wrap gap-2.5 pt-1.5 border-t border-white/5 items-center justify-between text-[7px] font-mono text-slate-500 uppercase select-none">
+              <div className="flex flex-wrap gap-2.5 pt-1.5 border-t border-emerald-300 dark:border-white/5 items-center justify-between text-[7px] font-mono text-slate-500 uppercase select-none">
                 <div className="flex items-center gap-1">
-                  <span className="bg-black/30 border border-white/5 px-1.5 py-0.5 rounded text-cyan-400 font-bold">M</span>
+                  <span className="bg-black/30 border border-emerald-300 dark:border-white/5 px-1.5 py-0.5 rounded text-cyan-400 font-bold">M</span>
                   <span>Change Frame Mode</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="bg-black/30 border border-white/5 px-1.5 py-0.5 rounded text-cyan-400 font-bold">[</span>
-                  <span className="bg-black/30 border border-white/5 px-1.5 py-0.5 rounded text-cyan-400 font-bold">]</span>
+                  <span className="bg-black/30 border border-emerald-300 dark:border-white/5 px-1.5 py-0.5 rounded text-cyan-400 font-bold">[</span>
+                  <span className="bg-black/30 border border-emerald-300 dark:border-white/5 px-1.5 py-0.5 rounded text-cyan-400 font-bold">]</span>
                   <span>Scale Increment</span>
                 </div>
               </div>
             </div>
 
             {/* Code Generator & Snippet Injector */}
-            <div className="bg-[#141417] p-3 rounded-lg border border-white/5 space-y-2.5 flex flex-col">
-              <span className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wide block">
+            <div className="bg-[#141417] p-3 rounded-lg border border-emerald-300 dark:border-white/5 space-y-2.5 flex flex-col">
+              <span className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wide block">
                 Compile & Inject commands into open files
               </span>
 
-              <div className="grid grid-cols-5 gap-1 bg-[#0d0d0f] p-0.5 rounded border border-white/5 select-none">
+              <div className="grid grid-cols-5 gap-1 bg-[#0d0d0f] p-0.5 rounded border border-emerald-300 dark:border-white/5 select-none">
                 {(["G01", "G00", "M05", "G04", "M03"] as const).map((mode) => (
                   <button
                     key={mode}
@@ -1606,7 +1606,7 @@ def calculate_ramp(distance, feedrate):
                     className={`text-[8.5px] py-1 rounded font-bold uppercase cursor-pointer ${
                       cmdMode === mode
                         ? "bg-rose-600 text-white"
-                        : "text-slate-500 hover:text-slate-200"
+                        : "text-slate-500 hover:text-emerald-900 dark:text-slate-200"
                     }`}
                   >
                     {mode}
@@ -1623,7 +1623,7 @@ def calculate_ramp(distance, feedrate):
                       type="number"
                       value={feedrate}
                       onChange={(e) => setFeedrate(Math.max(100, parseInt(e.target.value) || 1200))}
-                      className="bg-[#09090b] border border-white/5 rounded px-2 py-0.5 text-[9px] text-blue-400 font-bold w-16 text-center select-text font-mono"
+                      className="bg-[#09090b] border border-emerald-300 dark:border-white/5 rounded px-2 py-0.5 text-[9px] text-blue-400 font-bold w-16 text-center select-text font-mono"
                     />
                     <span className="text-slate-650">mm/min</span>
                   </div>
@@ -1634,7 +1634,7 @@ def calculate_ramp(distance, feedrate):
                   <button
                     onClick={() => setSuctionState(!suctionState)}
                     className={`px-3 py-1 text-[8.5px] font-bold rounded uppercase cursor-pointer border ${
-                      suctionState ? "bg-emerald-600/10 text-emerald-400 border-emerald-500/20" : "bg-[#0c0c0e] hover:bg-[#141417] text-slate-400 border-white/5"
+                      suctionState ? "bg-emerald-600/10 text-emerald-400 border-emerald-500/20" : "bg-[#0c0c0e] hover:bg-[#141417] text-emerald-700 dark:text-slate-400 border-emerald-300 dark:border-white/5"
                     }`}
                   >
                     {suctionState ? "ACTIVE (VACUUM ON)" : "SAFE (VACUUM OFF)"}
@@ -1648,7 +1648,7 @@ def calculate_ramp(distance, feedrate):
                       type="number"
                       value={dwellMs}
                       onChange={(e) => setDwellMs(Math.max(50, parseInt(e.target.value) || 500))}
-                      className="bg-[#09090b] border border-white/5 rounded px-2 py-0.5 text-[9px] text-blue-400 font-bold w-16 text-center select-text font-mono"
+                      className="bg-[#09090b] border border-emerald-300 dark:border-white/5 rounded px-2 py-0.5 text-[9px] text-blue-400 font-bold w-16 text-center select-text font-mono"
                     />
                     <span className="text-slate-650">ms</span>
                   </div>
@@ -1659,7 +1659,7 @@ def calculate_ramp(distance, feedrate):
                   <button
                     onClick={() => setConveyorState(!conveyorState)}
                     className={`px-3 py-1 text-[8.5px] font-bold rounded uppercase cursor-pointer border ${
-                      conveyorState ? "bg-indigo-600/10 text-indigo-400 border-indigo-500/20 animate-pulse" : "bg-[#0c0c0e] hover:bg-[#141417] text-slate-400 border-white/5"
+                      conveyorState ? "bg-indigo-600/10 text-indigo-400 border-indigo-500/20 animate-pulse" : "bg-[#0c0c0e] hover:bg-[#141417] text-emerald-700 dark:text-slate-400 border-emerald-300 dark:border-white/5"
                     }`}
                   >
                     {conveyorState ? "MOTOR SPINNING ON" : "MOTOR HALTED OFF"}
@@ -1668,7 +1668,7 @@ def calculate_ramp(distance, feedrate):
               )}
 
               {/* Injected terminal command preview */}
-              <div className="bg-[#0d0d0f] rounded border border-white/5 p-2 flex flex-col space-y-1 select-all relative group font-mono">
+              <div className="bg-[#0d0d0f] rounded border border-emerald-300 dark:border-white/5 p-2 flex flex-col space-y-1 select-all relative group font-mono">
                 <span className="text-[6.5px] text-slate-650 tracking-wider font-bold block uppercase leading-none select-none">Preview Block Injection Output</span>
                 <span className="text-[9.5px] text-pink-400 font-bold tracking-tight select-all leading-tight">
                   {getCommandPreview()}
@@ -1692,8 +1692,8 @@ def calculate_ramp(distance, feedrate):
           <div className="space-y-4 font-mono select-none">
             
             {/* Title Block */}
-            <div className="border-b border-white/5 pb-2">
-              <h3 className="text-[11px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+            <div className="border-b border-emerald-300 dark:border-white/5 pb-2">
+              <h3 className="text-[11px] font-bold text-emerald-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <Settings className="w-4 h-4 text-amber-500" />
                 <span>Active Variables & Calibration Registry</span>
               </h3>
@@ -1702,7 +1702,7 @@ def calculate_ramp(distance, feedrate):
               </span>
             </div>
 
-            <div className="text-[9px] text-slate-400 leading-normal bg-amber-500/5 border border-amber-500/10 p-3 rounded-lg">
+            <div className="text-[9px] text-emerald-700 dark:text-slate-400 leading-normal bg-amber-500/5 border border-amber-500/10 p-3 rounded-lg">
               <span className="text-amber-500 font-bold block uppercase mb-1 flex items-center gap-1">
                 <Info className="w-3.5 h-3.5" /> Instruction registers calibration guide
               </span>
@@ -1710,10 +1710,10 @@ def calculate_ramp(distance, feedrate):
             </div>
 
             {/* Registers Grid Container */}
-            <div className="bg-[#141417]/30 border border-white/5 rounded-lg overflow-hidden">
+            <div className="bg-[#141417]/30 border border-emerald-300 dark:border-white/5 rounded-lg overflow-hidden">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-[#141417] text-left text-[8px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5">
+                  <tr className="bg-[#141417] text-left text-[8px] font-bold text-slate-500 uppercase tracking-widest border-b border-emerald-300 dark:border-white/5">
                     <th className="p-2.5">REGISTER</th>
                     <th className="p-2.5">DESCRIPTION & METRICS</th>
                     <th className="p-2.5 text-right w-24">VALUE</th>
@@ -1726,7 +1726,7 @@ def calculate_ramp(distance, feedrate):
                       <tr key={reg.varName} className="hover:bg-white/5 transition-colors">
                         <td className="p-2.5 font-bold text-amber-400 select-all vertical-middle">{reg.varName}</td>
                         <td className="p-2.5 vertical-middle">
-                          <div className="text-[9.5px] font-medium text-slate-300 leading-none mb-1.5">{reg.name}</div>
+                          <div className="text-[9.5px] font-medium text-emerald-800 dark:text-slate-300 leading-none mb-1.5">{reg.name}</div>
                           <div className="text-[7.5px] text-slate-500 max-w-xs leading-normal font-sans tracking-wide">{reg.desc}</div>
                         </td>
                         <td className="p-2.5 text-right vertical-middle">
@@ -1738,7 +1738,7 @@ def calculate_ramp(distance, feedrate):
                               const newVal = parseFloat(e.target.value) || 0;
                               updateGcodeVariable(reg.varName, newVal);
                             }}
-                            className="bg-[#09090b] border border-white/5 rounded px-2 py-1 text-center font-bold text-slate-100 font-mono text-[10.5px] w-20 focus:outline-none focus:border-amber-500"
+                            className="bg-[#09090b] border border-emerald-300 dark:border-white/5 rounded px-2 py-1 text-center font-bold text-slate-100 font-mono text-[10.5px] w-20 focus:outline-none focus:border-amber-500"
                           />
                           <div className="flex justify-end gap-1.5 mt-1">
                             <button
@@ -1776,8 +1776,8 @@ def calculate_ramp(distance, feedrate):
           <div className="space-y-4 font-mono select-none">
             
             {/* Title Block */}
-            <div className="border-b border-white/5 pb-2">
-              <h3 className="text-[11px] font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+            <div className="border-b border-emerald-300 dark:border-white/5 pb-2">
+              <h3 className="text-[11px] font-bold text-emerald-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <Activity className="w-4 h-4 text-blue-400" />
                 <span>Mechanical system diagnostics</span>
               </h3>
@@ -1788,7 +1788,7 @@ def calculate_ramp(distance, feedrate):
 
             {/* Total System Load Card */}
             <div className="grid grid-cols-2 gap-3.5">
-              <div className="bg-[#141417] border border-white/5 p-3.5 rounded-lg flex flex-col space-y-1 relative">
+              <div className="bg-[#141417] border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg flex flex-col space-y-1 relative">
                 <span className="text-[7.5px] text-slate-500 font-bold block uppercase tracking-wider">
                   Aggregated Output Power
                 </span>
@@ -1800,7 +1800,7 @@ def calculate_ramp(distance, feedrate):
                 </span>
               </div>
 
-              <div className="bg-[#141417] border border-white/5 p-3.5 rounded-lg flex flex-col space-y-1 justify-between">
+              <div className="bg-[#141417] border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg flex flex-col space-y-1 justify-between">
                 <div>
                   <span className="text-[7.5px] text-slate-500 font-bold block uppercase tracking-wider leading-none mb-1">
                     Ramping profile state
@@ -1817,8 +1817,8 @@ def calculate_ramp(distance, feedrate):
             </div>
 
             {/* Real-time Velocity Profile Sparkline */}
-            <div className="bg-[#141417] border border-white/5 rounded-lg p-3.5 space-y-2">
-              <div className="flex justify-between items-center text-[9px] text-slate-400">
+            <div className="bg-[#141417] border border-emerald-300 dark:border-white/5 rounded-lg p-3.5 space-y-2">
+              <div className="flex justify-between items-center text-[9px] text-emerald-700 dark:text-slate-400">
                 <span className="font-bold uppercase tracking-wider flex items-center space-x-1.5 text-blue-400">
                   <Activity className="w-3.5 h-3.5 animate-pulse" />
                   <span>Trapezoidal Velocity Sparkline</span>
@@ -1828,13 +1828,34 @@ def calculate_ramp(distance, feedrate):
                 </span>
               </div>
 
-              <div className="h-16 bg-[#0d0d0f] rounded-md relative overflow-hidden p-1 flex items-end border border-white/5">
-                <div className="absolute inset-0 flex flex-col justify-between p-1 opacity-20 pointer-events-none text-[6.5px] font-mono text-slate-600">
-                  <div className="border-b border-dashed border-slate-500/30 w-full" />
-                  <div className="border-b border-dashed border-slate-500/30 w-full" />
+              <div className="h-20 bg-[#060a0f] rounded-md relative overflow-hidden p-1 flex items-end border border-cyan-500/20 shadow-[inset_0_0_15px_rgba(6,182,212,0.15)]">
+                {/* Oscilloscope Grid Phosphor effect */}
+                <div 
+                  className="absolute inset-0 pointer-events-none opacity-30"
+                  style={{
+                    backgroundImage: `linear-gradient(rgba(34, 211, 238, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 211, 238, 0.2) 1px, transparent 1px)`,
+                    backgroundSize: '8px 8px'
+                  }}
+                />
+                <div className="absolute inset-0 flex flex-col justify-between p-1 opacity-40 pointer-events-none">
+                  <div className="border-b border-dashed border-cyan-500/40 w-full" />
+                  <div className="border-b border-dashed border-cyan-500/40 w-full" />
                 </div>
 
                 <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
+                  <defs>
+                    <filter id="scope-glow-tab" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="1.5" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    <linearGradient id="cyan-gradient-tab" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.8"/>
+                      <stop offset="100%" stopColor="#083344" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
                   <polygon
                     points={`0,40 ${velocityHistory
                       .map((val, idx) => {
@@ -1843,13 +1864,14 @@ def calculate_ramp(distance, feedrate):
                         return `${x},${y}`;
                       })
                       .join(" ")} 100,40`}
-                    fill="url(#blue-gradient-tab)"
-                    fillOpacity="0.15"
+                    fill="url(#cyan-gradient-tab)"
+                    fillOpacity="0.25"
                   />
                   <polyline
                     fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="1.2"
+                    stroke="#67e8f9"
+                    strokeWidth="1.5"
+                    filter="url(#scope-glow-tab)"
                     points={velocityHistory
                       .map((val, idx) => {
                         const x = (idx / (velocityHistory.length - 1)) * 100;
@@ -1858,19 +1880,13 @@ def calculate_ramp(distance, feedrate):
                       })
                       .join(" ")}
                   />
-                  <defs>
-                    <linearGradient id="blue-gradient-tab" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#3b82f6" />
-                      <stop offset="100%" stopColor="#1e3a8a" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
                 </svg>
               </div>
             </div>
 
             {/* Torques indicators */}
-            <div className="bg-[#141417] border border-white/5 p-3.5 rounded-lg space-y-3.5">
-              <span className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wide block mb-1">
+            <div className="bg-[#141417] border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3.5">
+              <span className="text-[8.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wide block mb-1">
                 Dynamic link joint-load stress meters (Torques)
               </span>
 
@@ -1884,7 +1900,7 @@ def calculate_ramp(distance, feedrate):
                   return (
                     <div key={joint.id} className="space-y-1">
                       <div className="flex justify-between text-[9px] font-mono leading-none">
-                        <span className="text-slate-400 font-bold uppercase">{joint.name} Segment</span>
+                        <span className="text-emerald-700 dark:text-slate-400 font-bold uppercase">{joint.name} Segment</span>
                         <div className="space-x-1.5">
                           <span className={isStressed ? "text-rose-450 text-rose-400 font-black animate-pulse" : "text-blue-400 font-bold"}>
                             {torqueVal} N·m
@@ -1892,7 +1908,7 @@ def calculate_ramp(distance, feedrate):
                           <span className="text-slate-600">/ max {maxTorqueVal} N·m</span>
                         </div>
                       </div>
-                      <div className="w-full bg-[#0d0d0f] rounded-sm h-2 overflow-hidden border border-white/5 relative">
+                      <div className="w-full bg-[#0d0d0f] rounded-sm h-2 overflow-hidden border border-emerald-300 dark:border-white/5 relative">
                         <div 
                           className={`h-full transition-all duration-150 ${isStressed ? "bg-rose-500" : "bg-blue-500"}`}
                           style={{ width: `${pct}%` }} 
@@ -1919,19 +1935,19 @@ def calculate_ramp(distance, feedrate):
           }>
             
             {/* Title Block */}
-            <div className="border-b border-white/5 pb-2.5 flex items-start justify-between gap-3 shrink-0">
+            <div className="border-b border-emerald-300 dark:border-white/5 pb-2.5 flex items-start justify-between gap-3 shrink-0">
               <div>
                 <h3 className="text-[12.5px] font-extrabold text-slate-100 uppercase tracking-widest flex items-center gap-1.5">
                   <BookOpen className="w-4 h-4 text-indigo-400 animate-pulse" />
                   <span>VoltLogic PRO Dynamic Companion Academy{isManualMaximized && " (Maximized)"}</span>
                 </h3>
-                <p className="text-[8px] text-slate-400 uppercase tracking-wider mt-0.5 leading-normal">
+                <p className="text-[8px] text-emerald-700 dark:text-slate-400 uppercase tracking-wider mt-0.5 leading-normal">
                   Professional interactive robot cell manual, live kinematics calculators, &amp; knowledge audits.
                 </p>
               </div>
               <button
                 onClick={() => setIsManualMaximized(!isManualMaximized)}
-                className="px-2 py-1.5 text-[8.5px] font-bold text-slate-300 hover:text-indigo-300 hover:bg-indigo-600/15 border border-white/5 hover:border-indigo-500/20 rounded cursor-pointer transition-all shrink-0 flex items-center gap-1.5 uppercase"
+                className="px-2 py-1.5 text-[8.5px] font-bold text-emerald-800 dark:text-slate-300 hover:text-indigo-300 hover:bg-indigo-600/15 border border-emerald-300 dark:border-white/5 hover:border-indigo-500/20 rounded cursor-pointer transition-all shrink-0 flex items-center gap-1.5 uppercase"
                 title={isManualMaximized ? "Restore Normal Pane" : "Maximize Manual View"}
                 id="toggle-ref-maximize-btn"
               >
@@ -1950,13 +1966,13 @@ def calculate_ramp(distance, feedrate):
             </div>
 
             {/* NESTED SUB-TABS SELECTOR */}
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#0b0b0d] border border-white/5 rounded-lg">
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#0b0b0d] border border-emerald-300 dark:border-white/5 rounded-lg">
               <button
                 onClick={() => setRefSubTab("book")}
                 className={`py-1.5 px-2 text-[8.5px] font-bold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
                   refSubTab === "book"
                     ? "bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-black"
-                    : "text-slate-400 hover:bg-[#141417]/50 hover:text-slate-200 border border-transparent"
+                    : "text-emerald-700 dark:text-slate-400 hover:bg-[#141417]/50 hover:text-emerald-900 dark:text-slate-200 border border-transparent"
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />
@@ -1967,7 +1983,7 @@ def calculate_ramp(distance, feedrate):
                 className={`py-1.5 px-2 text-[8.5px] font-bold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
                   refSubTab === "sandbox"
                     ? "bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 font-black"
-                    : "text-slate-400 hover:bg-[#141417]/50 hover:text-slate-200 border border-transparent"
+                    : "text-emerald-700 dark:text-slate-400 hover:bg-[#141417]/50 hover:text-emerald-900 dark:text-slate-200 border border-transparent"
                 }`}
               >
                 <Calculator className="w-3.5 h-3.5" />
@@ -1978,7 +1994,7 @@ def calculate_ramp(distance, feedrate):
                 className={`py-1.5 px-2 text-[8.5px] font-bold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
                   refSubTab === "quiz"
                     ? "bg-pink-600/30 text-pink-300 border border-pink-500/30 font-black"
-                    : "text-slate-400 hover:bg-[#141417]/50 hover:text-slate-200 border border-transparent"
+                    : "text-emerald-700 dark:text-slate-400 hover:bg-[#141417]/50 hover:text-emerald-900 dark:text-slate-200 border border-transparent"
                 }`}
               >
                 <Award className="w-3.5 h-3.5" />
@@ -1988,29 +2004,29 @@ def calculate_ramp(distance, feedrate):
 
             {/* PART SELECTED TAB TOGGLE BLOCK */}
             {refSubTab === "book" && (
-              <div className="bg-[#0b0b0d] border border-white/5 p-2 rounded flex flex-col space-y-1.5 shrink-0">
-                <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">
+              <div className="bg-[#0b0b0d] border border-emerald-300 dark:border-white/5 p-2 rounded flex flex-col space-y-1.5 shrink-0">
+                <span className="text-[8px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wider">
                   Select Handbook Module Chapter:
                 </span>
                 <select
                   value={currentRefPart}
                   onChange={(e) => setCurrentRefPart(e.target.value)}
-                  className="bg-[#141417] border border-white/10 rounded px-2 py-1 text-slate-300 font-bold text-[9px] w-full focus:outline-none focus:border-blue-500 cursor-pointer font-mono uppercase"
+                  className="bg-[#141417] border border-emerald-400 dark:border-white/10 rounded px-2 py-1 text-emerald-800 dark:text-slate-300 font-bold text-[9px] w-full focus:outline-none focus:border-blue-500 cursor-pointer font-mono uppercase"
                 >
-                  <option value="ALL" className="bg-[#141417] text-slate-200">Show Complete Handbook (All Chapters)</option>
-                  <option value="PART_I" className="bg-[#141417] text-slate-200">Part I: Intro to VoltLogic &amp; Roadmap</option>
-                  <option value="PART_II" className="bg-[#141417] text-slate-200">Part II: Mathematics &amp; Kinematics</option>
-                  <option value="PART_III" className="bg-[#141417] text-slate-200">Part III: Robot Manipulator Types</option>
-                  <option value="PART_IV" className="bg-[#141417] text-slate-200">Part IV: G-Code Programming Reference</option>
-                  <option value="PART_V" className="bg-[#141417] text-slate-200">Part V: Breakbeams &amp; Color Sensors</option>
-                  <option value="PART_VI" className="bg-[#141417] text-slate-200">Part VI: Industrial Factory Projects</option>
-                  <option value="PART_VII" className="bg-[#141417] text-slate-200">Part VII: Diagnostics &amp; Hard Troubleshooting</option>
-                  <option value="PART_VIII" className="bg-[#141417] text-slate-200">Part VIII: Python/REST Developer SDK</option>
-                  <option value="PART_IX" className="bg-[#141417] text-slate-200">Part IX: Certification &amp; Prescription Presets</option>
+                  <option value="ALL" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Show Complete Handbook (All Chapters)</option>
+                  <option value="PART_I" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part I: Intro to VoltLogic &amp; Roadmap</option>
+                  <option value="PART_II" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part II: Mathematics &amp; Kinematics</option>
+                  <option value="PART_III" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part III: Robot Manipulator Types</option>
+                  <option value="PART_IV" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part IV: G-Code Programming Reference</option>
+                  <option value="PART_V" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part V: Breakbeams &amp; Color Sensors</option>
+                  <option value="PART_VI" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part VI: Industrial Factory Projects</option>
+                  <option value="PART_VII" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part VII: Diagnostics &amp; Hard Troubleshooting</option>
+                  <option value="PART_VIII" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part VIII: Python/REST Developer SDK</option>
+                  <option value="PART_IX" className="bg-[#141417] text-emerald-900 dark:text-slate-200">Part IX: Certification &amp; Prescription Presets</option>
                 </select>
 
                 {/* Target Audience Badge Bar */}
-                <div className="flex flex-wrap gap-1 pt-1 border-t border-white/5">
+                <div className="flex flex-wrap gap-1 pt-1 border-t border-emerald-300 dark:border-white/5">
                   <span className="text-[7px] px-1 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded uppercase font-bold leading-none py-0.5">STUDENT</span>
                   <span className="text-[7px] px-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/25 rounded uppercase font-bold leading-none py-0.5">TECHNICIAN</span>
                   <span className="text-[7px] px-1 bg-pink-500/10 text-pink-400 border border-pink-500/25 rounded uppercase font-bold leading-none py-0.5">PROGRAMMER</span>
@@ -2025,22 +2041,22 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART I: ECOSYSTEM & ROADMAP --- */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_I") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-blue-400 uppercase tracking-widest leading-none">
                     PART I: INTRODUCTION TO THE VOLTLOGIC PRO ECOSYSTEM
                   </span>
                 </div>
                 
-                <div className="space-y-2 text-[9px] text-slate-350 leading-relaxed font-sans">
+                <div className="space-y-2 text-[9px] text-emerald-800 dark:text-slate-350 leading-relaxed font-sans">
                   <p className="font-semibold text-slate-250">What is VoltLogic Pro?</p>
                   <p>
                     VoltLogic Pro is an industrial-grade mechatronics simulation, hardware compilation, 
                     and motion routing ecosystem designed for smart automation pipelines. It combines physical multi-axis coordinate calculations 
                     with industrial-level automation controllers to deliver high-performance testing of robotic cells.
                   </p>
-                  <p className="font-semibold text-slate-300 mt-2">Target High-Capacity Capabilities:</p>
-                  <ul className="list-disc pl-4 space-y-0.5 font-mono text-[8.5px] text-slate-400">
+                  <p className="font-semibold text-emerald-800 dark:text-slate-300 mt-2">Target High-Capacity Capabilities:</p>
+                  <ul className="list-disc pl-4 space-y-0.5 font-mono text-[8.5px] text-emerald-700 dark:text-slate-400">
                     <li>Industrial Automation cell design &amp; path validation</li>
                     <li>Robot Kinematics (4-DOF Parallel Swivel link layouts)</li>
                     <li>SCARA and Cartesian high-speed precision sorting</li>
@@ -2050,22 +2066,22 @@ def calculate_ramp(distance, feedrate):
                 </div>
 
                 {/* 4 progressive training curriculums */}
-                <div className="space-y-2.5 pt-2 border-t border-white/5">
-                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">
+                <div className="space-y-2.5 pt-2 border-t border-emerald-300 dark:border-white/5">
+                  <span className="text-[8px] text-emerald-700 dark:text-slate-400 font-bold uppercase tracking-wider block">
                     Curriculum Learning Roadmaps (Level 1-4)
                   </span>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[8px]">
-                    <div className="bg-[#0b0b0d] p-2 rounded border border-white/5 space-y-1">
+                    <div className="bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                       <div className="text-emerald-400 font-bold uppercase flex justify-between">
                         <span>Level 1: Beginner</span>
                         <span className="text-slate-500 font-normal">Core Basics</span>
                       </div>
-                      <p className="text-slate-400 leading-relaxed font-sans">
+                      <p className="text-emerald-700 dark:text-slate-400 leading-relaxed font-sans">
                         Acquire familiarity with Cartesian offsets, reference coordinates, G90 absolute mode, 
                         G21 dimension controls, and simple tool positioning.
                       </p>
-                      <pre className="p-1 px-1.5 bg-[#141417] text-slate-300 rounded text-[7.5px] font-mono leading-tight">
+                      <pre className="p-1 px-1.5 bg-[#141417] text-emerald-800 dark:text-slate-300 rounded text-[7.5px] font-mono leading-tight">
                         G90 ; Set positioning absolute{"\n"}
                         G21 ; Dimensions in millimeters{"\n"}
                         G01 X100 Y0 Z50 F500 ; Smooth linear slide
@@ -2075,16 +2091,16 @@ def calculate_ramp(distance, feedrate):
                       </div>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2 rounded border border-white/5 space-y-1">
+                    <div className="bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                       <div className="text-blue-400 font-bold uppercase flex justify-between">
                         <span>Level 2: Intermediate</span>
                         <span className="text-slate-500 font-normal">Pick-and-place</span>
                       </div>
-                      <p className="text-slate-400 leading-relaxed font-sans">
+                      <p className="text-emerald-700 dark:text-slate-400 leading-relaxed font-sans">
                         Control real-time feedrates, understand pneumatic suction relays, process conveyor drive states, 
                         and synchronize with breakbeam sensors.
                       </p>
-                      <pre className="p-1 px-1.5 bg-[#141417] text-slate-300 rounded text-[7.5px] font-mono leading-tight">
+                      <pre className="p-1 px-1.5 bg-[#141417] text-emerald-800 dark:text-slate-300 rounded text-[7.5px] font-mono leading-tight">
                         M03 S1 ; Drive motor belt transport{"\n"}
                         M66 P1 L3 Q5 ; Wait sensor breakbeam{"\n"}
                         M05 P1 ; Vacuum suction hold active
@@ -2094,16 +2110,16 @@ def calculate_ramp(distance, feedrate):
                       </div>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2 rounded border border-white/5 space-y-1">
+                    <div className="bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                       <div className="text-purple-400 font-bold uppercase flex justify-between">
                         <span>Level 3: Advanced</span>
                         <span className="text-slate-500 font-normal">Flow logic</span>
                       </div>
-                      <p className="text-slate-400 leading-relaxed font-sans">
+                      <p className="text-emerald-700 dark:text-slate-400 leading-relaxed font-sans">
                         Incorporate relational checks, jump blocks with variables, color scanned indices, 
                         and write customized automatic decision registers.
                       </p>
-                      <pre className="p-1 px-1.5 bg-[#141417] text-slate-300 rounded text-[7.5px] font-mono leading-tight">
+                      <pre className="p-1 px-1.5 bg-[#141417] text-emerald-800 dark:text-slate-300 rounded text-[7.5px] font-mono leading-tight">
                         #200 = AI1 ; Store color reading{"\n"}
                         IF [#200 &gt; 100] GOTO 150 ; Color check{"\n"}
                         GOTO 200 ; Default fallthrough segment
@@ -2113,16 +2129,16 @@ def calculate_ramp(distance, feedrate):
                       </div>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2 rounded border border-white/5 space-y-1">
+                    <div className="bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                       <div className="text-rose-400 font-bold uppercase flex justify-between">
                         <span>Level 4: Professional</span>
                         <span className="text-slate-500 font-normal">Autonomous Cell</span>
                       </div>
-                      <p className="text-slate-400 leading-relaxed font-sans">
+                      <p className="text-emerald-700 dark:text-slate-400 leading-relaxed font-sans">
                         Deploy machine-vision camera buffers, execute real-time decision algorithms, 
                         calibrate spatial errors, and program multi-station factory arrays.
                       </p>
-                      <pre className="p-1 px-1.5 bg-[#141417] text-slate-300 rounded text-[7.5px] font-mono leading-tight">
+                      <pre className="p-1 px-1.5 bg-[#141417] text-emerald-800 dark:text-slate-300 rounded text-[7.5px] font-mono leading-tight">
                         ; Adaptive path profiling{"\n"}
                         #220 = ENC1 ; Read encoder speed{"\n"}
                         ; Process high speed collision bounds
@@ -2140,24 +2156,24 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART II: KINEMATICS & MATH --- */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_II") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-indigo-400 uppercase tracking-widest leading-none">
                     PART II: KINEMATICS, DIAGRAMS &amp; COORDINATE MATRIX SCALARS
                   </span>
                 </div>
 
                 {/* Spatial vectors and Cartesian explanation */}
-                <div className="space-y-2 text-[9px] text-slate-350 leading-relaxed font-sans">
-                  <p className="font-semibold text-slate-200 uppercase tracking-wide text-[8px]">Cartesian Coordinates Frame Configuration</p>
+                <div className="space-y-2 text-[9px] text-emerald-800 dark:text-slate-350 leading-relaxed font-sans">
+                  <p className="font-semibold text-emerald-900 dark:text-slate-200 uppercase tracking-wide text-[8px]">Cartesian Coordinates Frame Configuration</p>
                   <p>
                     VoltLogic physical workspace parameters map spatial vector states along three perpendicular axes relative to calibrated baseline:
                   </p>
                   
                   {/* ASCII Kinematic Linkages Diagram */}
-                  <div className="bg-[#0b0b0d] border border-white/5 p-2 rounded text-[8.5px] font-mono space-y-1 my-2">
+                  <div className="bg-[#0b0b0d] border border-emerald-300 dark:border-white/5 p-2 rounded text-[8.5px] font-mono space-y-1 my-2">
                     <span className="text-[8px] text-[#f472b6] font-extrabold uppercase tracking-wider block">Analytical Linkages Space Diagram:</span>
-                    <pre className="text-[7.5px] leading-tight text-indigo-300 bg-black/50 p-2 rounded border border-white/5 overflow-x-auto select-all">
+                    <pre className="text-[7.5px] leading-tight text-indigo-300 bg-black/50 p-2 rounded border border-emerald-300 dark:border-white/5 overflow-x-auto select-all">
 {`                        Joint 2 [J2] (θ2 relative to link 1)
                          o=========.  (Link 2: L2)
                         /           \\
@@ -2173,16 +2189,16 @@ def calculate_ramp(distance, feedrate):
                     </pre>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-[8px] font-mono text-slate-400 pt-1">
-                    <div className="bg-[#0b0b0d] p-1.5 rounded border border-white/5">
+                  <div className="grid grid-cols-3 gap-2 text-[8px] font-mono text-emerald-700 dark:text-slate-400 pt-1">
+                    <div className="bg-[#0b0b0d] p-1.5 rounded border border-emerald-300 dark:border-white/5">
                       <span className="text-blue-400 font-bold block">X-Axis Range:</span>
                       <span>Left/Right workspace displacement. Range: 100 to 500mm</span>
                     </div>
-                    <div className="bg-[#0b0b0d] p-1.5 rounded border border-white/5">
+                    <div className="bg-[#0b0b0d] p-1.5 rounded border border-emerald-300 dark:border-white/5">
                       <span className="text-blue-400 font-bold block">Y-Axis Range:</span>
                       <span>Forward/Backward extension alignment, simulated radial stretch limits.</span>
                     </div>
-                    <div className="bg-[#0b0b0d] p-1.5 rounded border border-white/5">
+                    <div className="bg-[#0b0b0d] p-1.5 rounded border border-emerald-300 dark:border-white/5">
                       <span className="text-blue-400 font-bold block">Z-Axis Range:</span>
                       <span>Up/Down tool vertical drop coordinates (retract offset, pick height zero boundary).</span>
                     </div>
@@ -2190,23 +2206,23 @@ def calculate_ramp(distance, feedrate):
                 </div>
 
                 {/* Kinematics Workflow */}
-                <div className="bg-[#0b0b0d] border border-white/5 p-2 rounded text-[8.5px] font-mono space-y-2">
+                <div className="bg-[#0b0b0d] border border-emerald-300 dark:border-white/5 p-2 rounded text-[8.5px] font-mono space-y-2">
                   <span className="text-[9px] text-teal-400 font-bold uppercase tracking-wider block">Joint Space Transformation Protocol</span>
-                  <div className="flex flex-col items-center justify-center p-2.5 bg-black/40 rounded border border-white/5 text-center leading-normal">
-                    <div className="text-slate-300 font-bold">DESIRED CARTESIAN COORDINATE frame (X, Y, Z)</div>
+                  <div className="flex flex-col items-center justify-center p-2.5 bg-black/40 rounded border border-emerald-300 dark:border-white/5 text-center leading-normal">
+                    <div className="text-emerald-800 dark:text-slate-300 font-bold">DESIRED CARTESIAN COORDINATE frame (X, Y, Z)</div>
                     <div className="text-indigo-400 my-1 font-bold">↓ (Controller processes Inverse Kinematics solver)</div>
-                    <div className="text-slate-200 font-bold">JOINT SPACE ROTATIONAL ANGLES (J1, J2, J3, B)</div>
+                    <div className="text-emerald-900 dark:text-slate-200 font-bold">JOINT SPACE ROTATIONAL ANGLES (J1, J2, J3, B)</div>
                     <div className="text-indigo-400 my-1 font-bold">↓ (Closed-loop digital servo feedback)</div>
-                    <div className="text-slate-300 font-black text-blue-400">PHYSICAL STEPPER BRUSHLESS COMMAND DECODE</div>
+                    <div className="text-emerald-800 dark:text-slate-300 font-black text-blue-400">PHYSICAL STEPPER BRUSHLESS COMMAND DECODE</div>
                   </div>
                 </div>
 
                 {/* Mathematical conversions */}
                 <div className="space-y-2 text-[8.5px] font-mono">
-                  <span className="text-[9px] text-slate-400 font-bold uppercase block tracking-wider">Kinematics Solver Mathematical Equations</span>
-                  <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5 space-y-1.5 text-slate-400 leading-relaxed font-sans">
+                  <span className="text-[9px] text-emerald-700 dark:text-slate-400 font-bold uppercase block tracking-wider">Kinematics Solver Mathematical Equations</span>
+                  <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5 space-y-1.5 text-emerald-700 dark:text-slate-400 leading-relaxed font-sans">
                     <div>
-                      <span className="font-bold font-mono text-slate-200 block">Forward Kinematics Transformation (Angles → Spatial positions):</span>
+                      <span className="font-bold font-mono text-emerald-900 dark:text-slate-200 block">Forward Kinematics Transformation (Angles → Spatial positions):</span>
                       <p>
                         Calculates tool end effector position using joint lengths <span className="font-mono text-blue-400">L1, L2</span> and rotational state angles <span className="font-mono text-blue-400">θ1, θ2</span>:
                       </p>
@@ -2215,8 +2231,8 @@ def calculate_ramp(distance, feedrate):
                         Y = BaseY - L1 * sin(θ1) - L2 * sin(θ1 + θ2)
                       </pre>
                     </div>
-                    <div className="pt-2 border-t border-white/5">
-                      <span className="font-bold font-mono text-slate-200 block">Inverse Kinematics Resolution (Spatial positions → Angles):</span>
+                    <div className="pt-2 border-t border-emerald-300 dark:border-white/5">
+                      <span className="font-bold font-mono text-emerald-900 dark:text-slate-200 block">Inverse Kinematics Resolution (Spatial positions → Angles):</span>
                       <p>
                         Determines joint states required to navigate end-effector to location X, Y using law of cosines algorithm:
                       </p>
@@ -2235,67 +2251,67 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART III: ROBOT CONFIGS --- */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_III") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-rose-400 uppercase tracking-widest leading-none">
                     PART III: ROBOT MANIPULATOR CONFIGURATION ARRAYS
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[8px] font-mono">
-                  <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5 space-y-1">
+                  <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                     <span className="text-blue-400 font-extrabold uppercase block text-[8.5px]">1. Articulated System</span>
-                    <p className="text-slate-400 font-sans leading-relaxed">
+                    <p className="text-emerald-700 dark:text-slate-400 font-sans leading-relaxed">
                       Replicates flexible human muscle ranges with three rotational joint segments pivoting around base swivel frame J0.
                     </p>
                     <div className="text-[#a855f7] font-bold">Advantages:</div>
                     <span className="text-slate-500 font-sans leading-snug block">
                       Maximum circular workspace reach bounds, spatial dexterity, obstacle collision loops bypass clearance.
                     </span>
-                    <div className="text-slate-600 block text-[7.5px] uppercase pt-1 border-t border-white/5">
+                    <div className="text-slate-600 block text-[7.5px] uppercase pt-1 border-t border-emerald-300 dark:border-white/5">
                       Applications: Laser Welding, painting sprayers, multi-axis heavy assemblies.
                     </div>
                   </div>
 
-                  <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5 space-y-1">
+                  <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                     <span className="text-indigo-400 font-extrabold uppercase block text-[8.5px]">2. SCARA Manipulator</span>
-                    <p className="text-slate-400 font-sans leading-relaxed">
+                    <p className="text-emerald-700 dark:text-slate-400 font-sans leading-relaxed">
                       Selective Compliance Assembly Robot Arm. Uses vertical column axis combined with two planar folding rotational joints.
                     </p>
                     <div className="text-[#a855f7] font-bold">Advantages:</div>
                     <span className="text-slate-500 font-sans leading-snug block">
                       Excellent structural rigidity along vertical thrust vector axis, incredibly fast cycle speeds, precise placement.
                     </span>
-                    <div className="text-slate-600 block text-[7.5px] uppercase pt-1 border-t border-white/5">
+                    <div className="text-slate-600 block text-[7.5px] uppercase pt-1 border-t border-emerald-300 dark:border-white/5">
                       Applications: Board pick-and-place, micro PCB component placements.
                     </div>
                   </div>
 
-                  <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5 space-y-1">
+                  <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                     <span className="text-teal-400 font-extrabold uppercase block text-[8.5px]">3. Cartesian Gantry</span>
-                    <p className="text-slate-400 font-sans leading-relaxed">
+                    <p className="text-emerald-700 dark:text-slate-400 font-sans leading-relaxed">
                       Linear slide carriages traveling exclusively along orthogonal grid rails (X, Y, Z sliders) with no rotational joints.
                     </p>
                     <div className="text-[#a855f7] font-bold">Advantages:</div>
                     <span className="text-slate-500 font-sans leading-snug block">
                       Linear scaling limits, absolute geometric positioning, simplest algebraic trajectory calculations.
                     </span>
-                    <div className="text-slate-600 block text-[7.5px] uppercase pt-1 border-t border-white/5">
+                    <div className="text-slate-600 block text-[7.5px] uppercase pt-1 border-t border-emerald-300 dark:border-white/5">
                       Applications: CNC milling gantries, heavy package pellet sorting bays.
                     </div>
                   </div>
                 </div>
 
                 {/* TABLE COMPARATIVE SPECIFICATIONS */}
-                <div className="bg-[#0b0b0d] border border-white/5 rounded-lg overflow-hidden mt-3 font-mono">
-                  <div className="bg-[#141417]/70 p-1.5 border-b border-white/5 flex items-center justify-between">
+                <div className="bg-[#0b0b0d] border border-emerald-300 dark:border-white/5 rounded-lg overflow-hidden mt-3 font-mono">
+                  <div className="bg-[#141417]/70 p-1.5 border-b border-emerald-300 dark:border-white/5 flex items-center justify-between">
                     <span className="text-[8.5px] font-black tracking-wider uppercase text-pink-400">Table 3.1: Kinematic Manipulator Comparison Grid</span>
-                    <span className="text-[6.5px] text-slate-500 uppercase px-1.5 py-0.5 bg-black rounded-full border border-white/5">Auto-Ref</span>
+                    <span className="text-[6.5px] text-slate-500 uppercase px-1.5 py-0.5 bg-black rounded-full border border-emerald-300 dark:border-white/5">Auto-Ref</span>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-[7.5px]">
                       <thead>
-                        <tr className="bg-black/30 border-b border-white/5 text-slate-400">
+                        <tr className="bg-black/30 border-b border-emerald-300 dark:border-white/5 text-emerald-700 dark:text-slate-400">
                           <th className="p-1 px-2 font-black uppercase">Configuration</th>
                           <th className="p-1 font-black uppercase">Joint Type</th>
                           <th className="p-1 font-black uppercase">Z-Rigidity</th>
@@ -2303,7 +2319,7 @@ def calculate_ramp(distance, feedrate):
                           <th className="p-1 font-black uppercase">IK Math Complexity</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/5 text-slate-350">
+                      <tbody className="divide-y divide-white/5 text-emerald-800 dark:text-slate-350">
                         <tr>
                           <td className="p-1 px-2 font-bold text-blue-300">Articulated (3R)</td>
                           <td className="p-1">Rotational (3 Rot)</td>
@@ -2337,76 +2353,76 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART IV: G-CODE REFERENCE --- */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_IV") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-yellow-400 uppercase tracking-widest leading-none">
                     PART IV: G-CODE &amp; MOTION INSTRUCTION DICTIONARY
                   </span>
                 </div>
 
-                <div className="space-y-2 text-[9px] text-slate-300">
-                  <p className="font-sans leading-relaxed text-slate-400">
+                <div className="space-y-2 text-[9px] text-emerald-800 dark:text-slate-300">
+                  <p className="font-sans leading-relaxed text-emerald-700 dark:text-slate-400">
                     All interpreter instruction codes map coordinates in millimeter dimensional limits or degrees angular scales. Feedrate is absolute.
                   </p>
 
                   <div className="space-y-2 font-mono text-[8.5px]">
-                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5">
+                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5">
                       <div className="flex justify-between font-bold text-pink-400 text-[9px] mb-0.5">
                         <span>G00: Rapid Seek Positioning</span>
                         <span className="text-slate-500">Syntax: G00 X[val] Z[val] B[angle]</span>
                       </div>
-                      <p className="font-sans text-slate-400 leading-normal">
+                      <p className="font-sans text-emerald-700 dark:text-slate-400 leading-normal">
                         Drives motors rapidly without linear interpolation towards coordinates, moving all axes simultaneously at max core limit.
                       </p>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5">
+                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5">
                       <div className="flex justify-between font-bold text-pink-400 text-[9px] mb-0.5">
                         <span>G01: Linear Feed Interpolation</span>
                         <span className="text-slate-500">Syntax: G01 X[val] Z[val] F[feedrate]</span>
                       </div>
-                      <p className="font-sans text-slate-400 leading-normal">
+                      <p className="font-sans text-emerald-700 dark:text-slate-400 leading-normal">
                         Moves the tool tip along a straight vector profile at constant feedrate speed F (expressed in mm/min). Standard for pickup maneuvers.
                       </p>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5">
+                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5">
                       <div className="flex justify-between font-bold text-pink-400 text-[9px] mb-0.5">
                         <span>G02 / G03: Circular Arc Interpolation</span>
                         <span className="text-slate-500">Syntax: G02/G03 X[val] Z[val] R[radius] F[speed]</span>
                       </div>
-                      <p className="font-sans text-slate-400 leading-normal">
+                      <p className="font-sans text-emerald-700 dark:text-slate-400 leading-normal">
                         Drives the end effector in a circular clockwise (G02) or counter-clockwise (G03) arc to target waypoint with radius R.
                       </p>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5">
+                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5">
                       <div className="flex justify-between font-bold text-pink-400 text-[9px] mb-0.5">
                         <span>G04: Dwell Timer (Hold Sequence)</span>
                         <span className="text-slate-500">Syntax: G04 P[millis]</span>
                       </div>
-                      <p className="font-sans text-slate-400 leading-normal">
+                      <p className="font-sans text-emerald-700 dark:text-slate-400 leading-normal">
                         Blocks interpreter processing for P milliseconds. Halts path motion without disengaging step torque. Ideal for let vacuum establish.
                       </p>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5">
+                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5">
                       <div className="flex justify-between font-bold text-[#38bdf8] text-[9px] mb-0.5">
                         <span>M03: Conveyor Motor Belt State</span>
                         <span className="text-slate-500">Syntax: M03 S[0 or 1]</span>
                       </div>
-                      <p className="font-sans text-slate-400 leading-normal">
-                        Sets conveyor drive motor line. Parameter <span className="font-mono text-slate-200">S1</span> shifts belt active conveyor; 
-                        <span className="font-mono text-slate-200">S0</span> commands immediate halt of incoming material line.
+                      <p className="font-sans text-emerald-700 dark:text-slate-400 leading-normal">
+                        Sets conveyor drive motor line. Parameter <span className="font-mono text-emerald-900 dark:text-slate-200">S1</span> shifts belt active conveyor; 
+                        <span className="font-mono text-emerald-900 dark:text-slate-200">S0</span> commands immediate halt of incoming material line.
                       </p>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-white/5">
+                    <div className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-300 dark:border-white/5">
                       <div className="flex justify-between font-bold text-[#38bdf8] text-[9px] mb-0.5">
                         <span>M05: Suction Solenoid Suction active</span>
                         <span className="text-slate-500">Syntax: M05 P[0 or 1]</span>
                       </div>
-                      <p className="font-sans text-slate-400 leading-normal">
+                      <p className="font-sans text-emerald-700 dark:text-slate-400 leading-normal">
                         Triggers high-pressure pneumatic solenoid venturi generator. P1 activates strong suction grip; P0 shuts down valve for drop off release.
                       </p>
                     </div>
@@ -2419,20 +2435,20 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART V: SENSORS AND MACROS --- */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_V") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-cyan-400 uppercase tracking-widest leading-none">
                     PART V: SENSOR PROGRAMMING, MACROS &amp; INTERRUPTS
                   </span>
                 </div>
 
-                <div className="space-y-2 text-[9px] text-slate-350 leading-relaxed font-sans">
+                <div className="space-y-2 text-[9px] text-emerald-800 dark:text-slate-350 leading-relaxed font-sans">
                   <p>
                     Automation processes inside VoltLogic leverage optical scanner, color reading register, and dynamic rotation hardware:
                   </p>
 
                   <div className="space-y-2 font-mono text-[8px]">
-                    <div className="bg-[#0b0b0d] p-2 rounded border border-white/5 space-y-1">
+                    <div className="bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                       <div className="text-cyan-400 font-bold text-[8.5px]">Optoelectronic Breakbeam Interrupt:</div>
                       <p className="text-slate-450">
                         Halts execution until lightbeam receives occlusion barrier. Syntax structure: 
@@ -2440,7 +2456,7 @@ def calculate_ramp(distance, feedrate):
                       </p>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2 rounded border border-white/5 space-y-1">
+                    <div className="bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                       <div className="text-cyan-400 font-bold text-[8.5px]">Multi-Spectral Color Scanning Registers:</div>
                       <p className="text-slate-450">
                         Pushes RGB reflections down into global memory macros. The camera reads:
@@ -2451,7 +2467,7 @@ def calculate_ramp(distance, feedrate):
                       </p>
                     </div>
 
-                    <div className="bg-[#0b0b0d] p-2 rounded border border-white/5 space-y-1">
+                    <div className="bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5 space-y-1">
                       <div className="text-cyan-400 font-bold text-[8.5px]">High-Resolution Shaft Quadrature Encoders:</div>
                       <p className="text-slate-450">
                         Tracks microsecond rotation index. Access command: <span className="font-mono text-yellow-400">#220 = ENC1</span>. 
@@ -2467,14 +2483,14 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART VI: AUTOMATION PROJECTS --- */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_VI") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-amber-500 uppercase tracking-widest leading-none">
                     PART VI: INDUSTRIAL MANUFACTURING &amp; INTEGRATION CELL PROJECTS
                   </span>
                 </div>
 
-                <div className="space-y-3 text-[9px] font-sans text-slate-350">
+                <div className="space-y-3 text-[9px] font-sans text-emerald-800 dark:text-slate-350">
                   <div className="space-y-1">
                     <span className="font-mono font-bold text-orange-400 block text-[9.5px]">Project 1: Automatic Material Sorting Loop</span>
                     <p className="leading-relaxed font-sans">
@@ -2482,21 +2498,21 @@ def calculate_ramp(distance, feedrate):
                     </p>
                   </div>
 
-                  <div className="space-y-1 pt-2 border-t border-white/5">
+                  <div className="space-y-1 pt-2 border-t border-emerald-300 dark:border-white/5">
                     <span className="font-mono font-bold text-orange-400 block text-[9.5px]">Project 2: Autonomous Multi-Grid Inventory Depot</span>
                     <p className="leading-relaxed font-sans">
                       Implement coordinate cell allocating. Manage spatial registers (#500 through #599) to track coordinates of 100 virtual parts. Program robot to stack products cleanly in spatial bays without colliding with racks.
                     </p>
                   </div>
 
-                  <div className="space-y-1 pt-2 border-t border-white/5">
+                  <div className="space-y-1 pt-2 border-t border-emerald-300 dark:border-white/5">
                     <span className="font-mono font-bold text-orange-400 block text-[9.5px]">Project 3: Video Calibration Camera Guidance</span>
                     <p className="leading-relaxed font-sans">
                       Integrate real-time machine vision tracking. Track material shape configurations, align spatial offsets, and trigger correct pickup adjustments to accommodate random shifts along belt orientations.
                     </p>
                   </div>
 
-                  <div className="space-y-1 pt-2 border-t border-white/5">
+                  <div className="space-y-1 pt-2 border-t border-emerald-300 dark:border-white/5">
                     <span className="font-mono font-bold text-orange-400 block text-[9.5px]">Project 4: Synchronized Multi-Stage Robotic Cluster</span>
                     <p className="leading-relaxed font-sans">
                       Formulate automated plant cell. Robot Alpha extracts mold; Robot Beta inspects dimensions via coordinate probe; Robot Gamma packages finished box, maintaining zero bottlenecks.
@@ -2510,8 +2526,8 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART VII: DIAGNOSTICS & ALARMS - */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_VII") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-rose-400 uppercase tracking-widest leading-none">
                     PART VII: SYSTEM DIAGNOSTIC ERROR CODES &amp; CRITICAL REPAIRS
                   </span>
@@ -2523,8 +2539,8 @@ def calculate_ramp(distance, feedrate):
 
                 <div className="space-y-2.5 font-mono text-[8.5px]">
                   {errorDatabase.map((err) => (
-                    <div key={err.code} className="bg-[#0b0b0d] border border-white/5 rounded p-2.5 space-y-1">
-                      <div className="flex justify-between items-center text-[9px] pb-1 border-b border-white/5">
+                    <div key={err.code} className="bg-[#0b0b0d] border border-emerald-300 dark:border-white/5 rounded p-2.5 space-y-1">
+                      <div className="flex justify-between items-center text-[9px] pb-1 border-b border-emerald-300 dark:border-white/5">
                         <span className="text-rose-400 font-extrabold tracking-widest">{err.code}: {err.name}</span>
                         <span className="text-[7px] px-1 bg-rose-500/10 text-rose-500 rounded font-bold uppercase leading-none py-0.5">Critical Alarm</span>
                       </div>
@@ -2544,20 +2560,20 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART VIII: DEVELOPER SDK ------- */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_VIII") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-teal-400 uppercase tracking-widest leading-none">
                     PART VIII: DEVELOPER PLATFORM SDK &amp; FIRMWARE CORRIDORS
                   </span>
                 </div>
 
-                <div className="space-y-3 text-[9px] text-slate-350 leading-relaxed font-sans">
+                <div className="space-y-3 text-[9px] text-emerald-800 dark:text-slate-350 leading-relaxed font-sans">
                   <p>
                     VoltLogic platform provides developers with extensibility hooks for custom sensors, coordinate kinematics engines, and camera buffers:
                   </p>
 
-                  <div className="space-y-3 font-mono text-[8px] text-slate-400 leading-snug">
-                    <div className="space-y-1 bg-[#0b0b0d] p-2 rounded border border-white/5">
+                  <div className="space-y-3 font-mono text-[8px] text-emerald-700 dark:text-slate-400 leading-snug">
+                    <div className="space-y-1 bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5">
                       <span className="font-bold text-teal-400">1. Plugin Sensor API Hook (Python Framework)</span>
                       <pre className="p-2 bg-black/40 text-cyan-400 rounded overflow-x-auto leading-tight">
                         class SensorPlugin:{"\n"}
@@ -2570,7 +2586,7 @@ def calculate_ramp(distance, feedrate):
                       </pre>
                     </div>
 
-                    <div className="space-y-1 bg-[#0b0b0d] p-2 rounded border border-white/5">
+                    <div className="space-y-1 bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5">
                       <span className="font-bold text-teal-400">2. Low level Motion API (Node / C++ Bindings)</span>
                       <pre className="p-2 bg-black/40 text-cyan-400 rounded overflow-x-auto leading-tight">
                         robot.move_to({"\n"}
@@ -2582,7 +2598,7 @@ def calculate_ramp(distance, feedrate):
                       </pre>
                     </div>
 
-                    <div className="space-y-1 bg-[#0b0b0d] p-2 rounded border border-white/5">
+                    <div className="space-y-1 bg-[#0b0b0d] p-2 rounded border border-emerald-300 dark:border-white/5">
                       <span className="font-bold text-teal-400">3. Camera Vision API (Integration module)</span>
                       <pre className="p-2 bg-black/40 text-cyan-400 rounded overflow-x-auto leading-tight">
                         color = camera.detect_color(){"\n"}
@@ -2599,23 +2615,23 @@ def calculate_ramp(distance, feedrate):
             {/* --- PART IX: CERTIFICATION TESTS --- */}
             {/* ------------------------------------ */}
             {(currentRefPart === "ALL" || currentRefPart === "PART_IX") && (
-              <div className="bg-[#141417]/40 border border-white/5 p-3.5 rounded-lg space-y-3">
-                <div className="flex items-center space-x-1.5 border-b border-white/5 pb-1.5">
+              <div className="bg-[#141417]/40 border border-emerald-300 dark:border-white/5 p-3.5 rounded-lg space-y-3">
+                <div className="flex items-center space-x-1.5 border-b border-emerald-300 dark:border-white/5 pb-1.5">
                   <span className="text-[9.5px] font-black text-pink-400 uppercase tracking-widest leading-none">
                     PART IX: ACADEMY PROGRESSIVE CERTIFICATION ASSIGNMENTS
                   </span>
                 </div>
 
-                <div className="space-y-3 font-mono text-[8.5px] text-slate-350">
+                <div className="space-y-3 font-mono text-[8.5px] text-emerald-800 dark:text-slate-350">
                   <p className="font-sans leading-relaxed text-slate-500 text-[9px]">
                     To unlock professional certificates, verify program setups by injecting these preset scripts directly and launching simulation.
                   </p>
 
                   <div className="space-y-3.5 pt-2">
                     {codeSnippetsDatabase.map((snippet, idx) => (
-                      <div key={idx} className="bg-[#0b0b0d] p-2.5 rounded border border-white/10 space-y-1.5 font-mono">
+                      <div key={idx} className="bg-[#0b0b0d] p-2.5 rounded border border-emerald-400 dark:border-white/10 space-y-1.5 font-mono">
                         <div className="flex justify-between items-center text-[9px]">
-                          <span className="text-slate-200 font-bold uppercase tracking-wider">{snippet.title}</span>
+                          <span className="text-emerald-900 dark:text-slate-200 font-bold uppercase tracking-wider">{snippet.title}</span>
                           <button
                             onClick={() => onInsertCode(snippet.content)}
                             className="text-[8px] bg-cyan-600/10 hover:bg-cyan-600 border border-cyan-500/25 hover:border-cyan-500 text-cyan-400 hover:text-white font-black px-2 py-0.5 rounded transition-all cursor-pointer uppercase"
@@ -2628,7 +2644,7 @@ def calculate_ramp(distance, feedrate):
                            idx === 1 ? "Target Certification: Level 2 Advanced Sensors Conveyor Synchronization." :
                            "Target Certification: Level 3 Automated Dynamic Sorting &amp; Variables Relational checks."}
                         </p>
-                        <pre className="p-2 bg-[#09090b] text-[8px] text-slate-350 rounded border border-white/5 overflow-x-auto max-h-36 scrollbar-thin">
+                        <pre className="p-2 bg-[#09090b] text-[8px] text-emerald-800 dark:text-slate-350 rounded border border-emerald-300 dark:border-white/5 overflow-x-auto max-h-36 scrollbar-thin">
                           {snippet.content}
                         </pre>
                       </div>
@@ -2647,20 +2663,20 @@ def calculate_ramp(distance, feedrate):
             <div className="space-y-4 font-mono text-[8.5px]">
               
               {/* Lab Overview Intro Banner */}
-              <div className="bg-[#141417]/30 border border-white/5 p-3 rounded-lg space-y-1">
+              <div className="bg-[#141417]/30 border border-emerald-300 dark:border-white/5 p-3 rounded-lg space-y-1">
                 <div className="flex items-center gap-1.5 text-[9.5px] font-black text-cyan-400 uppercase tracking-widest">
                   <Calculator className="w-4 h-4 text-cyan-400" />
                   <span>Interactive Forward &amp; Inverse Kinematic Lab</span>
                 </div>
-                <p className="font-sans text-[8.5px] text-slate-400 leading-relaxed">
+                <p className="font-sans text-[8.5px] text-emerald-700 dark:text-slate-400 leading-relaxed">
                   Analyze coordinate space mapping, Denavit-Hartenberg matrices, and Jacobian Singularities for planar 2R articulated configurations in real time.
                 </p>
               </div>
 
               {/* Dynamic Coordinate Target Visual Anchor */}
-              <div className="bg-[#0b0b0d] border border-white/10 rounded-lg overflow-hidden">
-                <div className="bg-[#141417] px-3 py-1.5 border-b border-white/5 flex justify-between items-center">
-                  <span className="text-[8px] font-black text-slate-300 uppercase tracking-wider flex items-center gap-1">
+              <div className="bg-[#0b0b0d] border border-emerald-400 dark:border-white/10 rounded-lg overflow-hidden">
+                <div className="bg-[#141417] px-3 py-1.5 border-b border-emerald-300 dark:border-white/5 flex justify-between items-center">
+                  <span className="text-[8px] font-black text-emerald-800 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Live Graphic Trajectory Map</span>
                   </span>
@@ -2677,7 +2693,7 @@ def calculate_ramp(distance, feedrate):
                         setIkSolverError(null);
                         setIkSolverSuccess(false);
                       }}
-                      className="px-1 text-[7px] bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-white/5 rounded cursor-pointer uppercase font-extrabold"
+                      className="px-1 text-[7px] bg-slate-800/60 hover:bg-slate-700 text-emerald-800 dark:text-slate-300 border border-emerald-300 dark:border-white/5 rounded cursor-pointer uppercase font-extrabold"
                     >
                       Home
                     </button>
@@ -2690,7 +2706,7 @@ def calculate_ramp(distance, feedrate):
                         setIkSolverError(null);
                         setIkSolverSuccess(false);
                       }}
-                      className="px-1 text-[7px] bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-white/5 rounded cursor-pointer uppercase font-extrabold"
+                      className="px-1 text-[7px] bg-slate-800/60 hover:bg-slate-700 text-emerald-800 dark:text-slate-300 border border-emerald-300 dark:border-white/5 rounded cursor-pointer uppercase font-extrabold"
                     >
                       Extended
                     </button>
@@ -2703,7 +2719,7 @@ def calculate_ramp(distance, feedrate):
                         setIkSolverError(null);
                         setIkSolverSuccess(false);
                       }}
-                      className="px-1 text-[7px] bg-slate-800/60 hover:bg-slate-700 text-slate-300 border border-white/5 rounded cursor-pointer uppercase font-extrabold"
+                      className="px-1 text-[7px] bg-slate-800/60 hover:bg-slate-700 text-emerald-800 dark:text-slate-300 border border-emerald-300 dark:border-white/5 rounded cursor-pointer uppercase font-extrabold"
                     >
                       Orthogonal
                     </button>
@@ -2716,7 +2732,7 @@ def calculate_ramp(distance, feedrate):
                         setIkSolverError(null);
                         setIkSolverSuccess(false);
                       }}
-                      className="px-1 text-[7px] bg-slate-800/60 hover:bg-slate-700 text-red-400 border border-white/10 rounded cursor-pointer uppercase font-extrabold"
+                      className="px-1 text-[7px] bg-slate-800/60 hover:bg-slate-700 text-red-400 border border-emerald-400 dark:border-white/10 rounded cursor-pointer uppercase font-extrabold"
                     >
                       Singular
                     </button>
@@ -2728,7 +2744,7 @@ def calculate_ramp(distance, feedrate):
                   {/* Radar grid coordinates graph background */}
                   <svg
                     viewBox="-180 -150 360 300"
-                    className="w-full max-w-[340px] h-[210px] border border-white/5 rounded bg-black/60 shadow-inner"
+                    className="w-full max-w-[340px] h-[210px] border border-emerald-300 dark:border-white/5 rounded bg-black/60 shadow-inner"
                   >
                     {/* Concentric circles */}
                     <circle cx="0" cy="0" r="130" stroke="rgba(255,255,255,0.04)" fill="none" strokeDasharray="3 3" />
@@ -2804,7 +2820,7 @@ def calculate_ramp(distance, feedrate):
               {/* TWO COLUMN PANEL: Joint Knobs vs Live Solved Outputs */}
               <div className="grid grid-cols-2 gap-3">
                 {/* COLUMN 1: INTERACTIVE PHYSICAL MANUAL SLIDERS */}
-                <div className="bg-[#141417]/80 rounded p-2.5 border border-white/5 space-y-2.5">
+                <div className="bg-[#141417]/80 rounded p-2.5 border border-emerald-300 dark:border-white/5 space-y-2.5">
                   <span className="text-[8px] font-black text-indigo-400 uppercase tracking-wider flex items-center gap-1">
                     <Sliders className="w-3.5 h-3.5 text-indigo-400" />
                     <span>Joint Variables</span>
@@ -2812,7 +2828,7 @@ def calculate_ramp(distance, feedrate):
 
                   {/* Theta 1 controller */}
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[7.5px] font-bold text-slate-300">
+                    <div className="flex justify-between text-[7.5px] font-bold text-emerald-800 dark:text-slate-300">
                       <span>θ₁ Angle (Base)</span>
                       <span className="text-indigo-400 font-mono font-black">{interactiveTheta1}°</span>
                     </div>
@@ -2828,7 +2844,7 @@ def calculate_ramp(distance, feedrate):
 
                   {/* Theta 2 controller */}
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[7.5px] font-bold text-slate-300">
+                    <div className="flex justify-between text-[7.5px] font-bold text-emerald-800 dark:text-slate-300">
                       <span>θ₂ Angle (Elbow)</span>
                       <span className="text-cyan-400 font-mono font-black">{interactiveTheta2}°</span>
                     </div>
@@ -2843,10 +2859,10 @@ def calculate_ramp(distance, feedrate):
                   </div>
 
                   {/* Link 1 length dynamic controller */}
-                  <div className="space-y-1 pt-1 border-t border-white/5">
-                    <div className="flex justify-between text-[7.5px] text-slate-400">
+                  <div className="space-y-1 pt-1 border-t border-emerald-300 dark:border-white/5">
+                    <div className="flex justify-between text-[7.5px] text-emerald-700 dark:text-slate-400">
                       <span>L₁ Link Length</span>
-                      <span className="text-slate-300 font-bold">{linkLength1} mm</span>
+                      <span className="text-emerald-800 dark:text-slate-300 font-bold">{linkLength1} mm</span>
                     </div>
                     <input
                       type="range"
@@ -2860,9 +2876,9 @@ def calculate_ramp(distance, feedrate):
 
                   {/* Link 2 length dynamic controller */}
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[7.5px] text-slate-400">
+                    <div className="flex justify-between text-[7.5px] text-emerald-700 dark:text-slate-400">
                       <span>L₂ Link Length</span>
-                      <span className="text-slate-300 font-bold">{linkLength2} mm</span>
+                      <span className="text-emerald-800 dark:text-slate-300 font-bold">{linkLength2} mm</span>
                     </div>
                     <input
                       type="range"
@@ -2876,7 +2892,7 @@ def calculate_ramp(distance, feedrate):
                 </div>
 
                 {/* COLUMN 2: MATHEMATICAL METRICS CARD */}
-                <div className="bg-[#141417]/80 rounded p-2.5 border border-white/5 space-y-2 flex flex-col justify-between">
+                <div className="bg-[#141417]/80 rounded p-2.5 border border-emerald-300 dark:border-white/5 space-y-2 flex flex-col justify-between">
                   <div>
                     <span className="text-[8px] font-black text-rose-400 uppercase tracking-wider flex items-center gap-1">
                       <Code2 className="w-3.5 h-3.5 text-rose-400" />
@@ -2885,19 +2901,19 @@ def calculate_ramp(distance, feedrate):
 
                     {/* DH table */}
                     <div className="mt-1.5 space-y-1">
-                      <div className="grid grid-cols-4 text-[7px] text-slate-500 uppercase font-black border-b border-white/5 pb-0.5">
+                      <div className="grid grid-cols-4 text-[7px] text-slate-500 uppercase font-black border-b border-emerald-300 dark:border-white/5 pb-0.5">
                         <span>Link</span>
                         <span>aᵢ(L)</span>
                         <span>αᵢ</span>
                         <span>θᵢ</span>
                       </div>
-                      <div className="grid grid-cols-4 text-[7.5px] text-slate-300">
+                      <div className="grid grid-cols-4 text-[7.5px] text-emerald-800 dark:text-slate-300">
                         <span className="font-extrabold text-[#70c1b3]">1</span>
                         <span>{linkLength1}</span>
                         <span>0°</span>
                         <span>{interactiveTheta1}°</span>
                       </div>
-                      <div className="grid grid-cols-4 text-[7.5px] text-slate-300 border-b border-white/5 pb-1">
+                      <div className="grid grid-cols-4 text-[7.5px] text-emerald-800 dark:text-slate-300 border-b border-emerald-300 dark:border-white/5 pb-1">
                         <span className="font-extrabold text-[#70c1b3]">2</span>
                         <span>{linkLength2}</span>
                         <span>0°</span>
@@ -2907,9 +2923,9 @@ def calculate_ramp(distance, feedrate):
 
                     {/* Jacobian Metric Block */}
                     <div className="pt-2 space-y-1">
-                      <span className="text-[7.5px] text-slate-400 uppercase font-bold tracking-wider block">Jacobian Determinant:</span>
+                      <span className="text-[7.5px] text-emerald-700 dark:text-slate-400 uppercase font-bold tracking-wider block">Jacobian Determinant:</span>
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-[8.5px] text-slate-200">
+                        <span className="font-bold text-[8.5px] text-emerald-900 dark:text-slate-200">
                           det(J) = {(sandboxJacobianDeterminant).toFixed(1)}
                         </span>
                         {sandboxIsSingular ? (
@@ -2920,7 +2936,7 @@ def calculate_ramp(distance, feedrate):
                       </div>
                       
                       {/* Jacobian Matrix preview */}
-                      <pre className="text-[7.5px] text-slate-500 p-1 bg-[#09090b] rounded border border-white/5 mt-0.5 font-mono leading-tight">
+                      <pre className="text-[7.5px] text-slate-500 p-1 bg-[#09090b] rounded border border-emerald-300 dark:border-white/5 mt-0.5 font-mono leading-tight">
                         J = [ [ {(-linkLength1 * Math.sin(sandboxTh1Rad) - linkLength2 * Math.sin(sandboxTh2Rad)).toFixed(1)}, {(-linkLength2 * Math.sin(sandboxTh2Rad)).toFixed(1)} ],<br />
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ {(linkLength1 * Math.cos(sandboxTh1Rad) + linkLength2 * Math.cos(sandboxTh2Rad)).toFixed(1)}, {(linkLength2 * Math.cos(sandboxTh2Rad)).toFixed(1)} ] ]
                       </pre>
@@ -2938,8 +2954,8 @@ def calculate_ramp(distance, feedrate):
               </div>
 
               {/* INVERSE KINEMATICS CO-PROCESSOR SOLVER */}
-              <div className="bg-[#0b0b0d] border border-white/10 rounded-lg p-3 space-y-2.5">
-                <div className="flex justify-between items-center pb-1 border-b border-white/5">
+              <div className="bg-[#0b0b0d] border border-emerald-400 dark:border-white/10 rounded-lg p-3 space-y-2.5">
+                <div className="flex justify-between items-center pb-1 border-b border-emerald-300 dark:border-white/5">
                   <span className="text-[8.5px] font-black text-rose-300 uppercase tracking-widest flex items-center gap-1">
                     <RefreshCw className="w-3.5 h-3.5 text-rose-400 animate-spin" />
                     <span>Inertial Inverse Kinematics Co-Processor</span>
@@ -2949,22 +2965,22 @@ def calculate_ramp(distance, feedrate):
 
                 <div className="grid grid-cols-2 gap-3 items-center">
                   <div className="space-y-1.5Packed">
-                    <span className="text-[7.5px] text-slate-400 font-bold uppercase block leading-none">Target Absolute X (mm)</span>
+                    <span className="text-[7.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase block leading-none">Target Absolute X (mm)</span>
                     <input
                       type="number"
                       value={ikTargetX}
                       onChange={(e) => setIkTargetX(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-[#141417] border border-white/10 rounded px-2 py-1 text-slate-200 font-black font-mono focus:outline-none focus:border-rose-500 text-[9px]"
+                      className="w-full bg-[#141417] border border-emerald-400 dark:border-white/10 rounded px-2 py-1 text-emerald-900 dark:text-slate-200 font-black font-mono focus:outline-none focus:border-rose-500 text-[9px]"
                     />
                   </div>
 
                   <div className="space-y-1.5Packed">
-                    <span className="text-[7.5px] text-slate-400 font-bold uppercase block leading-none">Target Absolute Z (mm)</span>
+                    <span className="text-[7.5px] text-emerald-700 dark:text-slate-400 font-bold uppercase block leading-none">Target Absolute Z (mm)</span>
                     <input
                       type="number"
                       value={ikTargetZ}
                       onChange={(e) => setIkTargetZ(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-[#141417] border border-white/10 rounded px-2 py-1 text-slate-200 font-black font-mono focus:outline-none focus:border-rose-500 text-[9px]"
+                      className="w-full bg-[#141417] border border-emerald-400 dark:border-white/10 rounded px-2 py-1 text-emerald-900 dark:text-slate-200 font-black font-mono focus:outline-none focus:border-rose-500 text-[9px]"
                     />
                   </div>
                 </div>
@@ -3012,7 +3028,7 @@ def calculate_ramp(distance, feedrate):
                     onClick={() => {
                       onInsertCode(`G01 X${ikTargetX.toFixed(1)} Z${ikTargetZ.toFixed(1)} F1200\n`);
                     }}
-                    className="bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white font-black py-1.5 px-3 rounded transition-all cursor-pointer uppercase text-[8px]"
+                    className="bg-slate-800 hover:bg-slate-700 border border-emerald-400 dark:border-white/10 text-emerald-800 dark:text-slate-300 hover:text-white font-black py-1.5 px-3 rounded transition-all cursor-pointer uppercase text-[8px]"
                   >
                     Insert Coordinates
                   </button>
@@ -3050,7 +3066,7 @@ def calculate_ramp(distance, feedrate):
                     <Award className="w-4.5 h-4.5 text-pink-400 animate-pulse" />
                     <span>VoltLogic Academy Certification Portal</span>
                   </div>
-                  <p className="font-sans text-[8px] text-slate-400 leading-normal">
+                  <p className="font-sans text-[8px] text-emerald-700 dark:text-slate-400 leading-normal">
                     Complete the formal critical audit of 35 multiple-choice questions &amp; 3 programming challenges to secure high-tier credentials.
                   </p>
                 </div>
@@ -3066,7 +3082,7 @@ def calculate_ramp(distance, feedrate):
                         });
                         setQuizAnswers(solved);
                       }}
-                      className="text-[7.5px] bg-[#1a1a1f] hover:bg-indigo-950 text-indigo-400 hover:text-indigo-300 font-bold px-2 py-1 rounded border border-white/5 cursor-pointer uppercase font-mono"
+                      className="text-[7.5px] bg-[#1a1a1f] hover:bg-indigo-950 text-indigo-400 hover:text-indigo-300 font-bold px-2 py-1 rounded border border-emerald-300 dark:border-white/5 cursor-pointer uppercase font-mono"
                       title="For testing: Fills all MCQ answers with correct ones instantly."
                     >
                       [Auto-Solve MCQs]
@@ -3074,7 +3090,7 @@ def calculate_ramp(distance, feedrate):
                   )}
 
                   {quizSubmitted && (
-                    <div className="text-right p-1 px-2.5 bg-black/60 border border-white/10 rounded">
+                    <div className="text-right p-1 px-2.5 bg-black/60 border border-emerald-400 dark:border-white/10 rounded">
                       <div className="text-[6.5px] text-slate-500 uppercase font-bold">Grade Audit</div>
                       <div className="text-sm font-black text-pink-400 font-mono">
                         {quizScore !== null ? `${quizScore}%` : "0%"}
@@ -3087,7 +3103,7 @@ def calculate_ramp(distance, feedrate):
               {/* AUDIT QUESTIONS MAP CARD CONTAINER */}
               <div className="space-y-1">
                 <div className="flex justify-between items-center px-1">
-                  <span className="text-slate-400 text-[8px] uppercase font-bold tracking-wide">
+                  <span className="text-emerald-700 dark:text-slate-400 text-[8px] uppercase font-bold tracking-wide">
                     Section A: Multiple Choice Exam ({quizQuestions.length} Questions)
                   </span>
                   <span className="text-slate-500 text-[7.5px]">
@@ -3095,7 +3111,7 @@ def calculate_ramp(distance, feedrate):
                   </span>
                 </div>
                 
-                <div className="space-y-3 max-h-96 pr-1 overflow-y-auto scrollbar-thin border border-white/5 bg-black/20 p-2.5 rounded-lg">
+                <div className="space-y-3 max-h-96 pr-1 overflow-y-auto scrollbar-thin border border-emerald-300 dark:border-white/5 bg-black/20 p-2.5 rounded-lg">
                   {quizQuestions.map((question, qIdx) => {
                     const hasSelection = quizAnswers[qIdx] !== undefined;
                     const selectedOpt = quizAnswers[qIdx];
@@ -3107,7 +3123,7 @@ def calculate_ramp(distance, feedrate):
                         className={`p-2.5 bg-[#0b0b0d] rounded border transition-all ${
                           hasSelection 
                             ? "border-indigo-500/10 bg-[#101014]/40" 
-                            : "border-white/5"
+                            : "border-emerald-300 dark:border-white/5"
                         }`}
                       >
                         {/* Question Index Bar */}
@@ -3126,7 +3142,7 @@ def calculate_ramp(distance, feedrate):
                         </div>
 
                         {/* Question text */}
-                        <p className="text-[8.5px] font-bold text-slate-200 uppercase leading-snug font-mono">
+                        <p className="text-[8.5px] font-bold text-emerald-900 dark:text-slate-200 uppercase leading-snug font-mono">
                           {question.q}
                         </p>
 
@@ -3135,7 +3151,7 @@ def calculate_ramp(distance, feedrate):
                           {question.options.map((option, optIdx) => {
                             const isSelected = selectedOpt === optIdx;
                             const isCorrectOpt = question.correct === optIdx;
-                            let optStyle = "border-white/5 bg-[#141417] text-slate-350 hover:bg-[#1b1b22]";
+                            let optStyle = "border-emerald-300 dark:border-white/5 bg-[#141417] text-emerald-800 dark:text-slate-350 hover:bg-[#1b1b22]";
                             
                             if (isSelected) {
                               optStyle = "border-indigo-500 bg-indigo-950/20 text-indigo-350 font-black";
@@ -3148,7 +3164,7 @@ def calculate_ramp(distance, feedrate):
                               } else if (isSelected) {
                                 optStyle = "border-rose-500/30 bg-rose-950/25 text-rose-450";
                               } else {
-                                optStyle = "border-white/5 bg-black/40 text-slate-500 cursor-not-allowed";
+                                optStyle = "border-emerald-300 dark:border-white/5 bg-black/40 text-slate-500 cursor-not-allowed";
                               }
                             }
 
@@ -3162,7 +3178,7 @@ def calculate_ramp(distance, feedrate):
                                 className={`w-full text-left p-1.5 rounded text-[8px] border cursor-pointer flex justify-between items-center transition-all ${optStyle}`}
                               >
                                 <div className="flex items-center gap-1.5">
-                                  <span className="w-3.5 h-3.5 rounded-full bg-black/40 border border-white/5 text-[6.5px] font-bold text-center flex items-center justify-center select-none uppercase">
+                                  <span className="w-3.5 h-3.5 rounded-full bg-black/40 border border-emerald-300 dark:border-white/5 text-[6.5px] font-bold text-center flex items-center justify-center select-none uppercase">
                                     {optIdx === 0 ? "A" : optIdx === 1 ? "B" : optIdx === 2 ? "C" : "D"}
                                   </span>
                                   <span>{option}</span>
@@ -3177,20 +3193,20 @@ def calculate_ramp(distance, feedrate):
                         </div>
 
                         {/* Hint Trigger block */}
-                        <div className="mt-1.5 pt-1 border-t border-white/5 flex flex-col space-y-1">
+                        <div className="mt-1.5 pt-1 border-t border-emerald-300 dark:border-white/5 flex flex-col space-y-1">
                           <button
                             onClick={() => {
                               setQuizShowHint({ ...quizShowHint, [qIdx]: !showHint });
                             }}
-                            className="text-[6.5px] text-slate-500 hover:text-slate-300 flex items-center gap-1 cursor-pointer uppercase font-bold text-left self-start"
+                            className="text-[6.5px] text-slate-500 hover:text-emerald-800 dark:text-slate-300 flex items-center gap-1 cursor-pointer uppercase font-bold text-left self-start"
                           >
                             <HelpCircle className="w-2.5 h-2.5 text-slate-500" />
                             <span>{showHint ? "Conceal tip" : "Request Laboratory Hint"}</span>
                           </button>
 
                           {showHint && (
-                            <div className="p-1.5 bg-[#121215] border border-white/5 rounded text-slate-400 font-sans text-[7.5px] leading-relaxed">
-                              💡 <span className="font-semibold text-slate-300">Lab Tip:</span> {question.hint}
+                            <div className="p-1.5 bg-[#121215] border border-emerald-300 dark:border-white/5 rounded text-emerald-700 dark:text-slate-400 font-sans text-[7.5px] leading-relaxed">
+                              💡 <span className="font-semibold text-emerald-800 dark:text-slate-300">Lab Tip:</span> {question.hint}
                             </div>
                           )}
                         </div>
@@ -3201,9 +3217,9 @@ def calculate_ramp(distance, feedrate):
               </div>
 
               {/* MC SUBMISSION ZONE AND SCORE REPORT */}
-              <div className="bg-[#0b0b0d] border border-white/5 p-3 rounded-lg space-y-2">
+              <div className="bg-[#0b0b0d] border border-emerald-300 dark:border-white/5 p-3 rounded-lg space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400 text-[8px] uppercase font-bold tracking-wide">MCQ Telemetry Assembly</span>
+                  <span className="text-emerald-700 dark:text-slate-400 text-[8px] uppercase font-bold tracking-wide">MCQ Telemetry Assembly</span>
                   <span className="text-[7.5px] text-slate-500">Must solve all 35 prior to academic grading</span>
                 </div>
                 
@@ -3241,7 +3257,7 @@ def calculate_ramp(distance, feedrate):
                         setQuizScore(null);
                         setQuizShowHint({});
                       }}
-                      className="w-full text-center bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white font-bold py-1.5 rounded transition-all cursor-pointer uppercase text-[8px]"
+                      className="w-full text-center bg-slate-800 hover:bg-slate-700 border border-emerald-400 dark:border-white/10 text-emerald-800 dark:text-slate-300 hover:text-white font-bold py-1.5 rounded transition-all cursor-pointer uppercase text-[8px]"
                     >
                       Reset Multiple-Choice &amp; Re-Test Theory
                     </button>
@@ -3251,8 +3267,8 @@ def calculate_ramp(distance, feedrate):
 
               {/* SECTION B: CODING EXERCISES FOR ROBOTIC WORKCELLS */}
               <div className="space-y-3.5 pt-2">
-                <div className="flex justify-between items-center px-1 border-t border-white/5 pt-3.5">
-                  <span className="text-slate-400 text-[8px] uppercase font-bold tracking-wide">
+                <div className="flex justify-between items-center px-1 border-t border-emerald-300 dark:border-white/5 pt-3.5">
+                  <span className="text-emerald-700 dark:text-slate-400 text-[8px] uppercase font-bold tracking-wide">
                     Section B: High-Integrity Mechatronics Code Verification
                   </span>
                   <span className="text-[7.5px] text-[#f472b6] font-bold uppercase tracking-wider">
@@ -3266,29 +3282,29 @@ def calculate_ramp(distance, feedrate):
                     const res = codeResults?.[idx];
                     
                     return (
-                      <div key={exercise.id} className="bg-[#0b0b0d] p-3 rounded-lg border border-white/10 space-y-2">
+                      <div key={exercise.id} className="bg-[#0b0b0d] p-3 rounded-lg border border-emerald-400 dark:border-white/10 space-y-2">
                         {/* Header metadata row */}
-                        <div className="flex justify-between items-center pb-1.5 border-b border-white/5">
+                        <div className="flex justify-between items-center pb-1.5 border-b border-emerald-300 dark:border-white/5">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[7.5px] font-black tracking-widest text-indigo-400 px-1.5 py-0.5 bg-indigo-500/10 border border-indigo-500/25 rounded uppercase">
                               {exercise.difficulty}
                             </span>
-                            <span className="text-[8.5px] font-bold text-slate-200 uppercase">{exercise.title}</span>
+                            <span className="text-[8.5px] font-bold text-emerald-900 dark:text-slate-200 uppercase">{exercise.title}</span>
                           </div>
-                          <span className="text-[7px] text-slate-500 uppercase font-mono bg-[#141417] px-1.5 rounded border border-white/5">
+                          <span className="text-[7px] text-slate-500 uppercase font-mono bg-[#141417] px-1.5 rounded border border-emerald-300 dark:border-white/5">
                             Est: {exercise.linesRequired}
                           </span>
                         </div>
 
                         {/* Description and hint tips */}
-                        <p className="text-[8px] font-sans text-slate-350 leading-relaxed font-sans pr-1">
+                        <p className="text-[8px] font-sans text-emerald-800 dark:text-slate-350 leading-relaxed font-sans pr-1">
                           {exercise.description}
                         </p>
 
                         {/* Interactive Script Editor */}
                         <div className="space-y-1.5 pt-1">
                           <div className="flex justify-between items-center">
-                            <label className="text-[7.5px] text-slate-400 uppercase font-bold flex items-center gap-1">
+                            <label className="text-[7.5px] text-emerald-700 dark:text-slate-400 uppercase font-bold flex items-center gap-1">
                               <Code2 className="w-3 h-3 text-cyan-400" />
                               <span>Cell Sequence Draft:</span>
                             </label>
@@ -3299,13 +3315,13 @@ def calculate_ramp(distance, feedrate):
                                 nextAnswers[idx] = exercise.placeholder;
                                 setCodeAnswers(nextAnswers);
                               }}
-                              className="text-[6.5px] bg-[#141417] hover:bg-cyan-950 text-cyan-400 hover:text-cyan-300 font-bold px-2 py-0.5 rounded border border-white/5 cursor-pointer uppercase"
+                              className="text-[6.5px] bg-[#141417] hover:bg-cyan-950 text-cyan-400 hover:text-cyan-300 font-bold px-2 py-0.5 rounded border border-emerald-300 dark:border-white/5 cursor-pointer uppercase"
                             >
                               [Load Reference Template]
                             </button>
                           </div>
 
-                          <div className="relative font-mono rounded overflow-hidden border border-white/5">
+                          <div className="relative font-mono rounded overflow-hidden border border-emerald-300 dark:border-white/5">
                             <textarea
                               rows={4}
                               value={ansValue}
@@ -3347,7 +3363,7 @@ def calculate_ramp(distance, feedrate):
                             <div className={`p-2 rounded text-[8px] border transition-all leading-relaxed ${
                               res.success 
                                 ? "border-emerald-500/20 bg-emerald-950/10 text-emerald-300" 
-                                : "border-[#e05a47]/20 bg-[#e05a47]/5 text-slate-300"
+                                : "border-[#e05a47]/20 bg-[#e05a47]/5 text-emerald-800 dark:text-slate-300"
                             }`}>
                               <div className="flex items-center gap-1 font-bold mb-1">
                                 {res.success ? (
@@ -3360,9 +3376,9 @@ def calculate_ramp(distance, feedrate):
                                   </span>
                                 )}
                               </div>
-                              <p><strong className="text-slate-200">Verifier Feedback:</strong> {res.feedback}</p>
-                              <p><strong className="text-slate-200">Academy Advises:</strong> {res.advice}</p>
-                              <p><strong className="text-slate-200">Further Instruction:</strong> {res.nextInstruction}</p>
+                              <p><strong className="text-emerald-900 dark:text-slate-200">Verifier Feedback:</strong> {res.feedback}</p>
+                              <p><strong className="text-emerald-900 dark:text-slate-200">Academy Advises:</strong> {res.advice}</p>
+                              <p><strong className="text-emerald-900 dark:text-slate-200">Further Instruction:</strong> {res.nextInstruction}</p>
                             </div>
                           )}
                         </div>
@@ -3375,7 +3391,7 @@ def calculate_ramp(distance, feedrate):
               {/* VOLTLOGIC GRADUATION AND ACADEMY CONTROL GRADE TERMINAL */}
               {/* ACCORDING TO DIFFICULTY AND INCLUDES PROFESSIONAL 9 LINES AT THE END */}
               <div className="bg-black/40 border border-[#f472b6]/20 p-4 rounded-xl space-y-3 font-mono">
-                <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                <div className="flex justify-between items-center pb-2 border-b border-emerald-300 dark:border-white/5">
                   <div className="space-y-0.5">
                     <span className="text-[9px] uppercase font-extrabold text-[#f472b6] tracking-widest block">
                       SECTION C: ACADEMY GRADUATES GRADES TELEMETRY
@@ -3396,8 +3412,8 @@ def calculate_ramp(distance, feedrate):
                   return (
                     <div className="space-y-3.5">
                       {/* Terminal Grading Output Logs: Exactly 9 Lines of Professional data */}
-                      <div className="bg-[#07070a] p-3 rounded-lg border border-white/5 space-y-1">
-                        <div className="flex justify-between items-center border-b border-white/5 pb-1 mb-1.5">
+                      <div className="bg-[#07070a] p-3 rounded-lg border border-emerald-300 dark:border-white/5 space-y-1">
+                        <div className="flex justify-between items-center border-b border-emerald-300 dark:border-white/5 pb-1 mb-1.5">
                           <span className="text-[6.5px] text-slate-500 uppercase font-bold flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                             <span>VLA Secure Grade Stream [Terminal-0x3]</span>
@@ -3406,7 +3422,7 @@ def calculate_ramp(distance, feedrate):
                         </div>
                         
                         {/* THE PROFESSIONAL 9 LINES */}
-                        <div className="text-[7.5px] leading-relaxed text-slate-400 space-y-0.5 font-mono select-all">
+                        <div className="text-[7.5px] leading-relaxed text-emerald-700 dark:text-slate-400 space-y-0.5 font-mono select-all">
                           <p><span className="text-slate-600">[LINE 1]</span> <span className="text-indigo-400 font-bold">INIT PIPELINE:</span> ADVANCED ROBOTIC DESIGN ACADEMY GRADE GRADER TELEMETRY</p>
                           <p><span className="text-slate-600">[LINE 2]</span> <span className="text-blue-400 font-bold">MCQ AUDIT SCALE:</span> {mcqScore !== null ? `GRADE CONFIRMED [${mcqScore}% / 100%]` : "AWAITING SECTION A TELEMETRY SUBMISSION"}</p>
                           <p><span className="text-slate-600">[LINE 3]</span> <span className="text-[#fa9284] font-bold">G-CODE LEVEL 1:</span> {e1Passed ? "COMPILER VERIFIED [PASS-COMPLIANT]" : "AWAITING COMPLIANCE SCRIPT VALIDATION"}</p>
@@ -3420,7 +3436,7 @@ def calculate_ramp(distance, feedrate):
                       </div>
 
                       {/* Advice and further instructions text block */}
-                      <div className="p-3 bg-[#111114]/50 border border-white/5 rounded-lg space-y-2 text-[8px] text-slate-350 leading-relaxed font-sans">
+                      <div className="p-3 bg-[#111114]/50 border border-emerald-300 dark:border-white/5 rounded-lg space-y-2 text-[8px] text-emerald-800 dark:text-slate-350 leading-relaxed font-sans">
                         <span className="font-bold text-[8.5px] uppercase text-cyan-400 flex items-center gap-1 font-mono">
                           <Info className="w-3.5 h-3.5 text-cyan-400" />
                           <span>Final Certificate Instructions &amp; Advises:</span>
@@ -3446,7 +3462,7 @@ def calculate_ramp(distance, feedrate):
                             <p>
                               To achieve the prestigious Master grading level, please satisfy the following compliance requirements:
                             </p>
-                            <ul className="list-disc pl-4 space-y-1 font-mono text-[7.5px] text-slate-400">
+                            <ul className="list-disc pl-4 space-y-1 font-mono text-[7.5px] text-emerald-700 dark:text-slate-400">
                               <li>Achieve at least <strong className="text-white">90% score</strong> on the MCQ theory exam (Section A) by scrolling through and selecting correct industrial responses.</li>
                               <li>Achieve <strong className="text-white">COMPLIANT status on all three G-code challenges</strong> (Section B) by writing standard compliant commands and pressing 'Validate Script'.</li>
                             </ul>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles } from 'lucide-react';
 import Editor from '@/pages/Editor';
 import AnalogEditor from '@/pages/AnalogEditor';
@@ -9,6 +9,7 @@ import RobotPage from '@/components/robot/RobotPage';
 import MathsTools from '@/pages/MathsTools';
 import EngigraphPage from '@/pages/EngigraphPage';
 import DocsPage from '@/pages/DocsPage';
+import ProjectLandingScreen from '@/components/ProjectLandingScreen';
 import AIAssistant from '@/components/AIAssistant';
 import type { Circuit } from '@/lib/types';
 import {
@@ -64,12 +65,12 @@ export default function UnifiedShell() {
     saveProjects(projects);
   }, [projects]);
 
-  const handleNewProject = (name: string) => {
-    const p = createProject(name);
+  const handleNewProject = (name: string, type?: 'analog' | 'plc' | 'digital' | 'robot', data?: any) => {
+    const p = createProject(name, type, data);
     const updated = upsertProject(projects, p);
     setProjects(updated);
     setActiveProjectState(p);
-    setMode('analog');
+    setMode(p.type || 'analog');
     setActiveProject(p.id);
   };
 
@@ -77,8 +78,16 @@ export default function UnifiedShell() {
     const p = projects.find(pr => pr.id === id);
     if (!p) return;
     setActiveProjectState(p);
-    setMode('analog');
+    setMode(p.type || 'analog');
     setActiveProject(id);
+  };
+
+  const handleImportProject = (p: AnalogProject) => {
+    const updated = upsertProject(projects, p);
+    setProjects(updated);
+    setActiveProjectState(p);
+    setMode(p.type || 'analog');
+    setActiveProject(p.id);
   };
 
   const handleDeleteProject = (id: string) => {
@@ -89,16 +98,18 @@ export default function UnifiedShell() {
     }
   };
 
-  const handleProjectChange = (p: AnalogProject) => {
+  const handleProjectChange = useCallback((p: AnalogProject) => {
     setActiveProjectState(p);
     setProjects(prev => upsertProject(prev, p));
-  };
+  }, []);
 
   const modeLabel =
     mode === 'projects' ? 'Projects'
+    : mode === 'plc' && activeProject?.type === 'plc' ? `PLC · ${activeProject.name}`
     : mode === 'plc'      ? 'Industrial PLC'
     : mode === 'robot'    ? 'Robot Workspace'
     : mode === 'analog'   ? `Schematic · ${activeProject?.name ?? 'Untitled'}`
+    : mode === 'digital' && activeProject?.type === 'digital' ? `Digital · ${activeProject.name}`
     : mode === 'compute'  ? 'Compute Tools'
     : mode === 'maths'    ? 'Maths System'
     : mode === 'engigraph'? 'EngiGraph Pro'
@@ -120,7 +131,7 @@ export default function UnifiedShell() {
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-300 overflow-hidden">
       {/* ── Global Header ── */}
-      <header className="h-11 bg-slate-900 border-b border-slate-800 flex items-center px-4 gap-4 shrink-0 z-30 shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+      <header className="min-h-[2.75rem] py-1.5 bg-slate-900 border-b border-slate-800 flex flex-wrap md:flex-nowrap items-center px-4 gap-x-4 gap-y-2 shrink-0 z-30 shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
         {/* Logo */}
         <div
           className="flex items-center gap-2.5 cursor-pointer group"
@@ -152,7 +163,7 @@ export default function UnifiedShell() {
         </div>
 
         {/* Center mode switcher */}
-        <nav className="mx-auto flex items-center bg-slate-800/60 border border-slate-700/60 rounded-lg overflow-x-auto overflow-y-hidden whitespace-nowrap [&::-webkit-scrollbar]:hidden shrink min-w-0 mx-2">
+        <nav className="mx-auto flex flex-wrap justify-center items-center bg-slate-800/60 border border-slate-700/60 rounded-lg shrink min-w-0 mx-2 gap-y-0.5">
           {([
             { id: 'projects', label: 'Projects',       dot: '' },
             { id: 'plc',      label: 'Industrial PLC', dot: '#3b82f6' },
@@ -167,12 +178,12 @@ export default function UnifiedShell() {
             <button
               key={tab.id}
               onClick={() => {
-                if (tab.id === 'analog' && !activeProject) { setMode('projects'); return; }
-                setMode(tab.id);
+                if ((tab.id === 'analog' || tab.id === 'plc' || tab.id === 'digital' || tab.id === 'robot') && !activeProject) { setMode('projects'); return; }
+                if (tab.id !== 'projects') setMode(tab.id); else setMode('projects');
               }}
-              className={`px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+              className={`px-2 md:px-3 py-1 md:py-1.5 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
                 mode === tab.id
-                  ? 'bg-slate-700/50 text-white'
+                  ? 'bg-slate-700/50 text-white shadow-[inset_0_0_10px_rgba(255,255,255,0.05)]'
                   : 'text-slate-600 hover:text-slate-300 hover:bg-slate-700/30'
               }`}
             >
@@ -233,25 +244,39 @@ export default function UnifiedShell() {
             onNew={handleNewProject}
             onOpen={handleOpenProject}
             onDelete={handleDeleteProject}
+            onImport={handleImportProject}
+            onNavigate={setMode}
           />
         )}
 
-        {mode === 'analog' && activeProject && (
-          <AnalogEditor
-            project={activeProject}
-            onProjectChange={handleProjectChange}
-            onBack={() => setMode('projects')}
-            onBridgeToDigital={(c) => {
-              bridgeCircuitRef.current = c;
-              setMode('digital');
-            }}
-          />
+        {mode === 'analog' && (
+          activeProject?.type === 'analog' ? (
+            <AnalogEditor
+              project={activeProject}
+              onProjectChange={handleProjectChange}
+              onBack={() => setMode('projects')}
+              onBridgeToDigital={(c) => {
+                bridgeCircuitRef.current = c;
+                setMode('digital');
+              }}
+            />
+          ) : (
+            <ProjectLandingScreen type="analog" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+          )
         )}
 
         {mode === 'digital' && (
-          <div className="h-full">
-            <Editor initialCircuit={bridgeCircuitRef.current ?? undefined} />
-          </div>
+          activeProject?.type === 'digital' ? (
+            <div className="h-full">
+              <Editor 
+                initialCircuit={bridgeCircuitRef.current ?? undefined} 
+                project={activeProject} 
+                onProjectChange={handleProjectChange} 
+              />
+            </div>
+          ) : (
+            <ProjectLandingScreen type="digital" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+          )
         )}
 
         {mode === 'compute' && (
@@ -260,13 +285,31 @@ export default function UnifiedShell() {
           </div>
         )}
 
-        <div className={`h-full ${mode === 'plc' ? 'block' : 'hidden'}`}>
-          <PLCPage />
-        </div>
+        {mode === 'plc' && (
+          activeProject?.type === 'plc' ? (
+            <div className="h-full">
+              <PLCPage 
+                project={activeProject} 
+                onProjectChange={handleProjectChange} 
+              />
+            </div>
+          ) : (
+            <ProjectLandingScreen type="plc" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+          )
+        )}
 
-        <div className={`h-full ${mode === 'robot' ? 'block' : 'hidden'}`}>
-          <RobotPage />
-        </div>
+        {mode === 'robot' && (
+          activeProject?.type === 'robot' ? (
+            <div className="h-full">
+              <RobotPage 
+                project={activeProject} 
+                onProjectChange={handleProjectChange} 
+              />
+            </div>
+          ) : (
+            <ProjectLandingScreen type="robot" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+          )
+        )}
 
         {mode === 'maths' && (
           <div className="h-full">

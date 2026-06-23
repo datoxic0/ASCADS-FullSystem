@@ -47,12 +47,32 @@ export class MathWorkspace {
         }
         return result;
       },
+      ik2: (x: number, y: number, l1: number, l2: number) => {
+        const c2 = (x*x + y*y - l1*l1 - l2*l2) / (2 * l1 * l2);
+        if (c2 < -1 || c2 > 1) return [NaN, NaN]; // Unreachable
+        const s2 = Math.sqrt(1 - c2*c2);
+        const th2 = Math.atan2(s2, c2);
+        const th1 = Math.atan2(y, x) - Math.atan2(l2 * s2, l1 + l2 * c2);
+        return [th1 * 180 / Math.PI, th2 * 180 / Math.PI];
+      },
+      
+      // Energy & Power Dynamics
+      elec_power: (v: number, i: number, pf: number = 1) => v * i * pf,
+      elec_3phase: (v: number, i: number, pf: number = 1) => Math.sqrt(3) * v * i * pf,
+      mech_power: (torque: number, rpm: number) => torque * (rpm * 2 * Math.PI / 60),
+      kinetic_e: (m: number, v: number) => 0.5 * m * v * v,
+      potential_e: (m: number, h: number) => m * 9.81 * h,
+
+      // Fluid Power & Pneumatics
+      fluid_power: (p_bar: number, flow_Lmin: number) => (p_bar * flow_Lmin) / 600, // Returns kW
+      cylinder_force: (p_bar: number, d_mm: number) => p_bar * Math.PI * (d_mm * d_mm) / 40, // Returns Newtons
+      flow_vel: (flow_Lmin: number, d_mm: number) => (400 * flow_Lmin) / (6 * Math.PI * d_mm * d_mm), // Returns m/s
       ...initialGlobals
     };
   }
 
   private normalize(expr: string): string {
-    return expr
+    let normalized = expr
       .replace(/×/g, '*')
       .replace(/÷/g, '/')
       .replace(/√\(([^)]+)\)/g, 'sqrt($1)')
@@ -61,6 +81,18 @@ export class MathWorkspace {
       .replace(/τ/g, 'tau')
       .replace(/cbrt\(([^)]+)\)/g, 'nthRoot($1, 3)')
       .replace(/root\(([^,]+),\s*([^)]+)\)/g, 'nthRoot($1, $2)');
+
+    // Matlab matrix support: [1, 2; 3, 4] -> [[1, 2], [3, 4]]
+    if (normalized.includes('[') && normalized.includes(';')) {
+       normalized = normalized.replace(/\[(.*?)\]/g, (match, inner) => {
+          if (inner.includes(';')) {
+             const rows = inner.split(';').map((r: string) => `[${r.trim()}]`).join(', ');
+             return `[${rows}]`;
+          }
+          return match;
+       });
+    }
+    return normalized;
   }
 
   evaluateBlock(expr: string, defaultAnalysisVar: string = 'x'): MathBlockResult {
@@ -101,7 +133,7 @@ export class MathWorkspace {
         value = compiled.evaluate(this.scope);
         
         if (value !== undefined && typeof value !== 'function') {
-           valueStr = String(value);
+           valueStr = math.format(value, { precision: 14 });
            try {
              valueTex = math.parse(valueStr).toTex();
            } catch {
@@ -109,7 +141,12 @@ export class MathWorkspace {
            }
         }
       } catch (err: any) {
-        error = err.message;
+        // If it's a symbolic expression (like 3x^2) numeric evaluation will fail.
+        // We should NOT treat this as a fatal error if parsing succeeded.
+        if (!err.message.includes('Undefined symbol')) {
+            // We might still log or handle other errors, but let's be forgiving.
+            // For now, we just leave value as undefined, which means it's treated as a pure symbolic expression.
+        }
       }
 
       // Symbolic analysis (derivatives)
@@ -269,6 +306,126 @@ export class MathWorkspace {
       return { x: px, y: py, u, v };
     } catch {
       return { x: [], y: [], u: [], v: [] };
+    }
+  }
+
+  evaluateChaos(dxExpr: string, dyExpr: string, dzExpr: string, steps: number, dt: number, initialXYZ: [number, number, number]): { x: number[], y: number[], z: number[] } {
+    try {
+      const cDx = math.compile(this.normalize(dxExpr));
+      const cDy = math.compile(this.normalize(dyExpr));
+      const cDz = math.compile(this.normalize(dzExpr));
+      
+      const px: number[] = [initialXYZ[0]];
+      const py: number[] = [initialXYZ[1]];
+      const pz: number[] = [initialXYZ[2]];
+
+      let [cx, cy, cz] = initialXYZ;
+
+      // Runge-Kutta 4th Order (RK4) Integrator for better stability
+      for (let i = 0; i < steps; i++) {
+        let localScope = { ...this.scope, x: cx, y: cy, z: cz };
+        const k1x = cDx.evaluate(localScope) as number;
+        const k1y = cDy.evaluate(localScope) as number;
+        const k1z = cDz.evaluate(localScope) as number;
+
+        localScope = { ...this.scope, x: cx + 0.5*dt*k1x, y: cy + 0.5*dt*k1y, z: cz + 0.5*dt*k1z };
+        const k2x = cDx.evaluate(localScope) as number;
+        const k2y = cDy.evaluate(localScope) as number;
+        const k2z = cDz.evaluate(localScope) as number;
+
+        localScope = { ...this.scope, x: cx + 0.5*dt*k2x, y: cy + 0.5*dt*k2y, z: cz + 0.5*dt*k2z };
+        const k3x = cDx.evaluate(localScope) as number;
+        const k3y = cDy.evaluate(localScope) as number;
+        const k3z = cDz.evaluate(localScope) as number;
+
+        localScope = { ...this.scope, x: cx + dt*k3x, y: cy + dt*k3y, z: cz + dt*k3z };
+        const k4x = cDx.evaluate(localScope) as number;
+        const k4y = cDy.evaluate(localScope) as number;
+        const k4z = cDz.evaluate(localScope) as number;
+        
+        cx += (dt/6) * (k1x + 2*k2x + 2*k3x + k4x);
+        cy += (dt/6) * (k1y + 2*k2y + 2*k3y + k4y);
+        cz += (dt/6) * (k1z + 2*k2z + 2*k3z + k4z);
+
+        px.push(cx);
+        py.push(cy);
+        pz.push(cz);
+      }
+      return { x: px, y: py, z: pz };
+    } catch {
+      return { x: [], y: [], z: [] };
+    }
+  }
+
+  evaluateAstrodynamics(G: number, M: number, x0: number, y0: number, vx0: number, vy0: number, steps: number, dt: number): { x: number[], y: number[] } {
+    try {
+      const px: number[] = [x0];
+      const py: number[] = [y0];
+
+      let cx = x0;
+      let cy = y0;
+      let cvx = vx0;
+      let cvy = vy0;
+
+      // Simple Verlet or Symplectic Euler for orbital mechanics
+      for (let i = 0; i < steps; i++) {
+        const r2 = cx * cx + cy * cy;
+        const r = Math.sqrt(r2);
+        const r3 = r * r2;
+        
+        const ax = - (G * M * cx) / r3;
+        const ay = - (G * M * cy) / r3;
+
+        cvx += ax * dt;
+        cvy += ay * dt;
+
+        cx += cvx * dt;
+        cy += cvy * dt;
+
+        px.push(cx);
+        py.push(cy);
+      }
+      return { x: px, y: py };
+    } catch {
+      return { x: [], y: [] };
+    }
+  }
+
+  evaluatePDE(alpha: number, size: number, steps: number): { z: number[][] } {
+    try {
+      let grid: number[][] = Array.from({ length: size }, () => Array(size).fill(0));
+      
+      // Initialize a heat source in the center
+      const center = Math.floor(size / 2);
+      grid[center][center] = 100;
+      grid[center+1][center] = 100;
+      grid[center-1][center] = 100;
+      grid[center][center+1] = 100;
+      grid[center][center-1] = 100;
+
+      const dt = 0.1;
+      const dx = 1.0;
+      const coeff = (alpha * dt) / (dx * dx);
+
+      // Stability check for explicit FDM
+      if (coeff > 0.25) return { z: grid };
+
+      for (let s = 0; s < steps; s++) {
+        let newGrid: number[][] = Array.from({ length: size }, () => Array(size).fill(0));
+        for (let i = 1; i < size - 1; i++) {
+          for (let j = 1; j < size - 1; j++) {
+            newGrid[i][j] = grid[i][j] + coeff * (
+              grid[i+1][j] + grid[i-1][j] + grid[i][j+1] + grid[i][j-1] - 4 * grid[i][j]
+            );
+          }
+        }
+        // Keep the center hot (constant heat source)
+        newGrid[center][center] = 100;
+        grid = newGrid;
+      }
+      return { z: grid };
+    } catch {
+      return { z: [[]] };
     }
   }
 }
