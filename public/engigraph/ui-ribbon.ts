@@ -5,7 +5,8 @@ import {
     Ruler, Radius, Sparkles, Type, Upload, ZapOff, Download, FileDown, Printer, Bot, 
     Zap, Send, Battery, Activity, Lightbulb, ToggleLeft, GitBranch, CircleSlash,
     GitPullRequest, GitCommit, BookOpen, GraduationCap, ShieldCheck, Compass, Wind, Mic, Flame,
-    Settings, Grid, Terminal, List, Eye, Code, Sun, Moon, Layers, Info, ChevronLeft, Plus, ChevronRight, ZoomIn, ZoomOut, Maximize
+    Settings, Grid, Terminal, List, Eye, Code, Sun, Moon, Layers, Info, ChevronLeft, Plus, ChevronRight, ZoomIn, ZoomOut, Maximize,
+    Play, Share2, ToggleRight, FolderOpen, Volume2
 } from 'https://esm.sh/lucide';
 import { RibbonSections } from './ui-ribbon-sections.js';
 
@@ -121,7 +122,8 @@ export class RibbonManager {
                 Type, Upload, Download, FileDown, Printer, Bot, Zap, ZapOff, Send,
                 Battery, Activity, Lightbulb, ToggleLeft, GitBranch, CircleSlash,
                 GitPullRequest, GitCommit, BookOpen, GraduationCap, ShieldCheck, Wind, Mic, Flame,
-                Settings, Grid, Terminal, List, Eye, Code, Sun, Moon, Layers, Info, ChevronLeft, Plus, ChevronRight, ZoomIn, ZoomOut, Maximize
+                Settings, Grid, Terminal, List, Eye, Code, Sun, Moon, Layers, Info, ChevronLeft, Plus, ChevronRight, ZoomIn, ZoomOut, Maximize,
+                Play, Share2, ToggleRight, FolderOpen, Volume2
             },
             nameAttr: 'data-ribbon-icon'
         });
