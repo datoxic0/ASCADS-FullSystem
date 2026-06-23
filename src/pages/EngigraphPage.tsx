@@ -1,5 +1,6 @@
 import { useState } from "react";
-import EngigraphNative from "../components/engigraph/EngigraphNative";
+import { Engigraph2D } from "../components/engigraph/Engigraph2D";
+import { SimulationProvider } from "../components/engigraph/context/SimulationContext";
 import Engigraph3D from "../components/engigraph/Engigraph3D";
 import DocumentationViewer from "../components/engigraph/DocumentationViewer";
 import { Database, Link2, Share2, Box, Square, Book } from "lucide-react";
@@ -83,7 +84,9 @@ export default function EngigraphPage() {
           <Engigraph3D />
         </div>
         <div style={{ display: mode === '2D' ? 'block' : 'none', height: '100%' }}>
-          <EngigraphNative />
+          <SimulationProvider>
+            <Engigraph2D />
+          </SimulationProvider>
         </div>
       </div>
 
