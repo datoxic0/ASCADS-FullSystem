@@ -1059,8 +1059,8 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       )}
       
       <Stage
-        width={dimensions.width}
-        height={dimensions.height}
+        width={Math.max(dimensions.width, 1)}
+        height={Math.max(dimensions.height, 1)}
         draggable={selectedTool === 'SELECT' && !selectedComponentId}
         scaleX={scale}
         scaleY={scale}

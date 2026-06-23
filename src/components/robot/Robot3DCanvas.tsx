@@ -1,8 +1,7 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect, useCallback } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Grid, Environment, ContactShadows, Box, Cylinder, Sphere, Html } from '@react-three/drei';
+import { OrbitControls, Grid, ContactShadows, Box, Cylinder, Sphere, Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { EffectComposer, Bloom, N8AO } from '@react-three/postprocessing';
 import { RobotJoint, RobotDesignConfig, CIMWorkpiece } from './types';
 
 interface Robot3DCanvasProps {
@@ -244,18 +243,30 @@ export default function Robot3DCanvas({ joints, robotDesign, workpieces }: Robot
 
   const endEffectorType = robotDesign?.endEffectorType || "gripper";
 
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
   return (
     <div className="w-full h-full relative bg-[#0a0a0c]">
-      <Canvas shadows camera={{ position: [0, 200, 500], fov: 50 }} dpr={[1, 2]} gl={{ antialias: false }}>
+      <Canvas
+        shadows={{ type: THREE.PCFShadowMap }}
+        camera={{ position: [0, 200, 500], fov: 50 }}
+        dpr={[1, 1.5]}
+        gl={{
+          antialias: false,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: false,
+          failIfMajorPerformanceCaveat: false,
+        }}
+        onCreated={({ gl }) => {
+          gl.shadowMap.enabled = true;
+          gl.shadowMap.type = THREE.PCFShadowMap;
+        }}
+      >
         <color attach="background" args={['#0a0a0c']} />
         
-        {/* Cinematic Lighting */}
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow />
-        <spotLight position={[-20, 50, 10]} angle={0.15} penumbra={1} intensity={2} castShadow />
-        
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[10, 10, 5]} intensity={1.2} castShadow />
+        {/* Optimized Lighting — single shadow caster only */}
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow shadow-mapSize={[512, 512]} />
         <directionalLight position={[-10, 10, -5]} intensity={0.5} />
 
         {/* The Floor / Grid */}

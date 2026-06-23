@@ -109,7 +109,7 @@ export default function CimWorkspaceVisualizer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTerminal, setShowTerminal] = useState(true);
   const [isDraggingTarget, setIsDraggingTarget] = useState(false);
-  const [viewMode, setViewMode] = useState<"2D" | "3D">("3D"); // Default to 3D for WOW factor
+  const [viewMode, setViewMode] = useState<"2D" | "3D">("2D"); // Default to 2D to prevent WebGL context limit exhaustion
   const [showGrid, setShowGrid] = useState(true);
   const [showAngles, setShowAngles] = useState(true);
   const [activeTab, setActiveTab] = useState<

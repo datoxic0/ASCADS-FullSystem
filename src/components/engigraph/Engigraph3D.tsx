@@ -430,10 +430,23 @@ export default function Engigraph3D() {
           </select>
         </div>
 
-        <Canvas camera={{ position: [150, 150, 150], fov: 45 }}>
+        <Canvas
+          camera={{ position: [150, 150, 150], fov: 45 }}
+          dpr={[1, 1.5]}
+          gl={{
+            antialias: false,
+            powerPreference: 'high-performance',
+            preserveDrawingBuffer: false,
+          }}
+          shadows={{ type: THREE.PCFShadowMap }}
+          onCreated={({ gl }) => {
+            gl.shadowMap.enabled = true;
+            gl.shadowMap.type = THREE.PCFShadowMap;
+          }}
+        >
           <color attach="background" args={['#0a0b0c']} />
-          <ambientLight intensity={0.4} />
-          <directionalLight position={[100, 100, 50]} intensity={1} castShadow />
+          <ambientLight intensity={0.7} />
+          <directionalLight position={[100, 100, 50]} intensity={1} castShadow shadow-mapSize={[512, 512]} />
           <directionalLight position={[-100, -100, -50]} intensity={0.3} />
           
           <Grid infiniteGrid fadeDistance={400} sectionColor="#334155" cellColor="#1e293b" />
@@ -460,10 +473,6 @@ export default function Engigraph3D() {
               )}
             </mesh>
           )}
-          
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[10, 10, 5]} intensity={1.2} castShadow />
-          <directionalLight position={[-10, 10, -5]} intensity={0.5} />
         </Canvas>
       </div>
     </div>
