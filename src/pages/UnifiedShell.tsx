@@ -238,16 +238,18 @@ export default function UnifiedShell() {
       </header>
 
       {/* ── Lifetime Project Notice ── */}
-      <div className="bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-slate-900/80 border-b border-indigo-500/30 px-4 py-1.5 flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.2)] z-20">
-        <p className="text-[10px] md:text-[11px] font-medium text-indigo-100 flex items-center gap-2 text-center tracking-wide">
-          <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-pulse" />
-          <span>
-            <strong className="text-white uppercase tracking-widest font-black mr-1">Mechatronics Lifetime Project (2026-2031):</strong> 
-            Currently undergoing rapid quarterly development. Expect massive upgrades over the next 5 years towards graduation!
-          </span>
-          <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-pulse" />
-        </p>
-      </div>
+      {(mode === 'projects' || mode === 'docs') && (
+        <div className="bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-slate-900/80 border-b border-indigo-500/30 px-4 py-1.5 flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.2)] z-20">
+          <p className="text-[10px] md:text-[11px] font-medium text-indigo-100 flex items-center gap-2 text-center tracking-wide">
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-pulse" />
+            <span>
+              <strong className="text-white uppercase tracking-widest font-black mr-1">Mechatronics Lifetime Project (2026-2031):</strong> 
+              Currently undergoing rapid quarterly development. Expect massive upgrades over the next 5 years towards graduation!
+            </span>
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-pulse" />
+          </p>
+        </div>
+      )}
 
       {/* ── Main Content ── */}
       <div className="flex-1 min-h-0 flex flex-col overflow-visible">
