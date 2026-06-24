@@ -30,7 +30,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
         navigateFallback: `${basePath.replace(/\/$/, "")}/index.html`,
-        maximumFileSizeToCacheInBytes: 10485760,
+        maximumFileSizeToCacheInBytes: 15728640,
       },
       manifest: {
         name: "Logic Lab — Digital Circuit Workbench",
