@@ -46,7 +46,7 @@ import {
   ExprImportDialog,
 } from "@/components/circuit/Dialogs";
 import { exprToCircuit } from "@/lib/expr-to-circuit";
-import { digitalToPLC } from "@/lib/bridge-utils";
+import { EcosystemTranslator } from "@/lib/EcosystemTranslator";
 import { useToast } from "@/hooks/use-toast";
 
 const EMPTY_CIRCUIT: Circuit = { gates: {}, wires: {} };
@@ -576,9 +576,14 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
         onToggleSignalLabels={() => setShowSignalLabels((v) => !v)}
         onImportExpr={() => setExprImportOpen(true)}
         onExportToPLC={() => {
-          const bridge = digitalToPLC(circuit);
+          const bridge = EcosystemTranslator.toPLCLadder(circuit);
           localStorage.setItem('ascads_bridge_digital_plc', JSON.stringify(bridge));
-          toast({ title: 'Bridge Export', description: `${bridge.tags.length} tags, ${bridge.rungs.length} rungs exported to PLC` });
+          toast({ title: 'Bridge Export', description: `${bridge.nodes.length} tags, ${bridge.wires.length} wires exported to PLC` });
+        }}
+        onExportToAnalog={() => {
+          const bridge = EcosystemTranslator.digitalToAnalog(circuit);
+          localStorage.setItem('ascads_bridge_digital_analog', JSON.stringify(bridge));
+          toast({ title: 'Bridge Export', description: `Exported to Analog format.` });
         }}
         onImportFromPLC={() => {
           try {

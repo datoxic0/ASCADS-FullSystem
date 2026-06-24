@@ -31,6 +31,8 @@ const BRIDGE_KEYS = [
   { key: 'ascads_bridge_digital_plc',  label: 'D→P', color: '#f59e0b', title: 'Digital→PLC' },
   { key: 'ascads_bridge_engigraph_analog', label: 'E→A', color: '#fb923c', title: 'Engigraph→Analog' },
   { key: 'ascads_bridge_engigraph_plc',    label: 'E→P', color: '#f87171', title: 'Engigraph→PLC' },
+  { key: 'ascads_bridge_engigraph_robot',  label: 'E→R', color: '#c084fc', title: 'Engigraph→Robot' },
+  { key: 'ascads_bridge_robot_plc_state',  label: 'R→P(L)', color: '#818cf8', title: 'Robot→PLC(Logic)' },
 ];
 
 function useBridgeStatus() {
@@ -178,7 +180,6 @@ export default function UnifiedShell() {
             <button
               key={tab.id}
               onClick={() => {
-                if ((tab.id === 'analog' || tab.id === 'plc' || tab.id === 'digital' || tab.id === 'robot') && !activeProject) { setMode('projects'); return; }
                 if (tab.id !== 'projects') setMode(tab.id); else setMode('projects');
               }}
               className={`px-2 md:px-3 py-1 md:py-1.5 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
@@ -261,7 +262,7 @@ export default function UnifiedShell() {
               }}
             />
           ) : (
-            <ProjectLandingScreen type="analog" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+            <ProjectLandingScreen type="analog" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
           )
         )}
 
@@ -275,7 +276,7 @@ export default function UnifiedShell() {
               />
             </div>
           ) : (
-            <ProjectLandingScreen type="digital" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+            <ProjectLandingScreen type="digital" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
           )
         )}
 
@@ -294,7 +295,7 @@ export default function UnifiedShell() {
               />
             </div>
           ) : (
-            <ProjectLandingScreen type="plc" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+            <ProjectLandingScreen type="plc" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
           )
         )}
 
@@ -307,7 +308,7 @@ export default function UnifiedShell() {
               />
             </div>
           ) : (
-            <ProjectLandingScreen type="robot" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+            <ProjectLandingScreen type="robot" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
           )
         )}
 

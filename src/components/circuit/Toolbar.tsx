@@ -81,6 +81,7 @@ type Props = {
   onImportExpr: () => void;
   onExportToPLC?: () => void;
   onImportFromPLC?: () => void;
+  onExportToAnalog?: () => void;
 };
 
 export function Toolbar({
@@ -118,6 +119,7 @@ export function Toolbar({
   onImportExpr,
   onExportToPLC,
   onImportFromPLC,
+  onExportToAnalog,
 }: Props) {
   const [editName, setEditName] = useState(circuitName);
   useEffect(() => setEditName(circuitName), [circuitName]);
@@ -459,6 +461,21 @@ export function Toolbar({
             </Button>
           </TooltipTrigger>
           <TooltipContent>Import PLC ladder rungs as digital gates</TooltipContent>
+        </Tooltip>
+      )}
+      {onExportToAnalog && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 text-[10px] text-purple-400 hover:text-purple-300 border border-purple-500/20 hover:border-purple-500/40"
+              onClick={onExportToAnalog}
+            >
+              <ArrowRightLeft className="h-3.5 w-3.5" /> → Analog
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Export gates to Analog Netlist</TooltipContent>
         </Tooltip>
       )}
 

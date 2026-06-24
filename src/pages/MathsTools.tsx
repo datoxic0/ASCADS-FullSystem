@@ -4,6 +4,7 @@ import Plotly from 'plotly.js-dist-min';
 // @ts-ignore
 import createPlotlyComponent from 'react-plotly.js/factory';
 const Plot = createPlotlyComponent(Plotly);
+import { toast } from 'sonner';
 import { MathWorkspace, MathBlockResult } from '../lib/mathEngine';
 import { DSPEngine } from '../lib/dspEngine';
 import { ControlEngine } from '../lib/controlEngine';
@@ -824,12 +825,24 @@ export default function App() {
               <label className="text-[10px] font-mono uppercase tracking-widest opacity-60 flex items-center gap-1.5">
                 <FunctionSquare size={12} /> Computation Blocks
               </label>
-              <button 
-                onClick={addBlock}
-                className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1 text-[9px] uppercase tracking-widest"
-              >
-                <Plus size={10}/> Add Block
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    localStorage.setItem('ascads_bridge_maths_analog', JSON.stringify(workspace.scope));
+                    toast.success('Exported mathematical variables to the Universal Bridge!');
+                  }}
+                  className="px-2 py-1 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30 rounded flex items-center gap-1 text-[9px] uppercase tracking-widest transition-all"
+                  title="Export computed variables (e.g. G, M, R, L, C) to Analog or PLC"
+                >
+                  <Share size={10} /> Push to Bridge
+                </button>
+                <button 
+                  onClick={addBlock}
+                  className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1 text-[9px] uppercase tracking-widest transition-all"
+                >
+                  <Plus size={10}/> Add Block
+                </button>
+              </div>
             </div>
 
             {/* Quick Insert Ribbon */}

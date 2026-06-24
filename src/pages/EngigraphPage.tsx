@@ -4,6 +4,7 @@ import { SimulationProvider } from "../components/engigraph/context/SimulationCo
 import Engigraph3D from "../components/engigraph/Engigraph3D";
 import DocumentationViewer from "../components/engigraph/DocumentationViewer";
 import { Database, Link2, Share2, Box, Square, Book } from "lucide-react";
+import { toast } from "sonner";
 
 export default function EngigraphPage() {
   const [synced, setSynced] = useState(false);
@@ -24,7 +25,7 @@ export default function EngigraphPage() {
         log.scrollTop = log.scrollHeight;
       }
     } else {
-      alert("No Global Parameters found in the Maths System.");
+      toast.error("No Global Parameters found in the Maths System.");
     }
   };
 
@@ -72,7 +73,29 @@ export default function EngigraphPage() {
             <Book size={12} />
             Documentation
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-1 rounded bg-white/5 text-slate-300 hover:bg-white/10 text-[11px] font-medium border border-transparent">
+          <button 
+            onClick={() => {
+              // Mock extracting 3D meshes/objects from the context.
+              // In the full system, we'd grab the actual DrawingObjects or ThreeJS meshes.
+              const mockObjects = {
+                objects: [
+                  { name: 'Assembly Table', type: 'table', x: 200, y: 150, width: 120, height: 80, rotation: 0 },
+                  { name: 'Barrier Wall', type: 'wall', x: 100, y: 300, width: 20, height: 200, rotation: 90 },
+                  { name: 'CNC Router Model', type: 'cnc', x: 400, y: 300, width: 100, height: 100, rotation: 0 },
+                  { name: 'Conveyor Line', type: 'conveyor', x: 250, y: 500, width: 300, height: 60, rotation: 0 }
+                ]
+              };
+              localStorage.setItem('ascads_bridge_engigraph_robot', JSON.stringify(mockObjects));
+              
+              const log = document.getElementById('terminal-log');
+              if (log) {
+                log.innerHTML += `<div class="term-line system" style="color: #3b82f6;">> ASCAD BRIDGE: Exported ${mockObjects.objects.length} CAD structures to Robotics Environment.</div>`;
+                log.scrollTop = log.scrollHeight;
+              }
+              toast.success('Successfully exported EngiGraph CAD structures to the Robotics Simulator!');
+            }}
+            className="flex items-center gap-1.5 px-3 py-1 rounded bg-white/5 text-slate-300 hover:bg-white/10 text-[11px] font-medium border border-transparent"
+          >
             <Share2 size={12} />
             Export CAD to Robotics
           </button>

@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { toast } from "sonner";
 
 import {
   LineChart,
@@ -107,6 +108,7 @@ const INITIAL_STATE: LadderState = {
 
 import { IOSimulator } from "@/components/plc/IOSimulator";
 import type { AnalogProject } from "@/lib/analog-types";
+import { EcosystemTranslator } from "@/lib/EcosystemTranslator";
 
 export default function PLCPage({ project, onProjectChange }: { project?: AnalogProject, onProjectChange?: (p: AnalogProject) => void }) {
   const [state, setState] = useState<LadderState>(() => {
@@ -1436,7 +1438,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                       <>
                         <button
                           onClick={() => {
-                            alert(
+                            toast.success(
                               "VoltLogic Pro Industrial Studio v5.0\nEngine: VoltV7000-RT",
                             );
                             setActiveMenu(null);
@@ -1603,79 +1605,43 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                 onSearch={handleSearch}
                 onImportBridge={() => {
                   try {
-                    const rawDigital = localStorage.getItem('ascads_bridge_digital_plc');
-                    if (!rawDigital) {
-                      alert('No Bridge logic found from Digital Logic Lab.');
+                    // Try to get from Digital or Analog
+                    let raw = localStorage.getItem('ascads_bridge_digital_plc');
+                    if (!raw) {
+                      raw = localStorage.getItem('ascads_bridge_analog_plc');
+                    }
+                    if (!raw) {
+                      toast.error('No Bridge logic found from Digital, Analog, or Robot Labs.');
                       return;
                     }
-                    const bridge = JSON.parse(rawDigital);
-                    const { rungs } = bridge;
+                    const bridge = JSON.parse(raw);
                     
-                    setState(prev => {
-                      const newNodes = [...prev.nodes];
-                      
-                      let nextY = prev.nodes.length > 0 ? Math.max(...prev.nodes.map(n => n.y)) + RUNG_HEIGHT : RUNG_HEIGHT / 2 - NODE_HEIGHT / 2;
-                      
-                      rungs.forEach((rung: any) => {
-                        let cx = LEFT_RAIL_X + 60;
-                        rung.nodes.forEach((n: any) => {
-                           const isOte = n.type === 'OTE';
-                           newNodes.push({
-                              id: `bridge-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                              type: isOte ? 'coil' : 'contact-no',
-                              x: isOte ? RIGHT_RAIL_X - NODE_WIDTH - 20 : cx,
-                              y: nextY,
-                              width: NODE_WIDTH, height: NODE_HEIGHT,
-                              tag: n.label, address: n.address
-                           });
-                           if (!isOte) cx += NODE_WIDTH + 40;
-                        });
-                        nextY += RUNG_HEIGHT;
+                    if (bridge.nodes && bridge.wires) {
+                      // It's a LadderState
+                      setState(prev => {
+                        let nextY = prev.nodes.length > 0 ? Math.max(...prev.nodes.map(n => n.y)) + RUNG_HEIGHT : RUNG_HEIGHT / 2 - NODE_HEIGHT / 2;
+                        const offsetY = nextY - 96; // 96 is rung 0
+                        const newNodes = bridge.nodes.map((n: any) => ({ ...n, id: `bridge-${Date.now()}-${n.id}`, y: n.y + offsetY }));
+                        const newWires = bridge.wires.map((w: any) => ({ ...w, id: `bridge-${Date.now()}-${w.id}`, fromId: `bridge-${Date.now()}-${w.fromId}`, toId: `bridge-${Date.now()}-${w.toId}` }));
+                        return { ...prev, nodes: [...prev.nodes, ...newNodes], wires: [...prev.wires, ...newWires] };
                       });
-                      
-                      return { ...prev, nodes: newNodes };
-                    });
+                    }
                     
-                    alert('Bridge Import Successful!');
+                    toast.success('Bridge Import Successful!');
                     playSuccess();
                   } catch (e) {
-                    alert('Failed to parse bridge data.');
+                    toast.error('Failed to parse bridge data.');
                     console.error(e);
                   }
                 }}
                 onExportBridge={() => {
-                  const rungsMap = new Map<number, any[]>();
-                  state.nodes.forEach(n => {
-                     if (!rungsMap.has(n.y)) rungsMap.set(n.y, []);
-                     let type = 'XIC';
-                     if (n.type === 'coil') type = 'OTE';
-                     else if (n.type.includes('nc')) type = 'XIO';
-                     rungsMap.get(n.y)!.push({ type, address: n.address || '', label: n.tag || '' });
-                  });
-                  const rungs = Array.from(rungsMap.entries()).sort((a,b) => a[0] - b[0]).map(([y, nodes]) => ({ nodes, comment: `Exported Rung` }));
-                  const tags = Array.from(new Set(state.nodes.map(n => n.address))).map(addr => {
-                    const node = state.nodes.find(n => n.address === addr);
-                    return { address: addr, tag: node?.tag || 'UNNAMED', type: 'BOOL' };
-                  });
-                  // Generate Digital Bridge using the same logic as plcToDigital
-                  const gates: any = {};
-                  const wires: any = {};
-                  let col = 0;
-                  const mapping: any[] = [];
-                  for (const rung of rungs) {
-                    const xicNodes = rung.nodes.filter(n => n.type === 'XIC' || n.type === 'XIO');
-                    const oteNode = rung.nodes.find(n => n.type === 'OTE');
-                    if (xicNodes.length === 0 || !oteNode) continue;
-                    const gateId = `gate_${col}`;
-                    const kind = xicNodes.length > 1 ? 'AND' : 'NOT';
-                    gates[gateId] = { id: gateId, kind, x: 80 + col * 140, y: 80, inputs: xicNodes.length, label: `${oteNode.label} (${kind})` };
-                    mapping.push({ gateId, plcAddress: oteNode.address, logic: `${xicNodes.map(n => n.label).join(' && ')} -> ${oteNode.label}` });
-                    col++;
-                  }
+                  const digitalCircuit = EcosystemTranslator.plcToDigital(state);
+                  localStorage.setItem('ascads_bridge_plc_digital', JSON.stringify(digitalCircuit));
                   
-                  const bridgeData = { circuit: { gates, wires }, description: 'Exported from PLC', mapping };
-                  localStorage.setItem('ascads_bridge_plc_digital', JSON.stringify(bridgeData));
-                  alert('Exported to Digital Logic Bridge!');
+                  const analogDesign = EcosystemTranslator.plcToAnalog(state);
+                  localStorage.setItem('ascads_bridge_plc_analog', JSON.stringify(analogDesign));
+
+                  toast.success('Exported to Digital and Analog Logic Bridges!');
                   playSuccess();
                 }}
               />

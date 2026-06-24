@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { AnalogProject } from '@/lib/analog-types';
 import type { Circuit } from '@/lib/types';
 import { useHardwareBus } from '@/lib/hardware-bus';
+import { EcosystemTranslator } from '@/lib/EcosystemTranslator';
 
 type View = 'DESIGN' | 'SIMULATION' | 'BOM' | 'LAYOUT' | 'LADDER' | 'LOGIC';
 
@@ -338,31 +339,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
 
             <button 
               onClick={() => {
-                const circuit: Circuit = { gates: {}, wires: {} };
-                design.components.forEach(comp => {
-                   const kindMap: Record<string, any> = {
-                      'LOGIC_AND': 'AND', 'LOGIC_OR': 'OR', 'LOGIC_NOT': 'NOT',
-                      'NAND_GATE': 'NAND', 'NOR_GATE': 'NOR', 'XOR_GATE': 'XOR', 'XNOR_GATE': 'XNOR',
-                      'BATTERY': 'INPUT', 'SWITCH': 'INPUT', 'PUSH_BUTTON': 'BUTTON',
-                      'GROUND': 'OUTPUT', 'LED': 'OUTPUT', 'MULTIMETER': 'PROBE'
-                   };
-                   const kind = kindMap[comp.type] || 'BUFFER';
-                   circuit.gates[comp.id] = {
-                       id: comp.id,
-                       kind,
-                       x: comp.x,
-                       y: comp.y,
-                       inputs: 2,
-                       label: comp.label || comp.type
-                   };
-                });
-                design.connections.forEach(conn => {
-                   circuit.wires[conn.id] = {
-                       id: conn.id,
-                       from: { gateId: conn.from, pinIndex: conn.fromPin || 0 },
-                       to: { gateId: conn.to, pinIndex: conn.toPin || 0 }
-                   };
-                });
+                const circuit = EcosystemTranslator.analogToDigital(design);
                 if (onBridgeToDigital) onBridgeToDigital(circuit);
               }}
               className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 rounded-xl transition-all border border-cyan-500/30 active:scale-95 group"
@@ -372,8 +349,8 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
             </button>
             <button 
               onClick={() => {
-                 localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(design));
-                 // flash effect or toast could go here
+                 const plcProject = EcosystemTranslator.toPLCLadder(design);
+                 localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(plcProject));
               }}
               className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-fuchsia-600/20 hover:bg-fuchsia-600/40 text-fuchsia-400 rounded-xl transition-all border border-fuchsia-500/30 active:scale-95 group"
               title="Send to Industrial PLC"

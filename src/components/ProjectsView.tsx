@@ -99,35 +99,38 @@ export default function ProjectsView({ projects, onNew, onOpen, onDelete, onImpo
       <div className="flex-1 p-8 space-y-12">
         {/* App Drawer */}
         <section>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {[
-              { id: 'analog', label: 'Analog', icon: '⚡', 
-                border: 'hover:border-violet-500/50', bg: 'hover:bg-violet-500/10', shadow: 'group-hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]' },
-              { id: 'digital', label: 'Digital', icon: '🧮', 
-                border: 'hover:border-cyan-500/50', bg: 'hover:bg-cyan-500/10', shadow: 'group-hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]' },
-              { id: 'plc', label: 'PLC', icon: '🏭', 
-                border: 'hover:border-blue-500/50', bg: 'hover:bg-blue-500/10', shadow: 'group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]' },
-              { id: 'robot', label: 'Robotics', icon: '🦾', 
-                border: 'hover:border-emerald-500/50', bg: 'hover:bg-emerald-500/10', shadow: 'group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]' },
-              { id: 'compute', label: 'Compute Tools', icon: '🔧', 
-                border: 'hover:border-amber-500/50', bg: 'hover:bg-amber-500/10', shadow: 'group-hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]' },
-              { id: 'maths', label: 'Maths System', icon: '∑', 
-                border: 'hover:border-rose-500/50', bg: 'hover:bg-rose-500/10', shadow: 'group-hover:shadow-[0_0_20px_rgba(244,63,94,0.3)]' },
-              { id: 'engigraph', label: 'EngiGraph', icon: '📐', 
-                border: 'hover:border-orange-500/50', bg: 'hover:bg-orange-500/10', shadow: 'group-hover:shadow-[0_0_20px_rgba(249,115,22,0.3)]' },
-              { id: 'docs', label: 'Docs', icon: '📚', 
-                border: 'hover:border-pink-500/50', bg: 'hover:bg-pink-500/10', shadow: 'group-hover:shadow-[0_0_20px_rgba(236,72,153,0.3)]' },
+              { id: 'analog', label: 'Analog Design', desc: 'Circuit Schematics', icon: '⚡', 
+                border: 'hover:border-violet-500/50', bg: 'hover:bg-violet-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(139,92,246,0.25)]', color: 'text-violet-400' },
+              { id: 'digital', label: 'Digital Logic', desc: 'Logic Gates & ALUs', icon: '🧮', 
+                border: 'hover:border-cyan-500/50', bg: 'hover:bg-cyan-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(6,182,212,0.25)]', color: 'text-cyan-400' },
+              { id: 'plc', label: 'Industrial PLC', desc: 'Ladder Logic', icon: '🏭', 
+                border: 'hover:border-blue-500/50', bg: 'hover:bg-blue-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(59,130,246,0.25)]', color: 'text-blue-400' },
+              { id: 'robot', label: 'Robotics', desc: 'Kinematics & CIM', icon: '🦾', 
+                border: 'hover:border-emerald-500/50', bg: 'hover:bg-emerald-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(16,185,129,0.25)]', color: 'text-emerald-400' },
+              { id: 'compute', label: 'Compute Tools', desc: 'Converters & IEEE', icon: '🔧', 
+                border: 'hover:border-amber-500/50', bg: 'hover:bg-amber-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(245,158,11,0.25)]', color: 'text-amber-400' },
+              { id: 'maths', label: 'Maths System', desc: 'Symbolic Math', icon: '∑', 
+                border: 'hover:border-rose-500/50', bg: 'hover:bg-rose-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(244,63,94,0.25)]', color: 'text-rose-400' },
+              { id: 'engigraph', label: 'EngiGraph Pro', desc: '3D Code CAD', icon: '📐', 
+                border: 'hover:border-orange-500/50', bg: 'hover:bg-orange-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(249,115,22,0.25)]', color: 'text-orange-400' },
+              { id: 'docs', label: 'Documentation', desc: 'Manuals & Legal', icon: '📚', 
+                border: 'hover:border-pink-500/50', bg: 'hover:bg-pink-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(236,72,153,0.25)]', color: 'text-pink-400' },
             ].map(app => (
               <button
                 key={app.id}
                 onClick={() => onNavigate(app.id as any)}
-                className={`flex flex-col items-center justify-center p-4 rounded-2xl bg-slate-900/50 border border-slate-800 ${app.border} ${app.bg} transition-all group`}
+                className={`flex flex-col items-center justify-center p-6 rounded-3xl bg-slate-900/80 border border-slate-800 ${app.border} ${app.bg} transition-all group cursor-pointer relative overflow-hidden`}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 flex items-center justify-center text-2xl mb-3 shadow-lg ${app.shadow} transition-all`}>
+                <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 flex items-center justify-center text-4xl mb-4 shadow-xl ${app.shadow} transition-all group-hover:scale-110 duration-300`}>
                   {app.icon}
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-200 text-center leading-tight">
+                <span className={`text-sm font-black uppercase tracking-widest ${app.color} mb-1 group-hover:brightness-125 transition-all text-center leading-tight`}>
                   {app.label}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium text-center">
+                  {app.desc}
                 </span>
               </button>
             ))}

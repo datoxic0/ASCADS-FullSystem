@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CircuitDesign, Component, Connection } from '../types';
-import { Stage, Layer, Rect, Text, Group, Line, Circle } from 'react-konva';
+import { Stage, Layer, Rect, Text, Group, Line } from 'react-konva';
 import { COMPONENT_DEFINITIONS } from '../constants';
+import { renderFootprint } from './PCBFootprints';
+import { GerberCompiler } from '../services/GerberCompiler';
+import { UniversalGCodeEngine } from '../../lib/UniversalGCodeEngine';
 import { motion, AnimatePresence } from 'motion/react';
-import { Box, Layers, Zap, Info, Download, Maximize, RotateCcw, BoxSelect } from 'lucide-react';
+import { Box, Layers, Zap, Info, Download, Maximize, RotateCcw, BoxSelect, Cpu } from 'lucide-react';
 
 interface LayoutViewProps {
   design: CircuitDesign;
@@ -50,28 +53,38 @@ export default function LayoutView({ design, onUpdateComponent }: LayoutViewProp
   };
 
   const handleGenerateGerber = () => {
-    const manifest = {
-      project: 'Advanced PCB Export v2.0',
-      boardSize: '160mm x 100mm',
-      exportDate: new Date().toISOString(),
-      layers: {
-        top_copper: design.components.map(c => ({ 
-          designator: c.label, 
-          footprint: c.type, 
-          posX: c.layoutX || 0, 
-          posY: c.layoutY || 0 
-        })),
-        bottom_copper: [],
-        drill_guide: design.connections.map(cn => ({ from: cn.from, to: cn.to }))
-      }
+    const gtl = GerberCompiler.compileGTL(design);
+    const gto = GerberCompiler.compileGTO(design);
+    const drl = GerberCompiler.compileDRL(design);
+
+    // Trigger multiple downloads since we don't have jszip installed
+    const download = (filename: string, content: string) => {
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     };
-    
-    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+
+    download(`Siyabonga_${Date.now()}.GTL`, gtl);
+    setTimeout(() => download(`Siyabonga_${Date.now()}.GTO`, gto), 300);
+    setTimeout(() => download(`Siyabonga_${Date.now()}.DRL`, drl), 600);
+  };
+
+  const handleGenerateGCode = () => {
+    const gcode = UniversalGCodeEngine.generateIsolationRouting(design);
+    const blob = new Blob([gcode], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Siyabonga_Gerber_${Date.now()}.json`;
+    link.download = `Siyabonga_Isolation_${Date.now()}.nc`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -189,7 +202,7 @@ export default function LayoutView({ design, onUpdateComponent }: LayoutViewProp
                 </React.Fragment>
               ))}
 
-              {/* Advanced Routing Traces */}
+              {/* Advanced Orthogonal Routing Traces */}
               {design.connections.map((conn, idx) => {
                 const fromIdx = design.components.findIndex(c => c.id === conn.from);
                 const toIdx = design.components.findIndex(c => c.id === conn.to);
@@ -198,28 +211,60 @@ export default function LayoutView({ design, onUpdateComponent }: LayoutViewProp
                 const fromPos = getCompPos(design.components[fromIdx], fromIdx);
                 const toPos = getCompPos(design.components[toIdx], toIdx);
 
-                // Simulate real 45-degree routing
-                const midX = fromPos.x + (toPos.x - fromPos.x) / 2;
+                // Use center of component as a rough pin origin for traces
+                const x1 = fromPos.x + 20;
+                const y1 = fromPos.y + 20;
+                const x2 = toPos.x + 20;
+                const y2 = toPos.y + 20;
+                
+                const midX = x1 + (x2 - x1) / 2;
+
+                // Orthogonal routing with chamfers
+                const points = [
+                  x1, y1,
+                  midX, y1,
+                  midX, y2,
+                  x2, y2
+                ];
                 
                 return (
                   <Group key={`trace-${idx}`}>
                     {/* Shadow for 3D look */}
+                    {viewMode === '3D' && (
+                      <Line
+                        points={points}
+                        stroke="rgba(0,0,0,0.5)"
+                        strokeWidth={4}
+                        lineJoin="round"
+                        lineCap="round"
+                        tension={0}
+                        cornerRadius={15}
+                        offsetX={-3}
+                        offsetY={3}
+                        blurRadius={3}
+                      />
+                    )}
+                    {/* Copper Trace */}
                     <Line
-                      points={[fromPos.x + 40, fromPos.y + 30, midX, fromPos.y + 30, toPos.x + 40, toPos.y + 30]}
-                      stroke="rgba(0,0,0,0.4)"
-                      strokeWidth={4}
-                      opacity={viewMode === '3D' ? 0.3 : 0}
-                      blurRadius={2}
-                      offsetX={-2}
-                      offsetY={2}
-                    />
-                    <Line
-                      points={[fromPos.x + 40, fromPos.y + 30, midX, fromPos.y + 30, toPos.x + 40, toPos.y + 30]}
+                      points={points}
                       stroke={activeLayer === 'TOP' ? '#fbbf24' : '#38bdf8'}
-                      strokeWidth={2}
-                      opacity={0.8}
-                      lineJoin="miter"
+                      strokeWidth={3}
+                      opacity={0.85}
+                      lineJoin="round"
                       lineCap="round"
+                      tension={0}
+                      cornerRadius={15}
+                    />
+                    {/* Active Signal Core (Optional glow) */}
+                    <Line
+                      points={points}
+                      stroke="#ffffff"
+                      strokeWidth={0.5}
+                      opacity={0.3}
+                      lineJoin="round"
+                      lineCap="round"
+                      tension={0}
+                      cornerRadius={15}
                     />
                   </Group>
                 );
@@ -251,62 +296,12 @@ export default function LayoutView({ design, onUpdateComponent }: LayoutViewProp
                       });
                     }}
                   >
-                    {/* Shadow */}
-                    {viewMode === '3D' && (
-                       <Rect 
-                        width={80} 
-                        height={60} 
-                        fill="rgba(0,0,0,0.5)" 
-                        offsetX={-5}
-                        offsetY={5}
-                        cornerRadius={2}
-                        blurRadius={4}
-                       />
-                    )}
-
-                    <Rect 
-                      width={80} 
-                      height={60} 
-                      fill={isHovered ? '#334155' : '#1e293b'}
-                      stroke={isHovered ? '#6366f1' : '#10b981'}
-                      strokeWidth={1.5}
-                      cornerRadius={2}
-                      shadowBlur={isHovered ? 15 : 0}
-                      shadowColor="#6366f1"
-                    />
-                    
-                    {/* Silkscreen */}
-                    <Rect x={2} y={2} width={76} height={56} stroke="#ffffff" opacity={0.1} strokeWidth={0.5} />
-                    
-                    {/* SMT Pads */}
-                    <Rect x={-2} y={5} width={8} height={12} fill="#eab308" cornerRadius={1} />
-                    <Rect x={-2} y={43} width={8} height={12} fill="#eab308" cornerRadius={1} />
-                    <Rect x={74} y={5} width={8} height={12} fill="#eab308" cornerRadius={1} />
-                    <Rect x={74} y={43} width={8} height={12} fill="#eab308" cornerRadius={1} />
-                    
-                    <Text 
-                      text={comp.label} 
-                      fill="#10b981" 
-                      fontSize={11} 
-                      fontStyle="bold" 
-                      width={80}
-                      align="center"
-                      y={20}
-                      fontFamily="monospace"
-                    />
-                    <Text 
-                      text={comp.type} 
-                      fill="#64748b" 
-                      fontSize={7} 
-                      width={80}
-                      align="center"
-                      y={36}
-                      fontFamily="monospace"
-                      letterSpacing={1}
-                    />
-                    
-                    {/* Polarity/Pin 1 Indicator */}
-                    <Circle x={5} y={5} radius={1.5} fill="#ffffff" opacity={0.5} />
+                    {renderFootprint({
+                      type: comp.type,
+                      label: comp.label,
+                      isHovered,
+                      viewMode
+                    })}
                   </Group>
                 );
               })}
@@ -341,8 +336,17 @@ export default function LayoutView({ design, onUpdateComponent }: LayoutViewProp
             Sync topology
           </button>
           <button 
+            onClick={handleGenerateGCode}
+            className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-black uppercase tracking-[.2em] rounded-xl transition-all shadow-[0_10px_30px_rgba(217,119,6,0.4)] flex items-center gap-2 group active:scale-95"
+            title="Export G-Code for CNC Milling"
+          >
+            <Cpu size={14} className="group-hover:scale-110 transition-transform" />
+            Export G-Code
+          </button>
+          <button 
             onClick={handleGenerateGerber}
             className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-[.2em] rounded-xl transition-all shadow-[0_10px_30px_rgba(79,70,229,0.4)] flex items-center gap-2 group active:scale-95"
+            title="Export RS-274X Gerber Files"
           >
             <Download size={14} className="group-hover:translate-y-0.5 transition-transform" />
             Commit to Gerber

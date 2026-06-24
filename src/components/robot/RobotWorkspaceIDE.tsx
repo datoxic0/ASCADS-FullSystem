@@ -33,9 +33,11 @@ import {
   ChevronDown,
   ChevronUp,
   Pause,
-  Minimize2
+  Minimize2,
+  Share2
 } from "lucide-react";
 import { useHardwareBus } from "../../lib/hardware-bus";
+import { EcosystemTranslator } from "../../lib/EcosystemTranslator";
 
 interface RobotWorkspaceIDEProps {
   activeBoard: BoardConfig;
@@ -1444,6 +1446,20 @@ export default function RobotWorkspaceIDE({
             aria-label="Open G-Code Reference Manual"
           >
             <HelpCircle className="w-4 h-4" />
+          </button>
+
+          {/* Export Logic to PLC */}
+          <button
+            onClick={() => {
+              const plcState = EcosystemTranslator.robotToPLC(simulationState, sortingStats);
+              localStorage.setItem('ascads_bridge_robot_plc_state', JSON.stringify(plcState));
+              addLog("success", "Successfully transpiled Robot internal variables and states to PLC Logic Pipeline.");
+            }}
+            className="h-7 px-2 bg-indigo-900/30 hover:bg-indigo-800/50 border border-indigo-500/30 hover:border-indigo-400/50 rounded-md flex items-center justify-center cursor-pointer transition-all shrink-0 text-indigo-400 hover:text-indigo-300 gap-1"
+            title="Export Robot Logic & Sensors to PLC"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="text-[9px] font-bold tracking-wider hidden sm:inline-block">TO PLC</span>
           </button>
 
           {/* Simulation Speed Dropdown Selector */}
