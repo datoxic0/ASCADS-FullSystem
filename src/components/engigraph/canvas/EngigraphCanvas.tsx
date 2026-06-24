@@ -364,9 +364,9 @@ export const EngigraphCanvas: React.FC = () => {
 
                 <Layer>
                     {elements.map((obj) => (
-                        <Shape key={obj.id} obj={obj} />
+                        <Shape key={obj.id} obj={obj} isSelectTool={activeTool === 'select'} />
                     ))}
-                    {currentObj && <Shape obj={currentObj} />}
+                    {currentObj && <Shape obj={currentObj} isSelectTool={false} />}
                     {activeTool === 'protractor' && <ProtractorOverlay x={view.x * -1 / view.zoom + window.innerWidth / (2 * view.zoom)} y={view.y * -1 / view.zoom + window.innerHeight / (2 * view.zoom)} />}
                     {activeTool === 'ruler' && <RulerOverlay x={view.x * -1 / view.zoom + window.innerWidth / (2 * view.zoom) - 150} y={view.y * -1 / view.zoom + window.innerHeight / (2 * view.zoom)} />}
                     {selectionBox && (
@@ -387,6 +387,7 @@ export const EngigraphCanvas: React.FC = () => {
                     {selectedIds.length > 0 && (
                         <Transformer
                             ref={trRef}
+                            borderEnabled={false}
                             boundBoxFunc={(oldBox, newBox) => {
                                 if (newBox.width < 5 || newBox.height < 5) {
                                     return oldBox;
@@ -411,7 +412,7 @@ export const EngigraphCanvas: React.FC = () => {
     );
 };
 
-const Shape = ({ obj }: { obj: DrawingObject }) => {
+const Shape = ({ obj, isSelectTool }: { obj: DrawingObject, isSelectTool: boolean }) => {
     // Snap drag func for shapes
     const dragBoundFunc = (pos: any) => {
         const storeState = useEngigraphStore.getState();
@@ -424,18 +425,21 @@ const Shape = ({ obj }: { obj: DrawingObject }) => {
         return pos;
     };
 
+    const isSelected = useEngigraphStore.getState().selectedIds.includes(obj.id);
+    const shadowProps = isSelected ? { shadowColor: '#00f2ff', shadowBlur: 10, shadowOpacity: 0.8 } : {};
+
     // Basic shapes
     if (obj.type === 'line' || obj.type === 'wire' || obj.type === 'spline') {
-        return <Line id={obj.id} name="element-group" points={obj.points || []} stroke={obj.stroke} strokeWidth={obj.strokeWidth} dash={obj.dash} tension={obj.type === 'spline' ? 0.5 : 0} draggable dragBoundFunc={dragBoundFunc} />;
+        return <Line id={obj.id} name="element-group" points={obj.points || []} stroke={obj.stroke} strokeWidth={obj.strokeWidth} dash={obj.dash} tension={obj.type === 'spline' ? 0.5 : 0} draggable={isSelectTool} listening={isSelectTool} dragBoundFunc={dragBoundFunc} {...shadowProps} />;
     }
     if (obj.type === 'rect') {
-        return <Rect id={obj.id} name="element-group" x={obj.x} y={obj.y} width={obj.width} height={obj.height} stroke={obj.stroke} strokeWidth={obj.strokeWidth} draggable dragBoundFunc={dragBoundFunc} />;
+        return <Rect id={obj.id} name="element-group" x={obj.x} y={obj.y} width={obj.width} height={obj.height} stroke={obj.stroke} strokeWidth={obj.strokeWidth} draggable={isSelectTool} listening={isSelectTool} dragBoundFunc={dragBoundFunc} {...shadowProps} />;
     }
     if (obj.type === 'circle') {
-        return <Circle id={obj.id} name="element-group" x={obj.x} y={obj.y} radius={obj.radius} stroke={obj.stroke} strokeWidth={obj.strokeWidth} draggable dragBoundFunc={dragBoundFunc} />;
+        return <Circle id={obj.id} name="element-group" x={obj.x} y={obj.y} radius={obj.radius} stroke={obj.stroke} strokeWidth={obj.strokeWidth} draggable={isSelectTool} listening={isSelectTool} dragBoundFunc={dragBoundFunc} {...shadowProps} />;
     }
     if (obj.type === 'text') {
-        return <Text id={obj.id} name="element-group" x={obj.x} y={obj.y} text={obj.text || 'Text'} fill={obj.stroke} fontSize={16} draggable dragBoundFunc={dragBoundFunc} />;
+        return <Text id={obj.id} name="element-group" x={obj.x} y={obj.y} text={obj.text || 'Text'} fill={obj.stroke} fontSize={16} draggable={isSelectTool} listening={isSelectTool} dragBoundFunc={dragBoundFunc} {...shadowProps} />;
     }
     if (obj.type === 'dimension' && obj.points) {
         const p1x = obj.points[0];
@@ -444,7 +448,7 @@ const Shape = ({ obj }: { obj: DrawingObject }) => {
         const p2y = obj.points[3];
         const distance = Math.sqrt(Math.pow(p2x - p1x, 2) + Math.pow(p2y - p1y, 2)).toFixed(2);
         return (
-            <Group id={obj.id} name="element-group" draggable dragBoundFunc={dragBoundFunc}>
+            <Group id={obj.id} name="element-group" draggable={isSelectTool} listening={isSelectTool} dragBoundFunc={dragBoundFunc} {...shadowProps}>
                 <Line points={obj.points} stroke={obj.stroke} strokeWidth={obj.strokeWidth} />
                 <Circle x={p1x} y={p1y} radius={3} fill={obj.stroke} />
                 <Circle x={p2x} y={p2y} radius={3} fill={obj.stroke} />
@@ -454,8 +458,7 @@ const Shape = ({ obj }: { obj: DrawingObject }) => {
     }
     // Logic/Mechatronic Components
     if (obj.type === 'component') {
-        // Assume ComponentShape handles its own dragBoundFunc or doesn't need it if we wrap it, but it's a complex group
-        return <ComponentShape obj={obj} />;
+        return <ComponentShape obj={obj} isSelectTool={isSelectTool} dragBoundFunc={dragBoundFunc} shadowProps={shadowProps} />;
     }
     return null;
 };
