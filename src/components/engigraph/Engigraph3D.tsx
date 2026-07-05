@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { CSG } from 'three-csg-ts';
 import { Play, Download, Save, RefreshCw, BookOpen, ChevronRight, Wand2, Loader2, Upload } from 'lucide-react';
 import { askAI3D, getActiveEngine } from '@/lib/ai';
+import { useEngigraphStore } from './store/useEngigraphStore';
 
 const TUTORIALS = [
   {
@@ -43,6 +44,19 @@ return subtract(base, allHoles);
 
 export default function Engigraph3D() {
   const [script, setScript] = useState(DEFAULT_SCRIPT);
+  const [userTemplates, setUserTemplates] = useState<{name: string; code: string}[]>(() => {
+    try {
+      const saved = localStorage.getItem('ascads_engigraph3d_templates');
+      if (saved) {
+         const parsed = JSON.parse(saved);
+         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return [{ name: 'Default Enclosure', code: 'return difference(box(20,20,10), translate(box(18,18,10), 0,0,1));' }];
+    } catch {
+      return [{ name: 'Default Enclosure', code: 'return difference(box(20,20,10), translate(box(18,18,10), 0,0,1));' }];
+    }
+  });
+  
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
   const [externalMeshes, setExternalMeshes] = useState<THREE.Mesh[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -51,12 +65,95 @@ export default function Engigraph3D() {
   const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [isLibraryOpen, setIsLibraryOpen] = useState(window.innerWidth >= 1024);
+  const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(window.innerWidth >= 768);
+
+  useEffect(() => {
+    localStorage.setItem('ascads_engigraph3d_templates', JSON.stringify(userTemplates));
+  }, [userTemplates]);
+
+  const handleSaveAsTemplate = () => {
+    const name = prompt("Enter a name for your template:");
+    if (name) {
+      setUserTemplates(prev => [...prev, { name, code: script }]);
+    }
+  };
+
   // Strict WebGL Memory Cleanup
   useEffect(() => {
     return () => {
       if (geometry) geometry.dispose();
     };
   }, [geometry]);
+
+  // Hybrid Signal Listener
+  const hybridExtrudeSignal = useEngigraphStore(state => state.hybridExtrudeSignal);
+  const pending3DCode = useEngigraphStore(state => state.pending3DCode);
+  const clear3DCode = useEngigraphStore(state => state.clear3DCode);
+  const elements = useEngigraphStore(state => state.elements);
+  const extrudeDepth = useEngigraphStore(state => state.extrudeDepth);
+  const extrudeScale = useEngigraphStore(state => state.extrudeScale);
+
+  // Listen for push3DCode: enclosure generator, etc.
+  useEffect(() => {
+    if (pending3DCode) {
+      setScript(pending3DCode);
+      clear3DCode();
+    }
+  }, [pending3DCode, clear3DCode]);
+
+  useEffect(() => {
+    if (hybridExtrudeSignal > 0) {
+        const sc = extrudeScale || 10;
+        const depth = extrudeDepth || 5;
+        let autoScript = `// Auto-Extruded from 2D Canvas\n// Scale: 1:${sc} | Depth: ${depth}mm\n\n`;
+        let index = 0;
+        const unionOps: string[] = [];
+        
+        elements.forEach(el => {
+            if (el.type === 'rect' || el.type === 'roundrect') {
+                const w = (el.width || 10) / sc;
+                const h = (el.height || 10) / sc;
+                const cx = ((el.x || 0) + (el.width || 10) / 2) / sc;
+                const cy = -((el.y || 0) + (el.height || 10) / 2) / sc;
+                autoScript += `const o${index} = translate(box(${w.toFixed(2)}, ${h.toFixed(2)}, ${depth}), ${cx.toFixed(2)}, ${cy.toFixed(2)}, 0);\n`;
+                unionOps.push(`o${index}`);
+                index++;
+            } else if (el.type === 'circle' || el.type === 'ellipse') {
+                const r = ((el.radius || el.radiusX || 10)) / sc;
+                const cx = (el.x || 0) / sc;
+                const cy = -(el.y || 0) / sc;
+                autoScript += `const o${index} = translate(cylinder(${r.toFixed(2)}, ${depth}), ${cx.toFixed(2)}, ${cy.toFixed(2)}, 0);\n`;
+                unionOps.push(`o${index}`);
+                index++;
+            } else if (el.type === 'polygon') {
+                const r = ((el.radius || 20)) / sc;
+                const sides = el.sides || 6;
+                const cx = (el.x || 0) / sc;
+                const cy = -(el.y || 0) / sc;
+                // Approximate polygon as inscribed cylinder
+                autoScript += `// Polygon (${sides}-sided, approximated as cylinder)\n`;
+                autoScript += `const o${index} = translate(cylinder(${r.toFixed(2)}, ${depth}), ${cx.toFixed(2)}, ${cy.toFixed(2)}, 0);\n`;
+                unionOps.push(`o${index}`);
+                index++;
+            }
+        });
+        
+        if (unionOps.length === 0) {
+            autoScript += `// No supported shapes found — using default box\nreturn box(10, 10, ${depth});`;
+        } else if (unionOps.length === 1) {
+            autoScript += `return ${unionOps[0]};`;
+        } else {
+            autoScript += `let final = union(${unionOps[0]}, ${unionOps[1]});\n`;
+            for (let i = 2; i < unionOps.length; i++) {
+                autoScript += `final = union(final, ${unionOps[i]});\n`;
+            }
+            autoScript += `return final;`;
+        }
+        
+        setScript(autoScript);
+    }
+  }, [hybridExtrudeSignal]);
 
   useEffect(() => {
     return () => {
@@ -130,6 +227,12 @@ export default function Engigraph3D() {
         const content = e.target?.result;
         if (typeof content === 'string') {
           setScript(content);
+          // Automatically inject as template
+          const templateName = file.name.replace(/\.[^/.]+$/, "");
+          setUserTemplates(prev => {
+            if (prev.some(t => t.name === templateName)) return prev;
+            return [...prev, { name: templateName, code: content }];
+          });
         }
       };
       reader.readAsText(file);
@@ -297,61 +400,100 @@ export default function Engigraph3D() {
   };
 
   return (
-    <div className="w-full h-full flex bg-[#0a0b0c] text-slate-300 font-sans">
+    <div className="w-full h-full flex bg-[#0a0b0c] text-slate-300 font-sans relative overflow-hidden">
       {/* Component Library Sidebar */}
-      <div className="w-[240px] border-r border-[#334155] flex flex-col bg-[#0f1113] overflow-y-auto">
-        <div className="p-3 border-b border-[#334155] flex items-center gap-2">
-          <BookOpen size={14} className="text-emerald-400" />
-          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-200">Library & Tutorials</span>
-        </div>
-        <div className="p-3 flex flex-col gap-2">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Code Samples</span>
-          {TUTORIALS.map((tut, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                setScript(tut.code);
-                // We use a slight delay so the state updates before compiling
-                setTimeout(compileScript, 50);
-              }}
-              className="flex items-center justify-between text-left px-3 py-2 bg-white/5 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 rounded transition-all group"
-            >
-              <span className="text-xs font-medium text-slate-300 group-hover:text-emerald-400">{tut.name}</span>
-              <ChevronRight size={12} className="text-slate-600 group-hover:text-emerald-400" />
+      {isLibraryOpen && (
+        <div className="absolute lg:static z-40 inset-y-0 left-0 w-64 lg:w-[240px] border-r border-[#334155] flex flex-col bg-[#0f1113] overflow-y-auto shadow-2xl">
+          <div className="p-3 border-b border-[#334155] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpen size={14} className="text-emerald-400" />
+              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-200">Library & Templates</span>
+            </div>
+            <button onClick={() => setIsLibraryOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
+              <ChevronRight size={16} className="rotate-180" />
             </button>
-          ))}
+          </div>
+          
+          <div className="p-3 flex flex-col gap-2">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Your Templates</span>
+            {userTemplates.length === 0 && <span className="text-[10px] text-slate-600 italic">No templates saved yet.</span>}
+            {userTemplates.map((tut, idx) => (
+              <div key={`user-${idx}`} className="flex items-center justify-between px-3 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded group">
+                <button
+                  onClick={() => {
+                    setScript(tut.code);
+                    setTimeout(compileScript, 50);
+                    if (window.innerWidth < 1024) setIsLibraryOpen(false);
+                  }}
+                  className="text-xs font-medium text-indigo-300 hover:text-indigo-200 flex-1 text-left"
+                >
+                  {tut.name}
+                </button>
+                <button 
+                  onClick={() => setUserTemplates(prev => prev.filter((_, i) => i !== idx))}
+                  className="text-slate-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronRight size={12} className="rotate-90" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-3 flex flex-col gap-2 border-t border-[#334155]">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Code Samples</span>
+            {TUTORIALS.map((tut, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setScript(tut.code);
+                  // We use a slight delay so the state updates before compiling
+                  setTimeout(compileScript, 50);
+                  if (window.innerWidth < 1024) setIsLibraryOpen(false);
+                }}
+                className="flex items-center justify-between text-left px-3 py-2 bg-white/5 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 rounded transition-all group"
+              >
+                <span className="text-xs font-medium text-slate-300 group-hover:text-emerald-400">{tut.name}</span>
+                <ChevronRight size={12} className="text-slate-600 group-hover:text-emerald-400" />
+              </button>
+            ))}
+          </div>
+          
+          <div className="p-3 border-t border-[#334155] mt-auto">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 block">CSG API Reference</span>
+            <ul className="text-[10px] font-mono text-slate-400 space-y-1.5 opacity-80">
+              <li>box(w, d, h)</li>
+              <li>cylinder(r, h)</li>
+              <li>sphere(r)</li>
+              <li>translate(obj, x, y, z)</li>
+              <li>rotate(obj, rx, ry, rz)</li>
+              <li>scale(obj, sx, sy, sz)</li>
+              <li>mirror(obj, x, y, z)</li>
+              <li>union(a, b)</li>
+              <li>subtract(a, b)</li>
+              <li>intersect(a, b)</li>
+            </ul>
+          </div>
         </div>
-        
-        <div className="p-3 border-t border-[#334155] mt-auto">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 block">CSG API Reference</span>
-          <ul className="text-[10px] font-mono text-slate-400 space-y-1.5 opacity-80">
-            <li>box(w, d, h)</li>
-            <li>cylinder(r, h)</li>
-            <li>sphere(r)</li>
-            <li>translate(obj, x, y, z)</li>
-            <li>rotate(obj, rx, ry, rz)</li>
-            <li>scale(obj, sx, sy, sz)</li>
-            <li>mirror(obj, x, y, z)</li>
-            <li>union(a, b)</li>
-            <li>subtract(a, b)</li>
-            <li>intersect(a, b)</li>
-          </ul>
-        </div>
-      </div>
+      )}
 
       {/* Code Editor Panel */}
-      <div className="w-[450px] border-r border-[#334155] flex flex-col bg-[#141618]">
+      {isCodeEditorOpen && (
+        <div className="absolute md:static z-30 inset-y-0 left-0 w-full sm:w-[450px] border-r border-[#334155] flex flex-col bg-[#141618] shadow-2xl">
         <div className="p-3 border-b border-[#334155] flex items-center justify-between">
           <div className="flex items-center gap-2 text-blue-400">
             <span className="text-xs font-bold uppercase tracking-widest">Auto Code CAD</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+            <button onClick={() => setIsCodeEditorOpen(false)} className="md:hidden p-1 text-slate-400 hover:text-white mr-1"><ChevronRight size={16} className="rotate-180" /></button>
             <input type="file" ref={fileInputRef} className="hidden" accept=".js,.txt,.json,.stl,.obj" onChange={handleUploadScript} />
             <button onClick={() => fileInputRef.current?.click()} className="px-2 py-1.5 bg-[#1e293b] hover:bg-[#334155] text-slate-300 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors" title="Upload Script or 3D Model">
               <Upload size={12} />
             </button>
-            <button onClick={handleSaveScript} className="px-2 py-1.5 bg-[#1e293b] hover:bg-[#334155] text-slate-300 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors" title="Save Script">
+            <button onClick={handleSaveScript} className="px-2 py-1.5 bg-[#1e293b] hover:bg-[#334155] text-slate-300 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors" title="Download Script">
               <Save size={12} />
+            </button>
+            <button onClick={handleSaveAsTemplate} className="px-2 py-1.5 bg-[#1e293b] hover:bg-[#334155] text-indigo-300 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors" title="Save as Template">
+              <BookOpen size={12} /> Save
             </button>
             <button 
               onClick={compileScript}
@@ -405,11 +547,22 @@ export default function Engigraph3D() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* 3D Viewport Panel */}
-      <div className="flex-1 relative">
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
+      <div className="flex-1 relative flex flex-col min-w-0">
+        <div className="absolute top-4 left-4 z-10 flex gap-2 flex-wrap max-w-full pr-4">
+          {!isCodeEditorOpen && (
+            <button onClick={() => setIsCodeEditorOpen(true)} className="px-3 py-1.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30 rounded text-xs font-bold flex items-center gap-2 transition-all">
+              <ChevronRight size={14} /> Code
+            </button>
+          )}
+          {!isLibraryOpen && (
+            <button onClick={() => setIsLibraryOpen(true)} className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 rounded text-xs font-bold flex items-center gap-2 transition-all">
+              <BookOpen size={14} /> Library
+            </button>
+          )}
           <button onClick={handleExportSTL} className="px-3 py-1.5 bg-black/50 backdrop-blur border border-white/10 hover:border-white/30 rounded text-xs font-medium flex items-center gap-2 transition-all">
             <Download size={14} /> Export STL
           </button>

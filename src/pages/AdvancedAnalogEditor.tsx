@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { AnalogProject } from '@/lib/analog-types';
 import type { Circuit } from '@/lib/types';
 import { useHardwareBus } from '@/lib/hardware-bus';
+import { EcosystemTranslator } from '@/lib/EcosystemTranslator';
 
 type View = 'DESIGN' | 'SIMULATION' | 'BOM' | 'LAYOUT' | 'LADDER' | 'LOGIC';
 
@@ -29,6 +30,8 @@ interface Props {
 
 export default function AnalogEditor({ project, onProjectChange, onBack, onBridgeToDigital }: Props) {
   const [view, setView] = useState<View>('DESIGN');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const stageRef = useRef<any>(null);
   const canvasRef = useRef<SchematicCanvasRef>(null);
 
@@ -296,7 +299,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
             </div>
           </div>
 
-          <nav className="flex items-center gap-2 overflow-x-auto scrollbar-hide shrink-0 min-w-0">
+          <nav className="hidden lg:flex items-center gap-2 overflow-x-auto scrollbar-hide shrink-0 min-w-0">
             {(['DESIGN', 'SIMULATION', 'BOM', 'LAYOUT', 'LADDER', 'LOGIC'] as View[]).map((v) => (
               <button
                 key={v}
@@ -322,7 +325,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Security: <span className="text-indigo-400 font-bold">ACTIVE</span></span>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto lg:ml-0">
+          <div className="hidden lg:flex items-center gap-2 sm:gap-3 shrink-0 ml-auto lg:ml-0">
              <button
                 onClick={toggleSimulation}
                 className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg active:scale-95 border ${
@@ -338,31 +341,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
 
             <button 
               onClick={() => {
-                const circuit: Circuit = { gates: {}, wires: {} };
-                design.components.forEach(comp => {
-                   const kindMap: Record<string, any> = {
-                      'LOGIC_AND': 'AND', 'LOGIC_OR': 'OR', 'LOGIC_NOT': 'NOT',
-                      'NAND_GATE': 'NAND', 'NOR_GATE': 'NOR', 'XOR_GATE': 'XOR', 'XNOR_GATE': 'XNOR',
-                      'BATTERY': 'INPUT', 'SWITCH': 'INPUT', 'PUSH_BUTTON': 'BUTTON',
-                      'GROUND': 'OUTPUT', 'LED': 'OUTPUT', 'MULTIMETER': 'PROBE'
-                   };
-                   const kind = kindMap[comp.type] || 'BUFFER';
-                   circuit.gates[comp.id] = {
-                       id: comp.id,
-                       kind,
-                       x: comp.x,
-                       y: comp.y,
-                       inputs: 2,
-                       label: comp.label || comp.type
-                   };
-                });
-                design.connections.forEach(conn => {
-                   circuit.wires[conn.id] = {
-                       id: conn.id,
-                       from: { gateId: conn.from, pinIndex: conn.fromPin || 0 },
-                       to: { gateId: conn.to, pinIndex: conn.toPin || 0 }
-                   };
-                });
+                const circuit = EcosystemTranslator.analogToDigital(design);
                 if (onBridgeToDigital) onBridgeToDigital(circuit);
               }}
               className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 rounded-xl transition-all border border-cyan-500/30 active:scale-95 group"
@@ -372,8 +351,8 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
             </button>
             <button 
               onClick={() => {
-                 localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(design));
-                 // flash effect or toast could go here
+                 const plcProject = EcosystemTranslator.toPLCLadder(design);
+                 localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(plcProject));
               }}
               className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-fuchsia-600/20 hover:bg-fuchsia-600/40 text-fuchsia-400 rounded-xl transition-all border border-fuchsia-500/30 active:scale-95 group"
               title="Send to Industrial PLC"
@@ -382,14 +361,84 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
             </button>
             <button 
               onClick={handlePDFExport}
-              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 active:scale-95 group"
+              className="hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 active:scale-95 group"
               title="Export Schematic PDF"
             >
               <FileText size={16} className="group-hover:-translate-y-0.5 transition-transform" />
             </button>
+            
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 active:scale-95"
+            >
+              {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden absolute top-16 left-0 right-0 bg-slate-900 border-b border-slate-800 shadow-2xl z-40 p-2 flex flex-col gap-1 max-h-[50vh] overflow-y-auto">
+          {(['DESIGN', 'SIMULATION', 'BOM', 'LAYOUT', 'LADDER', 'LOGIC'] as View[]).map((v) => (
+            <button
+              key={v}
+              onClick={() => { setView(v); setIsMobileMenuOpen(false); }}
+              className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-md text-left ${
+                view === v ? 'bg-indigo-600/20 text-indigo-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+          <button
+             onClick={() => { setIsSidebarOpen(!isSidebarOpen); setIsMobileMenuOpen(false); }}
+             className="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-md text-left text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center justify-between xl:hidden"
+          >
+             Toggle Component Sidebar
+             <Box size={14} />
+          </button>
+          
+          <div className="w-full h-px bg-slate-800 my-1" />
+          
+          <button
+             onClick={toggleSimulation}
+             className="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-md text-left flex items-center justify-between text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30"
+          >
+             {isSimulating ? 'Stop Simulation' : 'Run Simulation'}
+             {isSimulating ? <StopCircle size={14} /> : <Play size={14} />}
+          </button>
+          <button
+             onClick={() => {
+                const circuit = EcosystemTranslator.analogToDigital(design);
+                if (onBridgeToDigital) onBridgeToDigital(circuit);
+                setIsMobileMenuOpen(false);
+             }}
+             className="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-md text-left flex items-center justify-between text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/30"
+          >
+             Send to Digital
+             <Cpu size={14} />
+          </button>
+          <button
+             onClick={() => {
+                 const plcProject = EcosystemTranslator.toPLCLadder(design);
+                 localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(plcProject));
+                 setIsMobileMenuOpen(false);
+             }}
+             className="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-md text-left flex items-center justify-between text-fuchsia-400 hover:text-fuchsia-300 hover:bg-fuchsia-900/30"
+          >
+             Send to PLC
+             <Share2 size={14} />
+          </button>
+          <button
+             onClick={() => { handlePDFExport(); setIsMobileMenuOpen(false); }}
+             className="px-4 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-md text-left flex items-center justify-between text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+          >
+             Export PDF
+             <FileText size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Main UI Container */}
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative min-h-0 bg-slate-950">
@@ -524,22 +573,26 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
                 </AnimatePresence>
               </main>
 
-              <Sidebar 
-                onAddComponent={(type) => {
-                  const x = stageRef.current ? (-stageRef.current.x() + stageRef.current.width() / 2) / stageRef.current.scaleX() : 100;
-                  const y = stageRef.current ? (-stageRef.current.y() + stageRef.current.height() / 2) / stageRef.current.scaleY() : 100;
-                  addComponent(type, x, y);
-                  setActiveTab('PROPERTIES');
-                }}
-                selectedComponentId={selectedId}
-                design={design}
-                onUpdateProperties={updateComponent}
-                isSimulating={isSimulating || view === 'SIMULATION'}
-                onToggleSimulation={toggleSimulation}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                scopeHistory={scopeHistory}
-              />
+              {/* Sidebar toggle wrapper for mobile */}
+              <div className={`absolute right-0 xl:relative z-40 h-full transition-transform ${isSidebarOpen ? 'translate-x-0 shadow-[-20px_0_30px_rgba(0,0,0,0.5)]' : 'translate-x-full xl:translate-x-0'} flex-shrink-0`}>
+                <Sidebar 
+                  onAddComponent={(type) => {
+                    const x = stageRef.current ? (-stageRef.current.x() + stageRef.current.width() / 2) / stageRef.current.scaleX() : 100;
+                    const y = stageRef.current ? (-stageRef.current.y() + stageRef.current.height() / 2) / stageRef.current.scaleY() : 100;
+                    addComponent(type, x, y);
+                    setActiveTab('PROPERTIES');
+                    if(window.innerWidth < 1024) setIsSidebarOpen(false);
+                  }}
+                  selectedComponentId={selectedId}
+                  design={design}
+                  onUpdateProperties={updateComponent}
+                  isSimulating={isSimulating || view === 'SIMULATION'}
+                  onToggleSimulation={toggleSimulation}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  scopeHistory={scopeHistory}
+                />
+              </div>
             </motion.div>
           ) : view === 'BOM' ? (
             <motion.div
@@ -606,7 +659,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
       />
       
       {/* Footer Credits */}
-      <footer className="bg-slate-950 border-t border-white/5 py-1.5 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center relative overflow-hidden shrink-0">
+      <footer className="hidden lg:flex bg-slate-950 border-t border-white/5 py-1.5 px-4 sm:px-8 flex-col sm:flex-row justify-between items-center relative overflow-hidden shrink-0">
          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-transparent to-indigo-500/5 pointer-events-none" />
          <p className="text-[7px] sm:text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] relative z-10 flex items-center gap-4 sm:gap-8 mb-2 sm:mb-0">
            <span>ARCHITECT: SIYABONGA B PHAKATHI © 2026</span>

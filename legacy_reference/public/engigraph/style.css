@@ -1,0 +1,42 @@
+/* 
+   Main Entry Point for CSS 
+   Component styles have been refactored into modular files.
+*/
+
+/* removed :root and base resets {} */
+/* removed .ribbon and tab styles {} */
+/* removed .workspace and sidebar layout {} */
+/* removed #canvas-container and navigation UI {} */
+/* removed .overlay and modal animations {} */
+/* removed .status-bar and command line styles {} */
+/* removed @media queries for responsive {} */
+
+/* Shared Utility Classes and Overrides */
+.pro-input-color {
+    background: #111;
+    border: 1px solid #444;
+    height: 24px;
+    padding: 0;
+    cursor: pointer;
+}
+
+.btn-small {
+    background: var(--bg-ribbon);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    margin: 10px;
+}
+
+.btn-small:hover {
+    background: var(--accent);
+}
+
+.compliance-check {
+    margin-top: 20px;
+    padding: 10px;
+    border-top: 1px solid var(--border);
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MousePointer2, GitCommit, Trash2, Download, RefreshCw, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Map } from 'lucide-react';
+import { MousePointer2, GitCommit, Trash2, Download, RefreshCw, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Map, Power } from 'lucide-react';
 
 interface ToolbarProps {
   tool: 'SELECT' | 'WIRE' | 'DELETE';
@@ -14,11 +14,12 @@ interface ToolbarProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onZoomFit?: () => void;
+  onToggleSwitch?: () => void;
 }
 
 const Toolbar = React.memo(({ 
   tool, setTool, onClear, onExport, onUndo, onRedo, onRoute, canUndo, canRedo,
-  onZoomIn, onZoomOut, onZoomFit
+  onZoomIn, onZoomOut, onZoomFit, onToggleSwitch
 }: ToolbarProps) => {
   return (
     <div className="flex flex-col border-r border-slate-800 bg-slate-900/90 backdrop-blur-md w-12 items-center py-4 gap-4 z-10 shadow-[5px_0_15px_-5px_rgba(0,0,0,0.5)] overflow-y-auto ring-1 ring-white/5">
@@ -98,8 +99,21 @@ const Toolbar = React.memo(({
         className="p-2 rounded transition-colors text-slate-400 hover:bg-slate-800 hover:text-indigo-400 font-mono text-xs items-center justify-center flex"
         title="Zoom to Fit"
       >
-        <Maximize size={18} />
+        <Maximize size={20} />
       </button>
+
+      {onToggleSwitch && (
+        <>
+          <div className="w-px h-8 bg-slate-800 my-1 mx-auto opacity-50" />
+          <button
+            onClick={onToggleSwitch}
+            className="p-2 rounded transition-colors text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 font-mono text-xs items-center justify-center flex shadow-[0_0_15px_rgba(52,211,153,0.1)]"
+            title="Toggle Switch State"
+          >
+            <Power size={20} />
+          </button>
+        </>
+      )}
 
       <div className="flex-1 w-px bg-slate-800 my-2 mx-auto" />
       

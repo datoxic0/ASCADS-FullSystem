@@ -177,8 +177,8 @@ export default function LadderView({ design, onUpdateDesign }: LadderViewProps) 
       </div>
 
       {/* Main Ladder Area */}
-      <div className="flex-1 flex items-center justify-center p-20 mt-10">
-         <div className="bg-slate-900 w-full max-w-5xl h-full rounded-3xl border-2 border-slate-800 shadow-[0_50px_100px_rgba(0,0,0,0.6)] relative overflow-hidden">
+      <div className="flex-1 flex relative items-center justify-center">
+         <div className="bg-slate-900 w-full h-full border-2 border-slate-800 relative overflow-hidden">
              {/* Rungs Styling */}
              <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute left-10 top-0 bottom-0 w-1 bg-indigo-500/30" title="V+ Rail" />
@@ -228,13 +228,23 @@ export default function LadderView({ design, onUpdateDesign }: LadderViewProps) 
 
                     const isActive = simState[conn.from]?.active || toggleStates[conn.from] || false;
                     const strokeColor = isActive ? "#10b981" : "#475569";
+                    const midX = startX + (endX - startX) / 2;
+                    const points = [
+                      startX, startY,
+                      midX, startY,
+                      midX, endY,
+                      endX, endY
+                    ];
                     
                     return (
                        <Line 
                           key={conn.id} 
-                          points={[startX, startY, endX, endY]} 
+                          points={points} 
                           stroke={strokeColor} 
-                          strokeWidth={2} 
+                          strokeWidth={2}
+                          lineJoin="round"
+                          lineCap="round"
+                          cornerRadius={5}
                        />
                     );
                  })}

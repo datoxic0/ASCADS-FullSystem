@@ -1,0 +1,167 @@
+/**
+ * HTML Templates for the Property Panel
+ */
+export const PropertyTemplates = {
+    renderHeader: (type) => `
+        <div class="prop-row" style="font-size: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 20px;">
+            <strong style="letter-spacing: 0.1em; color: var(--accent);">${type.toUpperCase()}</strong>
+        </div>
+    `,
+    renderEngineeringProps: (item) => {
+        let baseOptions = '';
+        const itType = item.data.instrumentType;
+        const isSet = itType === 'set-square' || itType === 'set-square-slider';
+        // Find the triangle if it's a paired set
+        let triangleItem = null;
+        if (item.data.instrumentType?.startsWith('paired')) {
+            triangleItem = item.children.find(c => c.data && c.data.isSlider);
+        }
+        else if (isSet) {
+            triangleItem = item;
+        }
+        if (triangleItem) {
+            const angle = triangleItem.data.angle;
+            const currentBase = triangleItem.data.activeBase || 0;
+            if (angle === 30) {
+                baseOptions = `
+                    <div class="prop-row">
+                        <label>Triangle Working Base</label>
+                        <select id="prop-instrument-base" class="pro-select-sm">
+                            <option value="0" ${currentBase == 0 ? 'selected' : ''}>Short Base</option>
+                            <option value="1" ${currentBase == 1 ? 'selected' : ''}>Mid Base</option>
+                            <option value="2" ${currentBase == 2 ? 'selected' : ''}>Long Base</option>
+                        </select>
+                    </div>
+                `;
+            }
+            else {
+                baseOptions = `
+                    <div class="prop-row">
+                        <label>Triangle Working Base</label>
+                        <select id="prop-instrument-base" class="pro-select-sm">
+                            <option value="0" ${currentBase == 0 ? 'selected' : ''}>Equal Base 1</option>
+                            <option value="1" ${currentBase == 1 ? 'selected' : ''}>Equal Base 2</option>
+                            <option value="2" ${currentBase == 2 ? 'selected' : ''}>Hypotenuse Base</option>
+                        </select>
+                    </div>
+                `;
+            }
+        }
+        let lockOptions = '';
+        if (item.data.instrumentType === 'ruler' || item.data.instrumentType === 'paired-set') {
+            const isVert = Math.abs((item.data.rotation || 0) % 180) === 90;
+            lockOptions = `
+                <div class="prop-row">
+                    <label>T-Square Orientation</label>
+                    <div class="btn-switch">
+                        <button class="small-tab-btn ${!isVert ? 'active' : ''}" id="btn-lock-horiz">Horizontal</button>
+                        <button class="small-tab-btn ${isVert ? 'active' : ''}" id="btn-lock-vert">Vertical</button>
+                    </div>
+                </div>
+            `;
+        }
+        return `
+        ${lockOptions}
+        ${baseOptions}
+        <div class="prop-row">
+            <label>Engineering Tolerance</label>
+            <select id="prop-eng-tolerance" class="pro-select-sm">
+                <option value="none">None</option>
+                <option value="±0.1" ${item.data.tolerance === '±0.1' ? 'selected' : ''}>±0.1mm (High Precision)</option>
+                <option value="±0.5" ${item.data.tolerance === '±0.5' ? 'selected' : ''}>±0.5mm (Standard)</option>
+                <option value="IT9" ${item.data.tolerance === 'IT9' ? 'selected' : ''}>ISO IT9 (Casting)</option>
+            </select>
+        </div>
+        <div class="prop-row">
+            <label>Datum Reference</label>
+            <input type="text" id="prop-eng-datum" value="${item.data.datum || ''}" placeholder="e.g. A, B, C" class="pro-input">
+        </div>
+    `;
+    },
+    renderMechatronicProps: (item) => {
+        if (item.data.type !== 'component')
+            return '';
+        const pt = item.data.partType;
+        return `
+            ${pt === 'resistor' ? `
+                <div class="prop-row"><label>Resistance (Ω)</label>
+                <input type="number" id="prop-elec-resistance" value="${item.data.resistance || 1000}" class="pro-input"></div>` : ''}
+            ${pt === 'battery_18650' ? `
+                <div class="prop-row"><label>Voltage (V)</label>
+                <input type="number" id="prop-elec-voltage" value="${item.data.voltage || 3.7}" step="0.1" class="pro-input"></div>` : ''}
+            ${pt === 'switch_spst' ? `
+                <div class="prop-row"><label>State</label>
+                <select id="prop-elec-switch" class="pro-select-sm">
+                    <option value="open" ${item.data.state === 'open' ? 'selected' : ''}>Open (OFF)</option>
+                    <option value="closed" ${item.data.state === 'closed' ? 'selected' : ''}>Closed (ON)</option>
+                </select></div>` : ''}
+            ${pt === 'dc_motor_generic' || pt === 'nema17' ? `
+                <div class="prop-row"><label>Simulation Speed (deg/frame)</label>
+                <input type="number" id="prop-mech-speed" value="${item.data.speed || 5}" class="pro-input"></div>` : ''}
+            ${pt === 'servo_sg90' ? `
+                <div class="prop-row"><label>Servo Target Angle (°)</label>
+                <input type="number" id="prop-mech-angle" value="${item.data.targetAngle || 90}" min="0" max="180" class="pro-input"></div>` : ''}
+        `;
+    },
+    renderGeneralProps: (item, hexColor, currentRot, styleOptions, layerOptions) => `
+        <div class="prop-row"><label>Color Profile</label><input type="color" id="prop-color" value="${hexColor}" class="pro-input-color"></div>
+        <div class="prop-row"><label>Weight</label><input type="number" id="prop-width" value="${item.strokeWidth || 1}" step="0.5" class="pro-input"></div>
+        <div class="prop-row"><label>Rotation (°)</label><input type="number" id="prop-rotation" value="${currentRot}" step="0.1" class="pro-input"></div>
+        <div class="prop-row"><label>Style</label><select id="prop-style" class="pro-select-sm">${styleOptions}</select></div>
+        <div class="prop-row"><label>Layer</label><select id="prop-layer" class="pro-select-sm">${layerOptions}</select></div>
+    `,
+    renderPlacementProps: (item, sF, posX, posY, realWidth, realHeight, realLen) => `
+        <div class="prop-group">
+            <div style="margin-bottom:12px; color: var(--accent); font-weight:bold; letter-spacing: 0.05em; font-size: 10px; opacity: 0.8;">PRECISION PLACEMENT</div>
+            <div class="prop-row-inline" style="display:flex; gap:10px; margin-bottom:12px;">
+                <label style="width:20px; align-self:center; font-weight:bold; color:var(--text-dim);">X</label><input type="number" id="prop-pos-x" value="${posX}" step="0.01" class="pro-input" style="flex:1">
+                <label style="width:20px; align-self:center; font-weight:bold; color:var(--text-dim);">Y</label><input type="number" id="prop-pos-y" value="${posY}" step="0.01" class="pro-input" style="flex:1">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:12px;">
+                <div class="prop-col">
+                    <label style="font-size:9px; color:var(--accent)">BREADTH / LENGTH</label>
+                    <input type="number" id="prop-dim-width" value="${realWidth}" step="0.1" class="pro-input">
+                </div>
+                <div class="prop-col">
+                    <label style="font-size:9px; color:var(--accent)">HEIGHT / DEPTH</label>
+                    <input type="number" id="prop-dim-height" value="${realHeight}" step="0.1" class="pro-input">
+                </div>
+            </div>
+            <div style="margin-top:15px; border-top: 1px solid #444; padding-top: 10px;"><strong>Path Length:</strong> <span style="color: #00ff00; letter-spacing: 0.05em;">${realLen} mm</span></div>
+            ${item.data.type === 'circle' ? `<div class="prop-row" style="margin-top:5px;"><label>Radius (mm)</label><input type="number" id="prop-param-radius" value="${(item.bounds.width / 2 * sF).toFixed(4)}" step="0.01" class="pro-input"></div>` : ''}
+            ${item.data.type === 'gear' ? `
+                <div class="prop-row"><label>Teeth Count</label><input type="number" id="prop-gear-teeth" value="${item.data.teeth || 18}" class="pro-input"></div>
+                <div class="prop-row"><label>Module (m)</label><input type="number" id="prop-gear-module" value="${item.data.module || 5}" step="0.5" class="pro-input"></div>
+            ` : ''}
+            ${item.data.metadata ? `<div style="color: var(--accent); margin-top:8px; border-top: 1px solid #444; padding-top:8px;">${item.data.metadata}</div>` : ''}
+        </div>
+    `,
+    renderAdvancedMetrics: (props, material, thickness, library) => {
+        const density = library[material]?.density || 0.001;
+        const mass = props.area * thickness * density;
+        return `
+            <div style="margin-top:5px; border-top: 1px solid #444; padding-top:5px; font-size: 10px; color: #aaa;">
+                <div style="display:flex; justify-content:space-between"><strong>Area:</strong> <span>${props.area.toFixed(2)} mm²</span></div>
+                <div style="display:flex; justify-content:space-between"><strong>Mass:</strong> <span style="color:var(--accent)">${mass.toFixed(3)} g</span></div>
+                <div class="prop-row" style="margin-top:5px">
+                    <label>Material</label>
+                    <select id="prop-mech-material" class="pro-select-sm" style="width:100%">
+                        ${Object.keys(library).map(m => `<option value="${m}" ${m === material ? 'selected' : ''}>${m}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="prop-row">
+                    <label>Thickness (mm)</label>
+                    <input type="number" id="prop-mech-thickness" value="${thickness}" step="0.1" class="pro-input">
+                </div>
+            </div>
+        `;
+    },
+    renderActions: () => `
+        <div class="prop-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+           <button class="btn-action" id="btn-prop-smooth"><i data-prop-icon="sparkles"></i> Smooth</button>
+           <button class="btn-action" id="btn-prop-duplicate"><i data-prop-icon="copy"></i> Clone</button>
+        </div>
+        <button class="btn-primary" id="btn-delete-entity" style="background:#d32f2f; margin-top: 10px; width: 100%;"><i data-prop-icon="trash-2"></i> Delete Entity</button>
+    `
+};
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidWktcHJvcGVydGllcy10ZW1wbGF0ZXMuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi91aS1wcm9wZXJ0aWVzLXRlbXBsYXRlcy50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFFQTs7R0FFRztBQUNILE1BQU0sQ0FBQyxNQUFNLGlCQUFpQixHQUFHO0lBQzdCLFlBQVksRUFBRSxDQUFDLElBQUksRUFBRSxFQUFFLENBQUM7OzJFQUUrQyxJQUFJLENBQUMsV0FBVyxFQUFFOztLQUV4RjtJQUVELHNCQUFzQixFQUFFLENBQUMsSUFBSSxFQUFFLEVBQUU7UUFDN0IsSUFBSSxXQUFXLEdBQUcsRUFBRSxDQUFDO1FBQ3JCLE1BQU0sTUFBTSxHQUFHLElBQUksQ0FBQyxJQUFJLENBQUMsY0FBYyxDQUFDO1FBQ3hDLE1BQU0sS0FBSyxHQUFHLE1BQU0sS0FBSyxZQUFZLElBQUksTUFBTSxLQUFLLG1CQUFtQixDQUFDO1FBRXhFLHlDQUF5QztRQUN6QyxJQUFJLFlBQVksR0FBRyxJQUFJLENBQUM7UUFDeEIsSUFBSSxJQUFJLENBQUMsSUFBSSxDQUFDLGNBQWMsRUFBRSxVQUFVLENBQUMsUUFBUSxDQUFDLEVBQUUsQ0FBQztZQUNoRCxZQUFZLEdBQUcsSUFBSSxDQUFDLFFBQVEsQ0FBQyxJQUFJLENBQUMsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFDLENBQUMsSUFBSSxJQUFJLENBQUMsQ0FBQyxJQUFJLENBQUMsUUFBUSxDQUFDLENBQUM7UUFDdkUsQ0FBQzthQUFNLElBQUksS0FBSyxFQUFFLENBQUM7WUFDZCxZQUFZLEdBQUcsSUFBSSxDQUFDO1FBQ3pCLENBQUM7UUFFRCxJQUFJLFlBQVksRUFBRSxDQUFDO1lBQ2YsTUFBTSxLQUFLLEdBQUcsWUFBWSxDQUFDLElBQUksQ0FBQyxLQUFLLENBQUM7WUFDdEMsTUFBTSxXQUFXLEdBQUcsWUFBWSxDQUFDLElBQUksQ0FBQyxVQUFVLElBQUksQ0FBQyxDQUFDO1lBQ3RELElBQUksS0FBSyxLQUFLLEVB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

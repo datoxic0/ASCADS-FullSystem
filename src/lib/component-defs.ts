@@ -58,6 +58,15 @@ export const GATE_CATEGORIES: PaletteCategory[] = [
     ],
   },
   {
+    label: "Quantum Logic",
+    items: [
+      { kind: "Q_HADAMARD", name: "Hadamard (H)" },
+      { kind: "Q_PAULI_X", name: "Pauli-X (X)" },
+      { kind: "Q_CNOT", name: "CNOT" },
+      { kind: "Q_MEASURE", name: "Measure" },
+    ],
+  },
+  {
     label: "Combinational Blocks",
     items: [
       { kind: "MUX2", name: "2:1 Mux" },
@@ -127,7 +136,9 @@ const COMBINATIONAL_KINDS = new Set<GateKind>([
   "MUX2", "MUX4", "DEMUX2", "DEC2",
   "HALFADDER", "FULLADDER",
   "DEC38", "ENC83", "ALU4",
-  "VALVE_3_2", "VALVE_5_2"
+  "VALVE_3_2", "VALVE_5_2",
+  // Quantum Logic (Phase 19)
+  "Q_HADAMARD", "Q_PAULI_X", "Q_CNOT", "Q_MEASURE"
 ]);
 
 const STATEFUL_KINDS = new Set<GateKind>([
@@ -164,7 +175,8 @@ export function defaultLabel(kind: GateKind): string | undefined {
 
 export function defaultInputs(kind: GateKind): number {
   if (isVariableInputKind(kind)) return 2;
-  if (kind === "NOT" || kind === "BUFFER") return 1;
+  if (kind === "NOT" || kind === "BUFFER" || kind === "Q_HADAMARD" || kind === "Q_PAULI_X" || kind === "Q_MEASURE") return 1;
+  if (kind === "Q_CNOT") return 2;
   return 0;
 }
 
@@ -215,6 +227,12 @@ export function sizeOf(g: Pick<Gate, "kind" | "inputs">): { w: number; h: number
       return { w: 60, h: 70 };
     case "MUX4":
       return { w: 70, h: 110 };
+    case "Q_HADAMARD":
+    case "Q_PAULI_X":
+    case "Q_MEASURE":
+      return { w: GRID * 4, h: GRID * 4 };
+    case "Q_CNOT":
+      return { w: GRID * 6, h: GRID * 6 };
     case "DEMUX2":
       return { w: 60, h: 70 };
     case "DEC2":
@@ -521,6 +539,20 @@ export function pinsFor(g: Pick<Gate, "kind" | "inputs">): Pin[] {
         { x: 0, y: h * 0.3, type: "in", label: "A" },
         { x: 0, y: h * 0.7, type: "in", label: "B" },
       ];
+    case "Q_HADAMARD":
+    case "Q_PAULI_X":
+    case "Q_MEASURE":
+      return [
+        { x: 0, y: h / 2, type: "in", label: "Q" },
+        { x: w, y: h / 2, type: "out", label: "Q'" }
+      ];
+    case "Q_CNOT":
+      return [
+        { x: 0, y: h * 0.3, type: "in", label: "Ctrl" },
+        { x: 0, y: h * 0.7, type: "in", label: "Targ" },
+        { x: w, y: h * 0.3, type: "out", label: "Ctrl'" },
+        { x: w, y: h * 0.7, type: "out", label: "Targ'" }
+      ];
     /* Variable input logic gates */
     default: {
       const n = Math.max(2, g.inputs);
@@ -588,6 +620,21 @@ export function evaluateGate(kind: GateKind, inputs: Signal[]): Signal[] {
       const a = reduceXor(inputs);
       return [a === "X" ? "X" : a === 0 ? 1 : 0];
     }
+    case "Q_HADAMARD":
+      // Pseudo-random evaluation (monte-carlo superposition)
+      // We pass through X if unknown
+      if (inputs[0] === "X") return ["X"];
+      return [Math.random() > 0.5 ? 1 : 0];
+    case "Q_PAULI_X":
+      if (inputs[0] === "X") return ["X"];
+      return [inputs[0] === 1 ? 0 : 1];
+    case "Q_CNOT":
+      // inputs[0] is Ctrl, inputs[1] is Targ
+      // output[0] is Ctrl (passthrough), output[1] is Targ ^ Ctrl
+      if (inputs[0] === "X" || inputs[1] === "X") return ["X", "X"];
+      return [inputs[0], inputs[0] === 1 ? (inputs[1] === 1 ? 0 : 1) : inputs[1]];
+    case "Q_MEASURE":
+      return [inputs[0] ?? "X"];
     case "TRI": {
       const [d, en] = inputs;
       if (en === 1) return [d ?? "X"];

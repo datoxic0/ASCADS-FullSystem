@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Box, Layers, Grid, Plus, MousePointer2, Move, Save, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { RobotDesignConfig } from './types';
+import { EcosystemTranslator } from '@/lib/EcosystemTranslator';
 
 interface Props {
   robotDesign: RobotDesignConfig;
@@ -110,6 +112,36 @@ export default function EnvironmentBuilder({ robotDesign, setRobotDesign, object
                 <span className="text-[9px] font-bold">Conveyor</span>
               </button>
             </div>
+          </div>
+
+          <div className="pt-4 border-t border-emerald-300 dark:border-white/5 space-y-2">
+            <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Bridge</label>
+            <button 
+              onClick={() => {
+                const payloadStr = localStorage.getItem('ascads_bridge_engigraph_robot');
+                if (payloadStr) {
+                  try {
+                    const payload = JSON.parse(payloadStr);
+                    const importedObjects = EcosystemTranslator.engigraphToRoboticsEnv(payload);
+                    if (importedObjects.length > 0) {
+                      setObjects([...objects, ...importedObjects]);
+                      setSelectedObjectId(importedObjects[0].id);
+                      toast.success(`Successfully imported ${importedObjects.length} CAD structures from EngiGraph!`);
+                    } else {
+                      toast.error('No structures found in the EngiGraph export.');
+                    }
+                  } catch (err) {
+                    toast.error('Failed to parse EngiGraph CAD data.');
+                  }
+                } else {
+                  toast.error('No EngiGraph CAD export found. Please export from EngiGraph Pro first.');
+                }
+              }}
+              className="w-full flex items-center justify-center p-2 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 rounded text-[10px] font-bold text-purple-400 transition-colors"
+            >
+              <Layers className="w-4 h-4 mr-1.5" />
+              Import from EngiGraph CAD
+            </button>
           </div>
         </div>
       </div>

@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { toast } from "sonner";
 
 import {
   LineChart,
@@ -107,6 +108,7 @@ const INITIAL_STATE: LadderState = {
 
 import { IOSimulator } from "@/components/plc/IOSimulator";
 import type { AnalogProject } from "@/lib/analog-types";
+import { EcosystemTranslator } from "@/lib/EcosystemTranslator";
 
 export default function PLCPage({ project, onProjectChange }: { project?: AnalogProject, onProjectChange?: (p: AnalogProject) => void }) {
   const [state, setState] = useState<LadderState>(() => {
@@ -985,7 +987,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
   };
 
   return (
-    <div className="flex flex-col h-full w-full font-sans overflow-hidden bg-[#07080b] text-slate-200 select-none">
+    <div className="flex flex-col h-full w-full bg-[#090a0d] text-slate-300 font-sans selection:bg-sky-500/30 overflow-hidden relative">
       {/* System Status Bar (Topmost) */}
       <div className="h-7 bg-[#090a0d] flex items-center justify-between px-6 text-[10px] font-medium tracking-tight border-b border-white/5 text-zinc-400 shrink-0 z-[60]">
         <div className="flex items-center gap-6">
@@ -1060,8 +1062,8 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
       </div>
 
       {/* Main Header / View Selector */}
-      <header className="h-11 bg-[#090a0d]/90 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 shrink-0 z-50 text-slate-200">
-        <div className="flex items-center gap-8">
+      <header className="h-auto min-h-11 py-2 lg:py-0 bg-[#090a0d]/90 backdrop-blur-xl border-b border-white/5 flex flex-wrap lg:flex-nowrap items-center justify-between px-2 sm:px-6 shrink-0 z-50 text-slate-200 overflow-x-auto custom-scrollbar gap-2 lg:gap-0 w-full">
+        <div className="flex items-center gap-2 sm:gap-8 min-w-max">
           <div className="flex items-center gap-3">
             <div className="bg-sky-600 p-1.5 rounded-lg shadow-lg">
               <Zap size={14} className="text-white fill-white" />
@@ -1436,7 +1438,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                       <>
                         <button
                           onClick={() => {
-                            alert(
+                            toast.success(
                               "VoltLogic Pro Industrial Studio v5.0\nEngine: VoltV7000-RT",
                             );
                             setActiveMenu(null);
@@ -1465,8 +1467,8 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-0.5 bg-[#12141c] px-1 py-0.5 rounded-lg border border-white/5 mr-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-max">
+          <div className="flex items-center gap-0.5 bg-[#12141c] px-1 py-0.5 rounded-lg border border-white/5 mr-0 sm:mr-2">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className={cn(
@@ -1531,13 +1533,19 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
       <div className="flex-1 flex overflow-hidden">
         <AnimatePresence>
           {isSidebarOpen && (
-            <div className="flex shrink-0">
+            <>
+              {/* Mobile Backdrop */}
+              <div 
+                className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+              <div className="flex shrink-0 absolute inset-y-0 left-0 z-40 lg:relative h-full">
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: sidebarWidth, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ type: "tween", duration: 0 }}
-                className="bg-[#0d0f14] border-r border-white/10 flex flex-col overflow-hidden"
+                className="bg-[#0d0f14] border-r border-white/10 flex flex-col overflow-hidden h-full shadow-[20px_0_50px_rgba(0,0,0,0.5)] lg:shadow-none"
               >
                 <Sidebar
                   onAddNode={(type) => setPlacementType(type)}
@@ -1554,16 +1562,23 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                 <div className="w-[1px] h-10 bg-white/10 group-hover:bg-sky-400 opacity-50" />
               </div>
             </div>
+            </>
           )}
 
           {showIOSim && (
-            <div className="flex shrink-0">
+            <>
+              {/* Mobile Backdrop */}
+              <div 
+                className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+                onClick={() => setShowIOSim(false)}
+              />
+              <div className="flex shrink-0 absolute inset-y-0 right-0 lg:left-0 z-40 lg:relative h-full">
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: ioSimulatorWidth, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ type: "tween", duration: 0 }}
-                className="bg-[#0c0d12] border-r border-white/10 flex flex-col overflow-hidden h-full"
+                className="bg-[#0c0d12] border-r border-white/10 flex flex-col overflow-hidden h-full shadow-[20px_0_50px_rgba(0,0,0,0.5)] lg:shadow-none"
               >
                 <IOSimulator
                   state={state}
@@ -1579,6 +1594,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                 <div className="w-[1px] h-10 bg-white/10 group-hover:bg-sky-400 opacity-50" />
               </div>
             </div>
+            </>
           )}
         </AnimatePresence>
 
@@ -1603,79 +1619,43 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                 onSearch={handleSearch}
                 onImportBridge={() => {
                   try {
-                    const rawDigital = localStorage.getItem('ascads_bridge_digital_plc');
-                    if (!rawDigital) {
-                      alert('No Bridge logic found from Digital Logic Lab.');
+                    // Try to get from Digital or Analog
+                    let raw = localStorage.getItem('ascads_bridge_digital_plc');
+                    if (!raw) {
+                      raw = localStorage.getItem('ascads_bridge_analog_plc');
+                    }
+                    if (!raw) {
+                      toast.error('No Bridge logic found from Digital, Analog, or Robot Labs.');
                       return;
                     }
-                    const bridge = JSON.parse(rawDigital);
-                    const { rungs } = bridge;
+                    const bridge = JSON.parse(raw);
                     
-                    setState(prev => {
-                      const newNodes = [...prev.nodes];
-                      
-                      let nextY = prev.nodes.length > 0 ? Math.max(...prev.nodes.map(n => n.y)) + RUNG_HEIGHT : RUNG_HEIGHT / 2 - NODE_HEIGHT / 2;
-                      
-                      rungs.forEach((rung: any) => {
-                        let cx = LEFT_RAIL_X + 60;
-                        rung.nodes.forEach((n: any) => {
-                           const isOte = n.type === 'OTE';
-                           newNodes.push({
-                              id: `bridge-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                              type: isOte ? 'coil' : 'contact-no',
-                              x: isOte ? RIGHT_RAIL_X - NODE_WIDTH - 20 : cx,
-                              y: nextY,
-                              width: NODE_WIDTH, height: NODE_HEIGHT,
-                              tag: n.label, address: n.address
-                           });
-                           if (!isOte) cx += NODE_WIDTH + 40;
-                        });
-                        nextY += RUNG_HEIGHT;
+                    if (bridge.nodes && bridge.wires) {
+                      // It's a LadderState
+                      setState(prev => {
+                        let nextY = prev.nodes.length > 0 ? Math.max(...prev.nodes.map(n => n.y)) + RUNG_HEIGHT : RUNG_HEIGHT / 2 - NODE_HEIGHT / 2;
+                        const offsetY = nextY - 96; // 96 is rung 0
+                        const newNodes = bridge.nodes.map((n: any) => ({ ...n, id: `bridge-${Date.now()}-${n.id}`, y: n.y + offsetY }));
+                        const newWires = bridge.wires.map((w: any) => ({ ...w, id: `bridge-${Date.now()}-${w.id}`, fromId: `bridge-${Date.now()}-${w.fromId}`, toId: `bridge-${Date.now()}-${w.toId}` }));
+                        return { ...prev, nodes: [...prev.nodes, ...newNodes], wires: [...prev.wires, ...newWires] };
                       });
-                      
-                      return { ...prev, nodes: newNodes };
-                    });
+                    }
                     
-                    alert('Bridge Import Successful!');
+                    toast.success('Bridge Import Successful!');
                     playSuccess();
                   } catch (e) {
-                    alert('Failed to parse bridge data.');
+                    toast.error('Failed to parse bridge data.');
                     console.error(e);
                   }
                 }}
                 onExportBridge={() => {
-                  const rungsMap = new Map<number, any[]>();
-                  state.nodes.forEach(n => {
-                     if (!rungsMap.has(n.y)) rungsMap.set(n.y, []);
-                     let type = 'XIC';
-                     if (n.type === 'coil') type = 'OTE';
-                     else if (n.type.includes('nc')) type = 'XIO';
-                     rungsMap.get(n.y)!.push({ type, address: n.address || '', label: n.tag || '' });
-                  });
-                  const rungs = Array.from(rungsMap.entries()).sort((a,b) => a[0] - b[0]).map(([y, nodes]) => ({ nodes, comment: `Exported Rung` }));
-                  const tags = Array.from(new Set(state.nodes.map(n => n.address))).map(addr => {
-                    const node = state.nodes.find(n => n.address === addr);
-                    return { address: addr, tag: node?.tag || 'UNNAMED', type: 'BOOL' };
-                  });
-                  // Generate Digital Bridge using the same logic as plcToDigital
-                  const gates: any = {};
-                  const wires: any = {};
-                  let col = 0;
-                  const mapping: any[] = [];
-                  for (const rung of rungs) {
-                    const xicNodes = rung.nodes.filter(n => n.type === 'XIC' || n.type === 'XIO');
-                    const oteNode = rung.nodes.find(n => n.type === 'OTE');
-                    if (xicNodes.length === 0 || !oteNode) continue;
-                    const gateId = `gate_${col}`;
-                    const kind = xicNodes.length > 1 ? 'AND' : 'NOT';
-                    gates[gateId] = { id: gateId, kind, x: 80 + col * 140, y: 80, inputs: xicNodes.length, label: `${oteNode.label} (${kind})` };
-                    mapping.push({ gateId, plcAddress: oteNode.address, logic: `${xicNodes.map(n => n.label).join(' && ')} -> ${oteNode.label}` });
-                    col++;
-                  }
+                  const digitalCircuit = EcosystemTranslator.plcToDigital(state);
+                  localStorage.setItem('ascads_bridge_plc_digital', JSON.stringify(digitalCircuit));
                   
-                  const bridgeData = { circuit: { gates, wires }, description: 'Exported from PLC', mapping };
-                  localStorage.setItem('ascads_bridge_plc_digital', JSON.stringify(bridgeData));
-                  alert('Exported to Digital Logic Bridge!');
+                  const analogDesign = EcosystemTranslator.plcToAnalog(state);
+                  localStorage.setItem('ascads_bridge_plc_analog', JSON.stringify(analogDesign));
+
+                  toast.success('Exported to Digital and Analog Logic Bridges!');
                   playSuccess();
                 }}
               />
@@ -2456,7 +2436,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
 
         <AnimatePresence>
           {isPropertyOpen && (
-            <div className="flex shrink-0">
+            <div className="flex shrink-0 absolute inset-y-0 right-0 z-40 lg:relative">
               {/* Resizer Handle Right */}
               <div
                 onMouseDown={() => startResizing("inspector")}
@@ -2470,7 +2450,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                 animate={{ width: inspectorWidth, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ type: "tween", duration: 0 }}
-                className="bg-[#12141a] border-l border-white/10 flex flex-col overflow-hidden"
+                className="bg-[#12141a] border-l border-white/10 flex flex-col overflow-hidden h-full shadow-[-20px_0_50px_rgba(0,0,0,0.5)] lg:shadow-none"
               >
                 <PropertyInspector
                   selectedNode={
@@ -2492,7 +2472,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
       </div>
 
       {/* Final System Footer */}
-      <footer className="h-12 md:h-8 bg-[#090b0e] border-t border-white/10 flex flex-col md:flex-row items-center justify-between px-6 py-2 md:py-0 text-[10px] font-mono text-zinc-500 shrink-0 select-none gap-1.5 md:gap-0">
+      <footer className="hidden lg:flex h-12 md:h-8 bg-[#090b0e] border-t border-white/10 flex-col md:flex-row items-center justify-between px-6 py-2 md:py-0 text-[10px] font-mono text-zinc-500 shrink-0 select-none gap-1.5 md:gap-0">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_8px_#0087ff]" />

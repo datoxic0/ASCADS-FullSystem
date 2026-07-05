@@ -4,6 +4,7 @@ import Plotly from 'plotly.js-dist-min';
 // @ts-ignore
 import createPlotlyComponent from 'react-plotly.js/factory';
 const Plot = createPlotlyComponent(Plotly);
+import { toast } from 'sonner';
 import { MathWorkspace, MathBlockResult } from '../lib/mathEngine';
 import { DSPEngine } from '../lib/dspEngine';
 import { ControlEngine } from '../lib/controlEngine';
@@ -70,8 +71,34 @@ export default function App() {
   const [regressionEnabled, setRegressionEnabled] = useState(false);
 
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(380);
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [range, setRange] = useState({ min: -10, max: 10, steps: 300 });
+
+  const startResizing = (e: React.MouseEvent | React.TouchEvent) => {
+    // e.preventDefault(); // Don't prevent default to allow scrolling if user touches outside the handle
+    const isTouch = 'touches' in e;
+    const startX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const startWidth = sidebarWidth;
+
+    const doDrag = (dragEvent: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in dragEvent ? dragEvent.touches[0].clientX : (dragEvent as MouseEvent).clientX;
+      const newWidth = Math.max(250, Math.min(startWidth + (clientX - startX), window.innerWidth - 50));
+      setSidebarWidth(newWidth);
+    };
+
+    const stopDrag = () => {
+      document.removeEventListener('mousemove', doDrag as EventListener);
+      document.removeEventListener('mouseup', stopDrag);
+      document.removeEventListener('touchmove', doDrag as EventListener);
+      document.removeEventListener('touchend', stopDrag);
+    };
+
+    document.addEventListener('mousemove', doDrag as EventListener);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', doDrag as EventListener, { passive: true });
+    document.addEventListener('touchend', stopDrag);
+  };
 
   const analysisVariable = useMemo(() => {
     if (mode === 'Polar' || mode === 'Parametric') return 't';
@@ -766,10 +793,10 @@ export default function App() {
       {/* Sidebar Controls (Notebook Style) */}
       <motion.aside
         initial={false}
-        animate={{ width: isSidebarOpen ? 380 : 0, opacity: isSidebarOpen ? 1 : 0 }}
-        className="relative h-full bg-[#0b0c13]/90 backdrop-blur-3xl border-r border-white/10 z-20 flex-shrink-0 flex flex-col overflow-hidden shadow-[10px_0_30px_rgba(0,0,0,0.5)]"
+        animate={{ width: isSidebarOpen ? (window.innerWidth < 768 ? '100%' : sidebarWidth) : 0, opacity: isSidebarOpen ? 1 : 0 }}
+        className="relative h-full bg-[#0b0c13]/90 backdrop-blur-3xl border-r border-white/10 z-50 flex-shrink-0 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.5)] md:z-20 md:static absolute inset-y-0 left-0"
       >
-        <div className="p-4 flex-1 flex flex-col gap-6 w-[380px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+        <div className="p-4 flex-1 flex flex-col gap-6 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-white/10" style={{ width: window.innerWidth < 768 ? '100%' : sidebarWidth }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-xl text-indigo-400 border border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
@@ -824,12 +851,24 @@ export default function App() {
               <label className="text-[10px] font-mono uppercase tracking-widest opacity-60 flex items-center gap-1.5">
                 <FunctionSquare size={12} /> Computation Blocks
               </label>
-              <button 
-                onClick={addBlock}
-                className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1 text-[9px] uppercase tracking-widest"
-              >
-                <Plus size={10}/> Add Block
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    localStorage.setItem('ascads_bridge_maths_analog', JSON.stringify(workspace.scope));
+                    toast.success('Exported mathematical variables to the Universal Bridge!');
+                  }}
+                  className="px-2 py-1 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30 rounded flex items-center gap-1 text-[9px] uppercase tracking-widest transition-all"
+                  title="Export computed variables (e.g. G, M, R, L, C) to Analog or PLC"
+                >
+                  <Share size={10} /> Push to Bridge
+                </button>
+                <button 
+                  onClick={addBlock}
+                  className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded flex items-center gap-1 text-[9px] uppercase tracking-widest transition-all"
+                >
+                  <Plus size={10}/> Add Block
+                </button>
+              </div>
             </div>
 
             {/* Quick Insert Ribbon */}
@@ -1001,6 +1040,17 @@ export default function App() {
 
         </div>
       </motion.aside>
+
+      {/* Resizer Handle */}
+      {isSidebarOpen && (
+        <div
+          onMouseDown={startResizing}
+          onTouchStart={startResizing}
+          className="hidden md:flex w-2 lg:w-1.5 h-full bg-transparent hover:bg-indigo-500/50 cursor-col-resize transition-colors items-center justify-center group z-30 shrink-0 border-r border-white/5"
+        >
+          <div className="w-[1px] h-10 bg-white/20 group-hover:bg-indigo-400 opacity-50" />
+        </div>
+      )}
 
       {/* Main Plot Area */}
       <main className="flex-1 relative flex flex-col min-w-0 bg-[#0d0e12]">

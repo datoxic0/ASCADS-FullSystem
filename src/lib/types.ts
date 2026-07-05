@@ -44,6 +44,11 @@ export type GateKind =
   // Sequential / display
   | "COUNTER4"
   | "SEG7"
+  // Quantum Logic (Phase 19)
+  | "Q_HADAMARD"
+  | "Q_PAULI_X"
+  | "Q_CNOT"
+  | "Q_MEASURE"
   // Interactive I/O
   | "BUTTON"   // momentary push button
   | "RGBLED"   // RGB LED (3 inputs: R, G, B)
@@ -104,6 +109,7 @@ export type Wire = {
   waypoints?: { x: number, y: number }[];
   color?: string;
   thickness?: number;
+  isEntangled?: boolean; // Quantum Phase 19
 };
 
 export type Circuit = {
@@ -143,7 +149,8 @@ export type Selection = {
 export type ToolMode =
   | { kind: "select" }
   | { kind: "place"; gateKind: GateKind; inputs?: number }
-  | { kind: "wire"; from: WireEnd; cursor: { x: number; y: number } };
+  | { kind: "wire"; from: WireEnd; cursor: { x: number; y: number } }
+  | { kind: "entangle"; from: WireEnd; cursor: { x: number; y: number } };
 
 export type ViewState = {
   tx: number;

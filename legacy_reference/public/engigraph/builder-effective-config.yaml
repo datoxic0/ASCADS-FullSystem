@@ -1,0 +1,10 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.engigraph.pro
+productName: EngiGraph Pro
+win:
+  target: portable
+  icon: EngiGraphLogo.png
+files: []
+electronVersion: 30.5.1

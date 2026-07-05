@@ -20,6 +20,7 @@ type Props = {
   onDeleteSelection: () => void;
   onClearSelection: () => void;
   simulation?: SimulationResult;
+  onClose?: () => void;
 };
 
 export function Inspector({
@@ -29,6 +30,7 @@ export function Inspector({
   onDeleteSelection,
   onClearSelection,
   simulation,
+  onClose,
 }: Props) {
   const selectedGateIds = Array.from(selection.gates);
   const selectedWireCount = selection.wires.size;
@@ -100,25 +102,23 @@ export function Inspector({
     const sigLabel = wireSig === 1 ? "HIGH (1)" : wireSig === 0 ? "LOW (0)" : "Unknown (X)";
     return (
       <aside className="w-72 shrink-0 border-l border-indigo-500/20 shadow-[-4px_0_30px_rgba(0,0,0,0.5)] bg-slate-950/80 backdrop-blur-md flex flex-col relative z-40">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <div>
-            <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              Wire
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-black/40 shadow-sm shrink-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <X className="w-4 h-4 text-muted-foreground shrink-0" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">
+              Selection
             </h2>
-            <p className="text-[11px] text-muted-foreground/80 mt-0.5">
-              Carries a single bit between an output and an input.
-            </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={onClearSelection}
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
+          {onClose && (
+            <Button variant="ghost" size="icon" className="h-6 w-6 xl:hidden shrink-0 ml-2" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         <div className="flex-1 px-4 py-4 space-y-4">
+          <p className="text-[11px] text-muted-foreground/80 mt-0.5">
+              Carries a single bit between an output and an input.
+          </p>
           {simulation && (
             <div className="flex items-center justify-between rounded-md border border-border/70 bg-muted/30 px-3 py-2">
               <span className="text-xs text-muted-foreground">Signal</span>
@@ -167,25 +167,30 @@ export function Inspector({
 
   return (
     <aside className="w-72 shrink-0 border-l border-indigo-500/20 shadow-[-4px_0_30px_rgba(0,0,0,0.5)] bg-slate-950/80 backdrop-blur-md flex flex-col relative z-40">
-      <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-        <div>
-          <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            {gate.kind}
-          </h2>
-          <p className="text-[11px] text-muted-foreground/80 mt-0.5 leading-snug max-w-[14rem]">
-            {KIND_DESCRIPTIONS[gate.kind]}
-          </p>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-black/40 shadow-sm shrink-0">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div>
+            <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              {gate.kind}
+            </h2>
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 shrink-0"
-          onClick={onClearSelection}
-        >
-          <X className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            onClick={onClearSelection}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+          {onClose && (
+            <Button variant="ghost" size="icon" className="h-6 w-6 xl:hidden shrink-0" onClick={onClose}>
+              <X className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
+        </div>
       </div>
-
       <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-4 space-y-4">
         {hasLabel && (
           <div>

@@ -19,7 +19,7 @@ import { useProjects } from './hooks/useProjects';
 import { SidebarTab } from './types';
 import { audioEngine } from './services/audioEngine';
 import { jsPDF } from 'jspdf';
-import { Cpu, Share2, Save, Menu, X, ChevronDown, FileText, Activity, Shield, Box, Zap, Globe, Github, Facebook, MessageSquare, Twitter, GitBranch, Braces } from 'lucide-react';
+import { Cpu, Share2, Save, Menu, X, ChevronDown, FileText, Activity, Shield, Box, Zap, Globe, Github, Facebook, MessageSquare, Twitter, GitBranch, Braces, LayoutGrid } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type View = 'PROJECTS' | 'DESIGN' | 'SIMULATION' | 'BOM' | 'LAYOUT' | 'LADDER' | 'LOGIC';
@@ -27,6 +27,7 @@ type View = 'PROJECTS' | 'DESIGN' | 'SIMULATION' | 'BOM' | 'LAYOUT' | 'LADDER' |
 export default function App() {
   const [view, setView] = useState<View>('PROJECTS');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState('Untitled Matrix');
   const stageRef = useRef<any>(null);
@@ -90,6 +91,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<SidebarTab>('LIBRARY');
   const [isFFTEnabled, setIsFFTEnabled] = useState(false);
   const [tick, setTick] = useState(0);
+  const scopeHistory = useRef<{ ch1: number[]; ch2: number[]; }>({ ch1: [], ch2: [] });
 
   useEffect(() => {
     if (!isSimulating) return;
@@ -238,9 +240,9 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-300 font-sans selection:bg-indigo-500 selection:text-white overflow-hidden border-2 border-slate-900">
+    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-300 font-sans selection:bg-indigo-500 selection:text-white overflow-hidden border-2 border-slate-900">
       {/* Cinematic Header */}
-      <header className="h-16 border-b border-white/5 flex items-center px-8 justify-between bg-slate-900/40 backdrop-blur-3xl z-30 shadow-2xl relative">
+      <header className="h-16 border-b border-white/5 flex items-center px-4 sm:px-8 justify-between bg-slate-900/40 backdrop-blur-3xl z-30 shadow-2xl relative overflow-x-auto custom-scrollbar">
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-30" />
         
         <div className="flex items-center gap-12">
@@ -267,7 +269,7 @@ export default function App() {
             </div>
           </div>
 
-          <nav className="hidden xl:flex items-center gap-2 overflow-x-auto max-w-2xl scrollbar-hide">
+          <nav className="flex items-center gap-2 overflow-x-auto max-w-2xl custom-scrollbar py-2">
             {(['PROJECTS', 'DESIGN', 'SIMULATION', 'BOM', 'LAYOUT', 'LADDER', 'LOGIC'] as View[]).map((v) => (
               <button
                 key={v}
@@ -286,8 +288,9 @@ export default function App() {
               </button>
             ))}
           </nav>
-        </div>
-        
+          
+          </div>
+
         <div className="flex items-center gap-6 shrink-0">
           <div className="hidden lg:flex items-center gap-4 bg-slate-950/80 px-5 py-2 rounded-2xl border border-white/5 shadow-inner">
              <Shield size={14} className="text-indigo-400" />
@@ -313,6 +316,15 @@ export default function App() {
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-slate-800 to-indigo-900 border border-white/10 flex items-center justify-center text-[12px] font-black text-white shadow-2xl ring-4 ring-indigo-600/10 shrink-0">
                SP
             </div>
+            {(view === 'DESIGN' || view === 'SIMULATION') && (
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className={`lg:hidden w-10 h-10 flex items-center justify-center rounded-xl transition-all border shrink-0 ${isSidebarOpen ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'}`}
+                title="Toggle Sidebar"
+              >
+                <LayoutGrid size={18} />
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -356,6 +368,16 @@ export default function App() {
                 onZoomIn={() => canvasRef.current?.zoomIn()}
                 onZoomOut={() => canvasRef.current?.zoomOut()}
                 onZoomFit={() => canvasRef.current?.zoomFit()}
+                onToggleSwitch={() => {
+                  if (selectedId) {
+                    const comp = design.components.find((c: any) => c.id === selectedId);
+                    if (comp && comp.type === 'SWITCH') {
+                      const currentState = comp.properties?.state || 'Open';
+                      const newState = currentState === 'Open' ? 'Closed' : 'Open';
+                      updateComponent(selectedId, { properties: { ...comp.properties, state: newState } });
+                    }
+                  }
+                }}
               />
               
               <main className="flex-1 flex flex-col relative group min-w-0">
@@ -457,21 +479,42 @@ export default function App() {
                 </AnimatePresence>
               </main>
 
-              <Sidebar 
-                onAddComponent={(type) => {
-                  const x = stageRef.current ? (-stageRef.current.x() + stageRef.current.width() / 2) / stageRef.current.scaleX() : 100;
-                  const y = stageRef.current ? (-stageRef.current.y() + stageRef.current.height() / 2) / stageRef.current.scaleY() : 100;
-                  addComponent(type, x, y);
-                  setActiveTab('PROPERTIES');
-                }}
-                selectedComponentId={selectedId}
-                design={design}
-                onUpdateProperties={updateComponent}
-                isSimulating={isSimulating || view === 'SIMULATION'}
-                onToggleSimulation={toggleSimulation}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              />
+              <AnimatePresence>
+                {isSidebarOpen && (
+                  <>
+                    {/* Mobile Backdrop */}
+                    <div 
+                      className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+                      onClick={() => setIsSidebarOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: window.innerWidth > 1024 ? 320 : Math.min(320, window.innerWidth - 48), opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ type: "tween", duration: 0.2 }}
+                      className="flex shrink-0 absolute inset-y-0 right-0 z-40 lg:relative h-full"
+                    >
+                      <Sidebar 
+                        onAddComponent={(type) => {
+                          const x = stageRef.current ? (-stageRef.current.x() + stageRef.current.width() / 2) / stageRef.current.scaleX() : 100;
+                          const y = stageRef.current ? (-stageRef.current.y() + stageRef.current.height() / 2) / stageRef.current.scaleY() : 100;
+                          addComponent(type, x, y);
+                          setActiveTab('PROPERTIES');
+                          if (window.innerWidth <= 1024) setIsSidebarOpen(false);
+                        }}
+                        selectedComponentId={selectedId}
+                        design={design}
+                        onUpdateProperties={updateComponent}
+                        isSimulating={isSimulating || view === 'SIMULATION'}
+                        onToggleSimulation={toggleSimulation}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        scopeHistory={scopeHistory}
+                      />
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </motion.div>
           ) : view === 'BOM' ? (
             <motion.div

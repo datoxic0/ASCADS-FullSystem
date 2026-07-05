@@ -5,15 +5,17 @@ import { GateBody } from "./GateBody";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Search, X, ChevronDown } from "lucide-react";
 
 type Props = {
   style: SymbolStyle;
   onClickPlace?: (kind: GateKind) => void;
   activeKind?: GateKind | null;
+  onClose?: () => void;
 };
 
-export function Palette({ style, onClickPlace, activeKind }: Props) {
+export function Palette({ style, onClickPlace, activeKind, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -31,15 +33,22 @@ export function Palette({ style, onClickPlace, activeKind }: Props) {
   }, [q]);
 
   return (
-    <aside className="w-60 shrink-0 border-r border-border bg-sidebar/80 backdrop-blur-sm flex flex-col">
+    <aside className="h-full w-60 shrink-0 border-r border-border bg-sidebar/80 backdrop-blur-sm flex flex-col">
       <div className="px-3 py-3 border-b border-border space-y-2">
-        <div>
-          <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            Components
-          </h2>
-          <p className="text-[11px] text-muted-foreground/80 mt-0.5">
-            Drag onto the workspace
-          </p>
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              Components
+            </h2>
+            <p className="text-[11px] text-muted-foreground/80 mt-0.5">
+              Drag onto the workspace
+            </p>
+          </div>
+          {onClose && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 xl:hidden shrink-0" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />

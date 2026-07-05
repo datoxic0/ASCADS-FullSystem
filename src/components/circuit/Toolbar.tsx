@@ -42,6 +42,11 @@ import {
   Tag,
   Zap,
   FunctionSquare,
+  Blocks,
+  Hand,
+  MousePointer2,
+  PanelRight,
+  Power,
 } from "lucide-react";
 import type { SymbolStyle } from "@/lib/types";
 import { Logo } from "./Logo";
@@ -81,6 +86,12 @@ type Props = {
   onImportExpr: () => void;
   onExportToPLC?: () => void;
   onImportFromPLC?: () => void;
+  onExportToAnalog?: () => void;
+  isPaletteOpen?: boolean;
+  onTogglePalette?: () => void;
+  isInspectorOpen?: boolean;
+  onToggleInspector?: () => void;
+  onToggleSwitch?: () => void;
 };
 
 export function Toolbar({
@@ -118,6 +129,12 @@ export function Toolbar({
   onImportExpr,
   onExportToPLC,
   onImportFromPLC,
+  onExportToAnalog,
+  isPaletteOpen,
+  onTogglePalette,
+  isInspectorOpen,
+  onToggleInspector,
+  onToggleSwitch,
 }: Props) {
   const [editName, setEditName] = useState(circuitName);
   useEffect(() => setEditName(circuitName), [circuitName]);
@@ -240,6 +257,93 @@ export function Toolbar({
       </div>
 
       <Separator orientation="vertical" className="h-6" />
+
+      {/* Palette Toggle */}
+      {onTogglePalette && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={isPaletteOpen ? "secondary" : "ghost"}
+              size="icon"
+              className="xl:hidden h-8 w-8 text-indigo-400 hover:text-indigo-300"
+              onClick={onTogglePalette}
+            >
+              <Blocks className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Toggle Components Palette</TooltipContent>
+        </Tooltip>
+      )}
+
+      {/* Properties Toggle */}
+      {onToggleInspector && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={isInspectorOpen ? "secondary" : "ghost"}
+              size="icon"
+              className="xl:hidden h-8 w-8 text-emerald-400 hover:text-emerald-300"
+              onClick={onToggleInspector}
+              data-testid="button-toggle-inspector"
+            >
+              <PanelRight className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Toggle Properties Panel</TooltipContent>
+        </Tooltip>
+      )}
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Move / Pan */}
+      <div className="flex items-center gap-0.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 text-indigo-400"
+            >
+              <MousePointer2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Select / Move Mode (V)</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-slate-400"
+            >
+              <Hand className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Pan Mode (H or Space)</TooltipContent>
+        </Tooltip>
+      </div>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Action / Toggle Switch */}
+      {onToggleSwitch && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-8 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
+              onClick={onToggleSwitch}
+              data-testid="button-toggle-switch"
+            >
+              <Power className="h-3.5 w-3.5" />
+              Toggle Switch
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Toggle Selected Switch (T)</TooltipContent>
+        </Tooltip>
+      )}
+
 
       {/* Undo / Redo */}
       <div className="flex items-center gap-0.5">
@@ -459,6 +563,21 @@ export function Toolbar({
             </Button>
           </TooltipTrigger>
           <TooltipContent>Import PLC ladder rungs as digital gates</TooltipContent>
+        </Tooltip>
+      )}
+      {onExportToAnalog && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 text-[10px] text-purple-400 hover:text-purple-300 border border-purple-500/20 hover:border-purple-500/40"
+              onClick={onExportToAnalog}
+            >
+              <ArrowRightLeft className="h-3.5 w-3.5" /> → Analog
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Export gates to Analog Netlist</TooltipContent>
         </Tooltip>
       )}
 

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useEngigraphStore, DrawingObject } from '../store/useEngigraphStore';
 
 interface SimulationContextType {
     startCFD: () => void;
@@ -12,6 +13,10 @@ interface SimulationContextType {
     startAcoustic: () => void;
     stopAcoustic: () => void;
     addAcousticSource: (x: number, y: number, frequency: number) => void;
+
+    runLogicSimulation: () => void;
+    isLogicRunning: boolean;
+    toggleLogicSimulation: () => void;
 
     cfdData: any;
     thermalData: any;
@@ -30,10 +35,15 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const cfdWorker = useRef<Worker | null>(null);
     const thermalWorker = useRef<Worker | null>(null);
     const acousticWorker = useRef<Worker | null>(null);
+    const logicWorker = useRef<Worker | null>(null);
 
     const [cfdData, setCfdData] = useState(null);
     const [thermalData, setThermalData] = useState(null);
     const [acousticData, setAcousticData] = useState(null);
+    const [isLogicRunning, setIsLogicRunning] = useState(false);
+
+    // Get the store directly to avoid stale closures in intervals
+    const store = useEngigraphStore();
 
     useEffect(() => {
         // Initialize workers
@@ -55,12 +65,35 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         };
         acousticWorker.current.postMessage({ type: 'INIT', payload: { gridSize: 100 } });
 
+        logicWorker.current = new Worker(new URL('../solvers/logic.worker.ts', import.meta.url), { type: 'module' });
+        logicWorker.current.onmessage = (e) => {
+            if (e.data.type === 'LOGIC_RESULT') {
+                useEngigraphStore.getState().setElements(e.data.elements);
+            }
+        };
+
         return () => {
             cfdWorker.current?.terminate();
             thermalWorker.current?.terminate();
             acousticWorker.current?.terminate();
+            logicWorker.current?.terminate();
         };
     }, []);
+
+    const runLogicSimulation = () => {
+        const elements = useEngigraphStore.getState().elements;
+        logicWorker.current?.postMessage({ type: 'SIMULATE', elements });
+    };
+
+    useEffect(() => {
+        let interval: any;
+        if (isLogicRunning) {
+            interval = setInterval(() => {
+                runLogicSimulation();
+            }, 100); // 10Hz logic tick
+        }
+        return () => clearInterval(interval);
+    }, [isLogicRunning]);
 
     const value: SimulationContextType = {
         startCFD: () => cfdWorker.current?.postMessage({ type: 'START' }),
@@ -75,6 +108,10 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         stopAcoustic: () => acousticWorker.current?.postMessage({ type: 'STOP' }),
         addAcousticSource: (x, y, frequency) => acousticWorker.current?.postMessage({ type: 'ADD_SOURCE', payload: { x, y, frequency } }),
 
+        runLogicSimulation,
+        isLogicRunning,
+        toggleLogicSimulation: () => setIsLogicRunning(!isLogicRunning),
+
         cfdData,
         thermalData,
         acousticData
@@ -86,3 +123,4 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         </SimulationContext.Provider>
     );
 };
+

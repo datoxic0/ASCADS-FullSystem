@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles } from 'lucide-react';
+import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X } from 'lucide-react';
 import Editor from '@/pages/Editor';
 import AnalogEditor from '@/pages/AnalogEditor';
 import ProjectsView from '@/components/ProjectsView';
@@ -31,6 +31,8 @@ const BRIDGE_KEYS = [
   { key: 'ascads_bridge_digital_plc',  label: 'D→P', color: '#f59e0b', title: 'Digital→PLC' },
   { key: 'ascads_bridge_engigraph_analog', label: 'E→A', color: '#fb923c', title: 'Engigraph→Analog' },
   { key: 'ascads_bridge_engigraph_plc',    label: 'E→P', color: '#f87171', title: 'Engigraph→PLC' },
+  { key: 'ascads_bridge_engigraph_robot',  label: 'E→R', color: '#c084fc', title: 'Engigraph→Robot' },
+  { key: 'ascads_bridge_robot_plc_state',  label: 'R→P(L)', color: '#818cf8', title: 'Robot→PLC(Logic)' },
 ];
 
 function useBridgeStatus() {
@@ -54,6 +56,7 @@ export default function UnifiedShell() {
   const [activeProject, setActiveProjectState] = useState<AnalogProject | null>(null);
   const [isDark, setIsDark] = useState(true);
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const bridgeCircuitRef = useRef<Circuit | null>(null);
   const bridgeStatus = useBridgeStatus();
 
@@ -134,7 +137,7 @@ export default function UnifiedShell() {
       <header className="min-h-[2.75rem] py-1.5 bg-slate-900 border-b border-slate-800 flex flex-wrap md:flex-nowrap items-center px-4 gap-x-4 gap-y-2 shrink-0 z-30 shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
         {/* Logo */}
         <div
-          className="flex items-center gap-2.5 cursor-pointer group"
+          className="flex items-center gap-3 cursor-pointer group"
           onClick={() => setMode('projects')}
         >
           <div className="w-7 h-7 bg-gradient-to-br from-cyan-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-[0_0_14px_rgba(34,211,238,0.3)] group-hover:shadow-[0_0_20px_rgba(34,211,238,0.5)] transition-all">
@@ -162,8 +165,8 @@ export default function UnifiedShell() {
           )}
         </div>
 
-        {/* Center mode switcher */}
-        <nav className="mx-auto flex flex-wrap justify-center items-center bg-slate-800/60 border border-slate-700/60 rounded-lg shrink min-w-0 mx-2 gap-y-0.5">
+        {/* Center mode switcher (Hidden on Mobile) */}
+        <nav className="mx-auto hidden lg:flex flex-wrap justify-center items-center bg-slate-800/60 border border-slate-700/60 rounded-lg shrink min-w-0 mx-4 gap-1 p-1">
           {([
             { id: 'projects', label: 'Projects',       dot: '' },
             { id: 'plc',      label: 'Industrial PLC', dot: '#3b82f6' },
@@ -178,17 +181,16 @@ export default function UnifiedShell() {
             <button
               key={tab.id}
               onClick={() => {
-                if ((tab.id === 'analog' || tab.id === 'plc' || tab.id === 'digital' || tab.id === 'robot') && !activeProject) { setMode('projects'); return; }
                 if (tab.id !== 'projects') setMode(tab.id); else setMode('projects');
               }}
-              className={`px-2 md:px-3 py-1 md:py-1.5 text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+              className={`px-3 md:px-4 py-1.5 md:py-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-md transition-all flex items-center gap-2 ${
                 mode === tab.id
                   ? 'bg-slate-700/50 text-white shadow-[inset_0_0_10px_rgba(255,255,255,0.05)]'
                   : 'text-slate-600 hover:text-slate-300 hover:bg-slate-700/30'
               }`}
             >
               {tab.dot && (
-                <div className="w-1.5 h-1.5 rounded-full" style={{ background: tab.dot, boxShadow: mode === tab.id ? `0 0 6px ${tab.dot}` : 'none' }} />
+                <div className="w-2 h-2 rounded-full" style={{ background: tab.dot, boxShadow: mode === tab.id ? `0 0 8px ${tab.dot}` : 'none' }} />
               )}
               {tab.label}
             </button>
@@ -223,18 +225,68 @@ export default function UnifiedShell() {
             <span className="hidden lg:inline">Ask AI</span>
           </button>
 
-          <button
-            onClick={() => setIsDark(d => !d)}
-            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
-          >
-            {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-          </button>
 
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-600/50 flex items-center justify-center text-[9px] font-black text-slate-200 shadow-sm">
+          <div className="hidden md:flex w-7 h-7 rounded-lg bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-600/50 items-center justify-center text-[9px] font-black text-slate-200 shadow-sm">
             SP
           </div>
+
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
         </div>
       </header>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden absolute top-[2.75rem] left-0 right-0 bg-slate-900 border-b border-slate-800 shadow-2xl z-40 p-2 flex flex-col gap-1 max-h-[60vh] overflow-y-auto">
+          {([
+            { id: 'projects', label: 'Projects',       dot: '' },
+            { id: 'plc',      label: 'Industrial PLC', dot: '#3b82f6' },
+            { id: 'robot',    label: 'Robotics',       dot: '#10b981' },
+            { id: 'analog',   label: 'Analog',         dot: '#8b5cf6' },
+            { id: 'digital',  label: 'Digital Logic',  dot: '#06b6d4' },
+            { id: 'compute',  label: 'Compute Tools',  dot: '#f59e0b' },
+            { id: 'maths',    label: 'Maths System',   dot: '#fb7185' },
+            { id: 'engigraph',label: 'EngiGraph Pro',  dot: '#fb923c' },
+            { id: 'docs',     label: 'System Docs',    dot: '#ec4899' },
+          ] as { id: TopMode; label: string; dot: string }[]).map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                if (tab.id !== 'projects') setMode(tab.id); else setMode('projects');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`px-4 py-2 text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 rounded-md ${
+                mode === tab.id
+                  ? 'bg-slate-700/50 text-white'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              {tab.dot && (
+                <div className="w-2 h-2 rounded-full" style={{ background: tab.dot }} />
+              )}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Lifetime Project Notice ── */}
+      {(mode === 'projects' || mode === 'docs') && (
+        <div className="bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-slate-900/80 border-b border-indigo-500/30 px-4 py-1.5 flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.2)] z-20">
+          <p className="text-[10px] md:text-[11px] font-medium text-indigo-100 flex items-center gap-2 text-center tracking-wide">
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-pulse" />
+            <span>
+              <strong className="text-white uppercase tracking-widest font-black mr-1">Mechatronics Lifetime Project (2026-2031):</strong> 
+              Currently undergoing rapid quarterly development. Expect massive upgrades over the next 5 years towards graduation!
+            </span>
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400 animate-pulse" />
+          </p>
+        </div>
+      )}
 
       {/* ── Main Content ── */}
       <div className="flex-1 min-h-0 flex flex-col overflow-visible">
@@ -261,7 +313,7 @@ export default function UnifiedShell() {
               }}
             />
           ) : (
-            <ProjectLandingScreen type="analog" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+            <ProjectLandingScreen type="analog" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
           )
         )}
 
@@ -275,7 +327,7 @@ export default function UnifiedShell() {
               />
             </div>
           ) : (
-            <ProjectLandingScreen type="digital" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+            <ProjectLandingScreen type="digital" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
           )
         )}
 
@@ -294,7 +346,7 @@ export default function UnifiedShell() {
               />
             </div>
           ) : (
-            <ProjectLandingScreen type="plc" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+            <ProjectLandingScreen type="plc" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
           )
         )}
 
@@ -307,7 +359,7 @@ export default function UnifiedShell() {
               />
             </div>
           ) : (
-            <ProjectLandingScreen type="robot" onNew={handleNewProject} onOpen={() => setMode('projects')} />
+            <ProjectLandingScreen type="robot" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
           )
         )}
 

@@ -1,0 +1,215 @@
+/* Workspace Layout */
+.workspace {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.sidebar-left, .sidebar-right {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border 0.3s ease;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+}
+
+.sidebar-left.collapsed, .sidebar-right.collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    border: none !important;
+}
+
+.sidebar-right {
+    border-right: none;
+    border-left: 1px solid var(--border);
+}
+
+.panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--border);
+    min-height: 0; /* Critical for nested flex scrolling */
+}
+
+.panel header {
+    flex-shrink: 0;
+    background: #3c3c3c;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--text-main);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.side-collapse-btn, .side-expand-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 4px;
+}
+
+.side-collapse-btn:hover, .side-expand-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.side-expand-btn {
+    position: absolute;
+    top: 10px;
+    z-index: 1000;
+    width: 24px;
+    height: 40px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.side-expand-btn.left {
+    left: 0;
+    border-radius: 0 4px 4px 0;
+    border-left: none;
+}
+
+.side-expand-btn.right {
+    right: 0;
+    border-radius: 4px 0 0 4px;
+    border-right: none;
+}
+
+/* Layer List */
+.layer-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.layer-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.layer-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.layer-item.active {
+    background: rgba(0, 120, 212, 0.2);
+    border-left: 3px solid var(--accent);
+}
+
+.layer-item i {
+    width: 14px;
+    height: 14px;
+}
+
+/* Property Panel */
+.property-content {
+    padding: 20px;
+    font-size: 12px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.prop-row {
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pro-input {
+    background: #0a0a0a;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: 'Consolas', monospace;
+    width: 100%;
+    letter-spacing: 0.05em;
+    font-size: 13px;
+}
+
+.prop-group {
+    background: rgba(0,0,0,0.3);
+    padding: 15px;
+    border-radius: 6px;
+    font-size: 11px;
+    border: 1px solid #444;
+    margin: 10px 0;
+}
+
+.pro-input-color {
+    background: #111;
+    border: 1px solid #444;
+    height: 24px;
+    padding: 0;
+    cursor: pointer;
+}
+
+.btn-action {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-action:hover {
+    background: #555;
+}
+
+.btn-small {
+    background: var(--bg-ribbon);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    margin: 10px;
+}
+
+.btn-small:hover {
+    background: var(--accent);
+}
+
+.empty-state {
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.compliance-check {
+    margin-top: 20px;
+    padding: 10px;
+    border-top: 1px solid var(--border);
+}

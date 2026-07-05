@@ -811,7 +811,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
              <Line points={[15, 10, 15, 30]} stroke={color} strokeWidth={2} />
              <Line points={[25, 10, 25, 30]} stroke={color} strokeWidth={2} />
              <Line points={[25, 20, 40, 20]} stroke={color} strokeWidth={2} />
-             <Text text={comp.properties.tag as string} y={32} width={40} align="center" fontSize={8} fill={color} />
+             <Text text={(comp.properties.tag as string) || ''} y={32} width={40} align="center" fontSize={8} fill={color} />
           </Group>
         );
         break;
@@ -823,7 +823,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
              <Line points={[25, 10, 25, 30]} stroke={color} strokeWidth={2} />
              <Line points={[25, 20, 40, 20]} stroke={color} strokeWidth={2} />
              <Line points={[12, 30, 28, 10]} stroke={color} strokeWidth={2} />
-             <Text text={comp.properties.tag as string} y={32} width={40} align="center" fontSize={8} fill={color} />
+             <Text text={(comp.properties.tag as string) || ''} y={32} width={40} align="center" fontSize={8} fill={color} />
           </Group>
         );
         break;
@@ -833,7 +833,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
              <Line points={[0, 20, 10, 20]} stroke={color} strokeWidth={2} />
              <Path data="M10,10 Q5,20 10,30 M30,10 Q35,20 30,30" stroke={color} strokeWidth={2} />
              <Line points={[30, 20, 40, 20]} stroke={color} strokeWidth={2} />
-             <Text text={comp.properties.tag as string} y={32} width={40} align="center" fontSize={8} fill={color} />
+             <Text text={(comp.properties.tag as string) || ''} y={32} width={40} align="center" fontSize={8} fill={color} />
           </Group>
         );
         break;

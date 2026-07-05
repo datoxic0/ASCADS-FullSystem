@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cpu, Activity, Zap, RefreshCw, Table } from 'lucide-react';
+import { Cpu, Activity, Zap, RefreshCw, Table, Share } from 'lucide-react';
 import { synthesizeLogic, type LogicTableRow } from '@/lib/binary-lab';
+import { toast } from 'sonner';
 
 function cn(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(' ');
@@ -351,8 +352,19 @@ export default function BooleanLogic() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4">
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Boolean Expressions</div>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-4 relative">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Boolean Expressions</div>
+                  <button
+                    onClick={() => {
+                      localStorage.setItem('ascads_bridge_compute_data', JSON.stringify({ minterms, sop: logic.sop, pos: logic.pos, minimized: logic.minimized }));
+                      toast.success('Exported logic definitions to the Universal Bridge!');
+                    }}
+                    className="px-2 py-1 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 border border-cyan-500/30 rounded flex items-center gap-1 text-[9px] uppercase tracking-widest transition-all"
+                  >
+                    <Share size={10} /> Push to Bridge
+                  </button>
+                </div>
 
                 {[
                   { label: 'Minimized (K-map)', expr: logic.minimized, color: 'emerald', desc: 'Quine-McCluskey reduced' },

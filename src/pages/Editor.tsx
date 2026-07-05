@@ -46,7 +46,7 @@ import {
   ExprImportDialog,
 } from "@/components/circuit/Dialogs";
 import { exprToCircuit } from "@/lib/expr-to-circuit";
-import { digitalToPLC } from "@/lib/bridge-utils";
+import { EcosystemTranslator } from "@/lib/EcosystemTranslator";
 import { useToast } from "@/hooks/use-toast";
 
 const EMPTY_CIRCUIT: Circuit = { gates: {}, wires: {} };
@@ -126,6 +126,10 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
   const [speed, setSpeed] = useState(1); // multiplier on clock frequency
   const [stepNonce, setStepNonce] = useState(0);
   const [clockState, setClockState] = useState<Record<string, boolean>>({});
+  
+  // Mobile/responsive sidebar toggles
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
 
   // Persistent simulator memory across renders
   const simStateRef = useRef(createSimState());
@@ -576,9 +580,14 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
         onToggleSignalLabels={() => setShowSignalLabels((v) => !v)}
         onImportExpr={() => setExprImportOpen(true)}
         onExportToPLC={() => {
-          const bridge = digitalToPLC(circuit);
+          const bridge = EcosystemTranslator.toPLCLadder(circuit);
           localStorage.setItem('ascads_bridge_digital_plc', JSON.stringify(bridge));
-          toast({ title: 'Bridge Export', description: `${bridge.tags.length} tags, ${bridge.rungs.length} rungs exported to PLC` });
+          toast({ title: 'Bridge Export', description: `${bridge.nodes.length} tags, ${bridge.wires.length} wires exported to PLC` });
+        }}
+        onExportToAnalog={() => {
+          const bridge = EcosystemTranslator.digitalToAnalog(circuit);
+          localStorage.setItem('ascads_bridge_digital_analog', JSON.stringify(bridge));
+          toast({ title: 'Bridge Export', description: `Exported to Analog format.` });
         }}
         onImportFromPLC={() => {
           try {
@@ -596,16 +605,36 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
             toast({ title: 'Bridge Import', description: 'PLC ladder logic loaded as digital gates' });
           } catch { toast({ title: 'Bridge Import', description: 'Failed to parse PLC bridge data. Please export from PLC again.', variant: 'destructive' }); }
         }}
+        isPaletteOpen={isPaletteOpen}
+        onTogglePalette={() => setIsPaletteOpen(!isPaletteOpen)}
+        isInspectorOpen={isInspectorOpen}
+        onToggleInspector={() => setIsInspectorOpen(!isInspectorOpen)}
+        onToggleSwitch={() => {
+          let toggled = false;
+          selection.gates.forEach(id => {
+            const g = circuit.gates[id];
+            if (g && g.kind === 'INPUT') {
+              updateGate(id, { on: !g.on });
+              toggled = true;
+            }
+          });
+          if (!toggled) {
+             toast({ title: 'No Switch Selected', description: 'Select an Input Switch first to toggle its state.' });
+          }
+        }}
       />
 
-      <div className="flex-1 flex min-h-0">
-        <Palette
-          style={prefs.symbolStyle}
-          onClickPlace={(k) =>
-            setPendingPlace((curr) => (curr === k ? null : k))
-          }
-          activeKind={pendingPlace}
-        />
+      <div className="flex-1 flex min-h-0 relative">
+        <div className={`absolute left-0 xl:relative z-40 h-full transition-transform ${isPaletteOpen ? 'translate-x-0 shadow-[20px_0_30px_rgba(0,0,0,0.5)]' : '-translate-x-full xl:translate-x-0'} flex-shrink-0`}>
+          <Palette
+            style={prefs.symbolStyle}
+            onClickPlace={(k) =>
+              setPendingPlace((curr) => (curr === k ? null : k))
+            }
+            activeKind={pendingPlace}
+            onClose={() => setIsPaletteOpen(false)}
+          />
+        </div>
 
         <div className="flex-1 flex flex-col min-w-0">
           <CircuitCanvas
@@ -641,27 +670,31 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
           )}
         </div>
 
-        <Inspector
-          selection={selection}
-          gates={circuit.gates}
-          onUpdateGate={updateGate}
-          onDeleteSelection={deleteSelection}
-          onClearSelection={() =>
-            setSelection({ gates: new Set(), wires: new Set() })
-          }
-          simulation={simulation}
+        <div className={`absolute right-0 xl:relative z-40 h-full transition-transform ${isInspectorOpen ? 'translate-x-0 shadow-[-20px_0_30px_rgba(0,0,0,0.5)]' : 'translate-x-full xl:translate-x-0'} flex-shrink-0`}>
+          <Inspector
+            selection={selection}
+            gates={circuit.gates}
+            onUpdateGate={updateGate}
+            onDeleteSelection={deleteSelection}
+            onClearSelection={() =>
+              setSelection({ gates: new Set(), wires: new Set() })
+            }
+            simulation={simulation}
+            onClose={() => setIsInspectorOpen(false)}
+          />
+        </div>
+      </div>
+      <div className="hidden lg:block">
+        <StatusBar
+          gateCount={Object.keys(circuit.gates).length}
+          wireCount={Object.keys(circuit.wires).length}
+          iterations={simulation.iterations}
+          oscillating={simulation.oscillating}
+          zoom={view.scale}
+          cursor={cursor}
+          onAboutClick={() => setAboutOpen(true)}
         />
       </div>
-
-      <StatusBar
-        gateCount={Object.keys(circuit.gates).length}
-        wireCount={Object.keys(circuit.wires).length}
-        iterations={simulation.iterations}
-        oscillating={simulation.oscillating}
-        zoom={view.scale}
-        cursor={cursor}
-        onAboutClick={() => setAboutOpen(true)}
-      />
 
       <input
         ref={fileInputRef}
