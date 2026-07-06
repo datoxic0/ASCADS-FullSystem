@@ -502,9 +502,9 @@ export const EngigraphCanvas: React.FC = () => {
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
-                onTouchStart={handlePointerDown}
-                onTouchMove={handlePointerMove}
-                onTouchEnd={handlePointerUp}
+                
+                
+                
                 onWheel={handleWheel}
                 scaleX={view.zoom}
                 scaleY={view.zoom}
