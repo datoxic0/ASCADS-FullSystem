@@ -495,7 +495,7 @@ export const EngigraphCanvas: React.FC = () => {
     };
 
     return (
-        <div className="w-full h-full bg-[#0a0b0c] cursor-crosshair">
+        <div className="w-full h-full bg-[#0a0b0c] cursor-crosshair touch-none">
             <Stage 
                 width={window.innerWidth} 
                 height={window.innerHeight}
