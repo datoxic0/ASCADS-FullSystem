@@ -168,6 +168,13 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [toggleSimulation]);
 
+  // Automatically switch to the Engine (SOLVER) tab when simulation starts
+  useEffect(() => {
+    if (isSimulating) {
+      setActiveTab('SOLVER');
+    }
+  }, [isSimulating]);
+
   const handleExport = () => {
     if (stageRef.current) {
       const dataURL = stageRef.current.toDataURL();
@@ -588,7 +595,6 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
                     const x = stageRef.current ? (-stageRef.current.x() + stageRef.current.width() / 2) / stageRef.current.scaleX() : 100;
                     const y = stageRef.current ? (-stageRef.current.y() + stageRef.current.height() / 2) / stageRef.current.scaleY() : 100;
                     addComponent(type, x, y);
-                    setActiveTab('PROPERTIES');
                     if(window.innerWidth < 1024) setIsSidebarOpen(false);
                   }}
                   selectedComponentId={selectedId}

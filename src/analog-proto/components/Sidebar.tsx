@@ -52,7 +52,7 @@ const Sidebar = React.memo(({
   );
 
   return (
-    <div className="flex flex-col border-l border-slate-800 bg-slate-900 w-80 z-10 overflow-hidden shadow-2xl font-sans">
+    <div className="flex flex-col h-full border-l border-slate-800 bg-slate-900 w-80 z-10 overflow-hidden shadow-2xl font-sans">
       {/* Tab Header */}
       <div className="flex bg-slate-950 border-b border-slate-800 p-1 gap-1">
         {[
