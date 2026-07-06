@@ -75,29 +75,26 @@ export default function App() {
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [range, setRange] = useState({ min: -10, max: 10, steps: 300 });
 
-  const startResizing = (e: React.MouseEvent | React.TouchEvent) => {
-    // e.preventDefault(); // Don't prevent default to allow scrolling if user touches outside the handle
-    const isTouch = 'touches' in e;
-    const startX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+  const startResizing = (e: React.PointerEvent) => {
+    e.preventDefault(); // Prevent text selection
+    const startX = e.clientX;
     const startWidth = sidebarWidth;
 
-    const doDrag = (dragEvent: MouseEvent | TouchEvent) => {
-      const clientX = 'touches' in dragEvent ? dragEvent.touches[0].clientX : (dragEvent as MouseEvent).clientX;
+    const doDrag = (dragEvent: PointerEvent) => {
+      const clientX = dragEvent.clientX;
       const newWidth = Math.max(250, Math.min(startWidth + (clientX - startX), window.innerWidth - 50));
       setSidebarWidth(newWidth);
     };
 
     const stopDrag = () => {
-      document.removeEventListener('mousemove', doDrag as EventListener);
-      document.removeEventListener('mouseup', stopDrag);
-      document.removeEventListener('touchmove', doDrag as EventListener);
-      document.removeEventListener('touchend', stopDrag);
+      document.removeEventListener('pointermove', doDrag);
+      document.removeEventListener('pointerup', stopDrag);
+      document.removeEventListener('pointercancel', stopDrag);
     };
 
-    document.addEventListener('mousemove', doDrag as EventListener);
-    document.addEventListener('mouseup', stopDrag);
-    document.addEventListener('touchmove', doDrag as EventListener, { passive: true });
-    document.addEventListener('touchend', stopDrag);
+    document.addEventListener('pointermove', doDrag);
+    document.addEventListener('pointerup', stopDrag);
+    document.addEventListener('pointercancel', stopDrag);
   };
 
   const analysisVariable = useMemo(() => {
@@ -1044,8 +1041,7 @@ export default function App() {
       {/* Resizer Handle */}
       {isSidebarOpen && (
         <div
-          onMouseDown={startResizing}
-          onTouchStart={startResizing}
+          onPointerDown={startResizing}
           className="hidden md:flex w-2 lg:w-1.5 h-full bg-transparent hover:bg-indigo-500/50 cursor-col-resize transition-colors items-center justify-center group z-30 shrink-0 border-r border-white/5"
         >
           <div className="w-[1px] h-10 bg-white/20 group-hover:bg-indigo-400 opacity-50" />

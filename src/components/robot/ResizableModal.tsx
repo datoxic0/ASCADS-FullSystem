@@ -91,7 +91,7 @@ export default function ResizableModal({
   }, [isOpen, isCenteredOnMount, isMaximized, isMobile]);
 
   // Handle Dragging
-  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+  const handleHeaderPointerDown = (e: React.PointerEvent) => {
     if (isMaximized || isMobile) return;
     // Don't drag if clicking buttons
     const target = e.target as HTMLElement;
@@ -105,11 +105,12 @@ export default function ResizableModal({
       objY: position.y,
     };
 
-    document.addEventListener("mousemove", handleHeaderMouseMove);
-    document.addEventListener("mouseup", handleHeaderMouseUp);
+    document.addEventListener("pointermove", handleHeaderPointerMove);
+    document.addEventListener("pointerup", handleHeaderPointerUp);
+    document.addEventListener("pointercancel", handleHeaderPointerUp);
   };
 
-  const handleHeaderMouseMove = (e: MouseEvent) => {
+  const handleHeaderPointerMove = (e: PointerEvent) => {
     if (!dragStartRef.current) return;
     const dx = e.clientX - dragStartRef.current.mouseX;
     const dy = e.clientY - dragStartRef.current.mouseY;
@@ -124,14 +125,15 @@ export default function ResizableModal({
     setPosition({ x: nextX, y: nextY });
   };
 
-  const handleHeaderMouseUp = () => {
+  const handleHeaderPointerUp = () => {
     dragStartRef.current = null;
-    document.removeEventListener("mousemove", handleHeaderMouseMove);
-    document.removeEventListener("mouseup", handleHeaderMouseUp);
+    document.removeEventListener("pointermove", handleHeaderPointerMove);
+    document.removeEventListener("pointerup", handleHeaderPointerUp);
+    document.removeEventListener("pointercancel", handleHeaderPointerUp);
   };
 
   // Handle Resizing
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
+  const handleResizePointerDown = (e: React.PointerEvent) => {
     if (isMaximized || isMobile) return;
     e.preventDefault();
     e.stopPropagation();
@@ -143,11 +145,12 @@ export default function ResizableModal({
       startHeight: size.height,
     };
 
-    document.addEventListener("mousemove", handleResizeMouseMove);
-    document.addEventListener("mouseup", handleResizeMouseUp);
+    document.addEventListener("pointermove", handleResizePointerMove);
+    document.addEventListener("pointerup", handleResizePointerUp);
+    document.addEventListener("pointercancel", handleResizePointerUp);
   };
 
-  const handleResizeMouseMove = (e: MouseEvent) => {
+  const handleResizePointerMove = (e: PointerEvent) => {
     if (!resizeStartRef.current) return;
     const dx = e.clientX - resizeStartRef.current.mouseX;
     const dy = e.clientY - resizeStartRef.current.mouseY;
@@ -161,10 +164,11 @@ export default function ResizableModal({
     setSize({ width: nextWidth, height: nextHeight });
   };
 
-  const handleResizeMouseUp = () => {
+  const handleResizePointerUp = () => {
     resizeStartRef.current = null;
-    document.removeEventListener("mousemove", handleResizeMouseMove);
-    document.removeEventListener("mouseup", handleResizeMouseUp);
+    document.removeEventListener("pointermove", handleResizePointerMove);
+    document.removeEventListener("pointerup", handleResizePointerUp);
+    document.removeEventListener("pointercancel", handleResizePointerUp);
   };
 
   // Double click header to toggle maximize
@@ -247,7 +251,7 @@ export default function ResizableModal({
       >
         {/* Drag Handle Header */}
         <div
-          onMouseDown={handleHeaderMouseDown}
+          onPointerDown={handleHeaderPointerDown}
           onDoubleClick={handleHeaderDoubleSelect}
           style={{ cursor: isMaximized ? "default" : "move" }}
           className="flex items-center justify-between px-4 py-3 border-b border-emerald-300 dark:border-white/5 shrink-0 bg-[#0f0f12] rounded-t-lg select-none"
@@ -293,7 +297,7 @@ export default function ResizableModal({
         {/* Resize Handle - only visible on Desktop and if not Maximize */}
         {!isMaximized && (
           <div
-            onMouseDown={handleResizeMouseDown}
+            onPointerDown={handleResizePointerDown}
             style={{ cursor: "se-resize" }}
             className="absolute bottom-0 right-0 w-5 h-5 flex items-end justify-end p-0.5 select-none z-20 group"
             title="Drag to resize modal"

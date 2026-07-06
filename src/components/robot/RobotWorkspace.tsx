@@ -30,7 +30,7 @@ export function RobotWorkspace({ config, simState, onJointChange }: Props) {
   // Keep target in sync
   useEffect(() => { targetAnimRef.current = ikTarget; }, [ikTarget]);
 
-  const getCanvasXY = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCanvasXY = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
@@ -42,13 +42,13 @@ export function RobotWorkspace({ config, simState, onJointChange }: Props) {
     };
   }, []);
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasClick = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     if (isDraggingTarget) return;
     const { x, y } = getCanvasXY(e);
     setIkTarget({ x, y });
   }, [isDraggingTarget, getCanvasXY]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!ikTarget) return;
     const { x, y } = getCanvasXY(e);
     const canvas = canvasRef.current;
@@ -67,7 +67,7 @@ export function RobotWorkspace({ config, simState, onJointChange }: Props) {
     }
   }, [ikTarget, getCanvasXY]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handlePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isDraggingTarget) return;
     const { x, y } = getCanvasXY(e);
     const canvas = canvasRef.current;
@@ -76,7 +76,7 @@ export function RobotWorkspace({ config, simState, onJointChange }: Props) {
     setIkTarget({ x: x / dpr, y: y / dpr });
   }, [isDraggingTarget, getCanvasXY]);
 
-  const handleMouseUp = useCallback(() => setIsDraggingTarget(false), []);
+  const handlePointerUp = useCallback(() => setIsDraggingTarget(false), []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -408,16 +408,17 @@ export function RobotWorkspace({ config, simState, onJointChange }: Props) {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <div className="flex-1 relative bg-[#06080d] overflow-hidden"
-        onMouseLeave={() => setHovered(false)}
-        onMouseEnter={() => setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
+        onPointerEnter={() => setHovered(true)}
       >
         <canvas
           ref={canvasRef}
-          className="w-full h-full cursor-crosshair"
+          className="w-full h-full cursor-crosshair outline-none ring-1 ring-white/5 bg-[#0a0c10] shadow-[inset_0_0_100px_rgba(0,0,0,0.8)] touch-none"
           onClick={handleCanvasClick}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
         />
         {!ikTarget && (
           <div className="absolute bottom-16 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/50 border border-emerald-400 dark:border-white/10 rounded text-[9px] font-mono text-zinc-500 pointer-events-none">

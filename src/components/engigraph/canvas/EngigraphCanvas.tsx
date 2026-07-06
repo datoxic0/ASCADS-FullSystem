@@ -142,7 +142,7 @@ export const EngigraphCanvas: React.FC = () => {
         }
     }, [selectedIds, elements]);
 
-    const handleMouseDown = (e: any) => {
+    const handlePointerDown = (e: any) => {
         const stage = e.target.getStage();
         const pointer = stage.getPointerPosition();
         
@@ -313,7 +313,7 @@ export const EngigraphCanvas: React.FC = () => {
         }
     };
 
-    const handleMouseMove = (e: any) => {
+    const handlePointerMove = (e: any) => {
         const stage = e.target.getStage();
         const pointer = stage.getPointerPosition();
         let x = (pointer.x - view.x) / view.zoom;
@@ -448,7 +448,7 @@ export const EngigraphCanvas: React.FC = () => {
         }
     };
 
-    const handleMouseUp = (e: any) => {
+    const handlePointerUp = (e: any) => {
         if (currentObj) {
             pushHistory([...elements, currentObj]);
             setCurrentObj(null);
@@ -499,12 +499,12 @@ export const EngigraphCanvas: React.FC = () => {
             <Stage 
                 width={window.innerWidth} 
                 height={window.innerHeight}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onTouchStart={handleMouseDown}
-                onTouchMove={handleMouseMove}
-                onTouchEnd={handleMouseUp}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onTouchStart={handlePointerDown}
+                onTouchMove={handlePointerMove}
+                onTouchEnd={handlePointerUp}
                 onWheel={handleWheel}
                 scaleX={view.zoom}
                 scaleY={view.zoom}

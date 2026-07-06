@@ -12,7 +12,7 @@ import MatrixStatus from '../analog-proto/components/MatrixStatus';
 import { SidebarTab } from '../analog-proto/types';
 import { audioEngine } from '../analog-proto/services/audioEngine';
 import { jsPDF } from 'jspdf';
-import { Cpu, Share2, Save, Menu, X, ChevronDown, FileText, Activity, Shield, Box, Zap, Globe, Github, Facebook, MessageSquare, Twitter, GitBranch, Braces, ChevronLeft, Play, StopCircle } from 'lucide-react';
+import { Cpu, Share2, Save, Menu, X, ChevronDown, FileText, Activity, Shield, Box, Zap, Globe, Github, Facebook, MessageSquare, Twitter, GitBranch, Braces, ChevronLeft, Play, StopCircle, PanelRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { AnalogProject } from '@/lib/analog-types';
 import type { Circuit } from '@/lib/types';
@@ -274,7 +274,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-300 font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="flex flex-col flex-1 w-full h-full bg-slate-950 text-slate-300 font-sans selection:bg-indigo-500 selection:text-white">
       {/* Cinematic Header */}
       <header className="h-16 border-b border-white/5 flex items-center px-4 sm:px-8 justify-between bg-slate-900/40 backdrop-blur-3xl z-30 shadow-2xl relative shrink-0">
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-30" />
@@ -299,7 +299,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-2 overflow-x-auto scrollbar-hide shrink-0 min-w-0">
+          <nav className="flex items-center gap-2 overflow-x-auto scrollbar-hide shrink-0 min-w-0">
             {(['DESIGN', 'SIMULATION', 'BOM', 'LAYOUT', 'LADDER', 'LOGIC'] as View[]).map((v) => (
               <button
                 key={v}
@@ -319,13 +319,13 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
             ))}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-4 bg-slate-950/80 px-5 py-2 rounded-2xl border border-white/5 shadow-inner shrink-0 ml-auto">
+          <div className="hidden xl:flex items-center gap-4 bg-slate-950/80 px-5 py-2 rounded-2xl border border-white/5 shadow-inner shrink-0 ml-auto">
              <Shield size={14} className="text-indigo-400" />
              <div className="h-4 w-px bg-slate-800" />
              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Security: <span className="text-indigo-400 font-bold">ACTIVE</span></span>
           </div>
 
-          <div className="hidden lg:flex items-center gap-2 sm:gap-3 shrink-0 ml-auto lg:ml-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
              <button
                 onClick={toggleSimulation}
                 className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg active:scale-95 border ${
@@ -366,10 +366,17 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
             >
               <FileText size={16} className="group-hover:-translate-y-0.5 transition-transform" />
             </button>
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 items-center justify-center rounded-xl transition-all border active:scale-95 group ${isSidebarOpen ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/40 hover:bg-indigo-600/30' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'}`}
+              title="Toggle Properties Panel"
+            >
+              <PanelRight size={16} className="group-hover:scale-110 transition-transform" />
+            </button>
             
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 active:scale-95"
+              className="hidden w-8 h-8 items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 active:scale-95"
             >
               {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
             </button>
@@ -441,7 +448,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
       )}
 
       {/* Main UI Container */}
-      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative min-h-0 bg-slate-950">
+      <div className="flex flex-row flex-1 overflow-hidden relative min-h-0 bg-slate-950">
         <AnimatePresence mode="wait">
           {view === 'DESIGN' || view === 'SIMULATION' ? (
             <motion.div 
@@ -449,7 +456,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
                initial={{ opacity: 0, x: -100 }}
                animate={{ opacity: 1, x: 0 }}
                exit={{ opacity: 0, x: 100 }}
-               className="flex flex-col lg:flex-row flex-1 overflow-hidden h-full min-h-0 w-full"
+               className="flex flex-row flex-1 overflow-hidden h-full min-h-0 w-full"
             >
               <Toolbar 
                 tool={tool} 

@@ -376,6 +376,26 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
           </Group>
         );
         break;
+      case 'SWITCH':
+      case 'TOGGLE_SWITCH':
+      case 'PUSH_BUTTON': {
+        const isClosed = comp.properties.state === 'Closed';
+        const switchColor = isClosed ? '#10b981' : color;
+        content = (
+          <Group>
+            <Circle x={0} y={0} radius={3} stroke={color} fill={bgColor} strokeWidth={2} />
+            <Circle x={30} y={0} radius={3} stroke={color} fill={bgColor} strokeWidth={2} />
+            {isClosed ? (
+              <Line points={[3, 0, 27, 0]} stroke={switchColor} strokeWidth={2} />
+            ) : (
+              <Line points={[3, 0, 25, -15]} stroke={switchColor} strokeWidth={2} />
+            )}
+            <Line points={[-10, 0, -3, 0]} stroke={color} strokeWidth={2} />
+            <Line points={[33, 0, 40, 0]} stroke={color} strokeWidth={2} />
+          </Group>
+        );
+        break;
+      }
       case 'DIODE':
         content = (
           <Group>
@@ -991,7 +1011,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
   };
 
   return (
-    <div ref={containerRef} className="w-full h-full bg-slate-950 relative cursor-crosshair overflow-hidden shadow-inner flex-1">
+    <div ref={containerRef} className="absolute inset-0 w-full h-full bg-slate-950 cursor-crosshair overflow-hidden shadow-inner">
       {/* Canvas Controls Overlay */}
       <div className="absolute top-6 right-6 z-30 flex flex-col gap-2">
          <button 
@@ -1017,16 +1037,16 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
          </button>
       </div>
 
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-20" 
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-50" 
            style={{ 
-             backgroundImage: 'linear-gradient(rgba(99,102,241,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.1) 1px, transparent 1px)', 
+             backgroundImage: 'linear-gradient(rgba(99,102,241,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.2) 1px, transparent 1px)', 
              backgroundSize: `${GRID_SIZE * 2}px ${GRID_SIZE * 2}px`,
              transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`
            }} 
       />
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-10" 
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-30" 
            style={{ 
-             backgroundImage: 'radial-gradient(rgba(99,102,241,0.2) 1px, transparent 1px)', 
+             backgroundImage: 'radial-gradient(rgba(99,102,241,0.4) 1px, transparent 1px)', 
              backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
              transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`
            }} 

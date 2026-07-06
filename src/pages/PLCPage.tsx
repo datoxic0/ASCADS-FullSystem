@@ -314,11 +314,11 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
   );
 
   useEffect(() => {
-    window.addEventListener("mousemove", resize);
-    window.addEventListener("mouseup", stopResizing);
+    window.addEventListener("pointermove", resize);
+    window.addEventListener("pointerup", stopResizing);
     return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
+      window.removeEventListener("pointermove", resize);
+      window.removeEventListener("pointerup", stopResizing);
     };
   }, [resize, stopResizing]);
 
@@ -1556,7 +1556,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
               </motion.div>
               {/* Resizer Handle Left */}
               <div
-                onMouseDown={() => startResizing("sidebar")}
+                onPointerDown={() => startResizing("sidebar")}
                 className="w-1.5 h-full bg-[#0a0c10] hover:bg-sky-500 cursor-col-resize transition-colors flex items-center justify-center group z-10 border-r border-white/5"
               >
                 <div className="w-[1px] h-10 bg-white/10 group-hover:bg-sky-400 opacity-50" />
@@ -1588,7 +1588,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
               </motion.div>
               {/* Resizer Handle Simulator */}
               <div
-                onMouseDown={() => startResizing("ioSimulator")}
+                onPointerDown={() => startResizing("ioSimulator")}
                 className="w-1.5 h-full bg-[#0a0c10] hover:bg-sky-500 cursor-col-resize transition-colors flex items-center justify-center group z-10 border-r border-white/5 shrink-0"
               >
                 <div className="w-[1px] h-10 bg-white/10 group-hover:bg-sky-400 opacity-50" />
@@ -1778,7 +1778,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
               <div className="flex flex-col shrink-0">
                 {/* Resizer Handle Top (Console) */}
                 <div
-                  onMouseDown={() => startResizing("console")}
+                  onPointerDown={() => startResizing("console")}
                   className="h-1 w-full bg-black/5 hover:bg-blue-400 cursor-row-resize transition-colors flex items-center justify-center group z-10"
                 >
                   <div className="h-[1px] w-8 bg-black/10 group-hover:bg-blue-400 opacity-50" />
@@ -2439,7 +2439,7 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
             <div className="flex shrink-0 absolute inset-y-0 right-0 z-40 lg:relative">
               {/* Resizer Handle Right */}
               <div
-                onMouseDown={() => startResizing("inspector")}
+                onPointerDown={() => startResizing("inspector")}
                 className="w-1 h-full bg-black/5 hover:bg-blue-400 cursor-col-resize transition-colors flex items-center justify-center group z-10"
               >
                 <div className="w-[1px] h-8 bg-black/10 group-hover:bg-blue-400 opacity-50" />

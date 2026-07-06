@@ -54,7 +54,7 @@ export default function FloatingWindow({
   }, []);
 
   // Handle Dragging
-  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+  const handleHeaderPointerDown = (e: React.PointerEvent) => {
     if (isMaximized || isMobile) return;
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
@@ -68,11 +68,12 @@ export default function FloatingWindow({
       objY: position.y,
     };
 
-    document.addEventListener("mousemove", handleHeaderMouseMove);
-    document.addEventListener("mouseup", handleHeaderMouseUp);
+    document.addEventListener("pointermove", handleHeaderPointerMove);
+    document.addEventListener("pointerup", handleHeaderPointerUp);
+    document.addEventListener("pointercancel", handleHeaderPointerUp);
   };
 
-  const handleHeaderMouseMove = (e: MouseEvent) => {
+  const handleHeaderPointerMove = (e: PointerEvent) => {
     if (!dragStartRef.current) return;
     const dx = e.clientX - dragStartRef.current.mouseX;
     const dy = e.clientY - dragStartRef.current.mouseY;
@@ -87,14 +88,15 @@ export default function FloatingWindow({
     setPosition({ x: nextX, y: nextY });
   };
 
-  const handleHeaderMouseUp = () => {
+  const handleHeaderPointerUp = () => {
     dragStartRef.current = null;
-    document.removeEventListener("mousemove", handleHeaderMouseMove);
-    document.removeEventListener("mouseup", handleHeaderMouseUp);
+    document.removeEventListener("pointermove", handleHeaderPointerMove);
+    document.removeEventListener("pointerup", handleHeaderPointerUp);
+    document.removeEventListener("pointercancel", handleHeaderPointerUp);
   };
 
   // Handle Resizing
-  const handleResizeMouseDown = (e: React.MouseEvent) => {
+  const handleResizePointerDown = (e: React.PointerEvent) => {
     if (isMaximized || isMobile) return;
     e.preventDefault();
     e.stopPropagation();
@@ -107,11 +109,12 @@ export default function FloatingWindow({
       startHeight: size.height,
     };
 
-    document.addEventListener("mousemove", handleResizeMouseMove);
-    document.addEventListener("mouseup", handleResizeMouseUp);
+    document.addEventListener("pointermove", handleResizePointerMove);
+    document.addEventListener("pointerup", handleResizePointerUp);
+    document.addEventListener("pointercancel", handleResizePointerUp);
   };
 
-  const handleResizeMouseMove = (e: MouseEvent) => {
+  const handleResizePointerMove = (e: PointerEvent) => {
     if (!resizeStartRef.current) return;
     const dx = e.clientX - resizeStartRef.current.mouseX;
     const dy = e.clientY - resizeStartRef.current.mouseY;
@@ -122,10 +125,11 @@ export default function FloatingWindow({
     setSize({ width: nextWidth, height: nextHeight });
   };
 
-  const handleResizeMouseUp = () => {
+  const handleResizePointerUp = () => {
     resizeStartRef.current = null;
-    document.removeEventListener("mousemove", handleResizeMouseMove);
-    document.removeEventListener("mouseup", handleResizeMouseUp);
+    document.removeEventListener("pointermove", handleResizePointerMove);
+    document.removeEventListener("pointerup", handleResizePointerUp);
+    document.removeEventListener("pointercancel", handleResizePointerUp);
   };
 
   const handleHeaderDoubleSelect = (e: React.MouseEvent) => {
@@ -184,7 +188,7 @@ export default function FloatingWindow({
       className="bg-[#16161a] border border-emerald-400 dark:border-white/10 rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col select-none transition-shadow animate-in fade-in zoom-in duration-150"
     >
       <div
-        onMouseDown={handleHeaderMouseDown}
+        onPointerDown={handleHeaderPointerDown}
         onDoubleClick={handleHeaderDoubleSelect}
         style={{ cursor: isMaximized ? "default" : "move" }}
         className="flex items-center justify-between px-4 py-2 border-b border-emerald-300 dark:border-white/5 shrink-0 bg-[#0f0f12] rounded-t-lg select-none"
@@ -216,7 +220,7 @@ export default function FloatingWindow({
       </div>
       {!isMaximized && (
         <div
-          onMouseDown={handleResizeMouseDown}
+          onPointerDown={handleResizePointerDown}
           style={{ cursor: "se-resize" }}
           className="absolute bottom-0 right-0 w-5 h-5 flex items-end justify-end p-0.5 select-none z-20 group"
         >

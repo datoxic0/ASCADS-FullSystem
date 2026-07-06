@@ -83,7 +83,7 @@ const MemoizedLadderNode = React.memo<{
         selected && "selected"
       )}
       transform={`translate(${node.x}, ${node.y})`}
-      onMouseDown={(e) => {
+      onPointerDown={(e) => {
         e.stopPropagation();
         onSelect(node.id);
         clickStartRef.current = { x: e.clientX, y: e.clientY };
@@ -227,7 +227,7 @@ const MemoizedLadderNode = React.memo<{
         <g 
           transform={`translate(0, ${node.height / 2})`}
           className="pointer-events-auto group/term cursor-crosshair"
-          onMouseDown={(e) => {
+          onPointerDown={(e) => {
             e.stopPropagation();
             onTerminalClick(node.id, 'left', node.x, node.y + node.height / 2);
           }}
@@ -253,7 +253,7 @@ const MemoizedLadderNode = React.memo<{
         <g 
           transform={`translate(${node.width}, ${node.height / 2})`}
           className="pointer-events-auto group/term cursor-crosshair"
-          onMouseDown={(e) => {
+          onPointerDown={(e) => {
             e.stopPropagation();
             onTerminalClick(node.id, 'right', node.x + node.width, node.y + node.height / 2);
           }}
@@ -446,7 +446,7 @@ export function LadderCanvas({
 
 
   // Panning logic - improved for reliability
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     // Only pan if clicking the background background
     const target = e.target as HTMLElement;
     if (target.closest('.ladder-node-g')) return;
@@ -459,7 +459,7 @@ export function LadderCanvas({
     const startY = e.clientY - viewport.y;
     let hasMoved = false;
 
-    const handleMouseMove = (mv: MouseEvent) => {
+    const handlePointerMove = (mv: PointerEvent) => {
       if (Math.abs(mv.clientX - (startX + viewport.x)) > 5 || Math.abs(mv.clientY - (startY + viewport.y)) > 5) {
         hasMoved = true;
       }
@@ -470,13 +470,15 @@ export function LadderCanvas({
       });
     };
 
-    const handleMouseUp = () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointerleave', handlePointerUp);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointerleave', handlePointerUp);
   };
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -715,7 +717,7 @@ export function LadderCanvas({
     return <rect width={node.width} height={node.height} fill="none" stroke="currentColor" strokeDasharray="4 2" />;
   };
 
-  const handleMouseMoveGlobal = (e: React.MouseEvent) => {
+  const handleMouseMoveGlobal = (e: React.PointerEvent) => {
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect) return;
 
@@ -918,8 +920,9 @@ export function LadderCanvas({
         "w-full h-full select-none canvas-grid flex items-center justify-center bg-[#090a0d] transition-all",
         placementType ? "cursor-cell" : "cursor-grab active:cursor-grabbing"
       )}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMoveGlobal}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handleMouseMoveGlobal}
+      onPointerLeave={handlePointerUp}
       onWheel={handleWheel}
       onClick={handleClick}
     >
@@ -1049,7 +1052,7 @@ export function LadderCanvas({
                   "rung-line transition-all duration-300 pointer-events-auto cursor-crosshair",
                   placementType ? "opacity-60 stroke-blue-400 stroke-[3px]" : "opacity-30 stroke-black stroke-[1.5px]"
                 )}
-                onMouseDown={(e) => {
+                onPointerDown={(e) => {
                   if (placementType !== 'wire') return;
                   e.stopPropagation();
                   const target = e.currentTarget as SVGLineElement;

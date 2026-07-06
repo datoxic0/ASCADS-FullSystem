@@ -126,14 +126,15 @@ export default function RobotWorkspaceIDE({
   const isResizingExplorerRef = useRef<boolean>(false);
   const isResizingTerminalRef = useRef<boolean>(false);
 
-  const startResizeExplorer = (e: React.MouseEvent) => {
+  const startResizeExplorer = (e: React.PointerEvent) => {
     e.preventDefault();
     isResizingExplorerRef.current = true;
-    document.addEventListener("mousemove", handleResizeExplorer);
-    document.addEventListener("mouseup", stopResizeExplorer);
+    document.addEventListener("pointermove", handleResizeExplorer);
+    document.addEventListener("pointerup", stopResizeExplorer);
+    document.addEventListener("pointercancel", stopResizeExplorer);
   };
 
-  const handleResizeExplorer = (e: MouseEvent) => {
+  const handleResizeExplorer = (e: PointerEvent) => {
     if (!isResizingExplorerRef.current) return;
     const ideCard = document.getElementById("workspace-ide-card");
     if (!ideCard) return;
@@ -145,18 +146,20 @@ export default function RobotWorkspaceIDE({
 
   const stopResizeExplorer = () => {
     isResizingExplorerRef.current = false;
-    document.removeEventListener("mousemove", handleResizeExplorer);
-    document.removeEventListener("mouseup", stopResizeExplorer);
+    document.removeEventListener("pointermove", handleResizeExplorer);
+    document.removeEventListener("pointerup", stopResizeExplorer);
+    document.removeEventListener("pointercancel", stopResizeExplorer);
   };
 
-  const startResizeTerminal = (e: React.MouseEvent) => {
+  const startResizeTerminal = (e: React.PointerEvent) => {
     e.preventDefault();
     isResizingTerminalRef.current = true;
-    document.addEventListener("mousemove", handleResizeTerminal);
-    document.addEventListener("mouseup", stopResizeTerminal);
+    document.addEventListener("pointermove", handleResizeTerminal);
+    document.addEventListener("pointerup", stopResizeTerminal);
+    document.addEventListener("pointercancel", stopResizeTerminal);
   };
 
-  const handleResizeTerminal = (e: MouseEvent) => {
+  const handleResizeTerminal = (e: PointerEvent) => {
     if (!isResizingTerminalRef.current) return;
     const ideCard = document.getElementById("workspace-ide-card");
     if (!ideCard) return;
@@ -168,8 +171,9 @@ export default function RobotWorkspaceIDE({
 
   const stopResizeTerminal = () => {
     isResizingTerminalRef.current = false;
-    document.removeEventListener("mousemove", handleResizeTerminal);
-    document.removeEventListener("mouseup", stopResizeTerminal);
+    document.removeEventListener("pointermove", handleResizeTerminal);
+    document.removeEventListener("pointerup", stopResizeTerminal);
+    document.removeEventListener("pointercancel", stopResizeTerminal);
   };
 
   const lineIdxRef = useRef<number>(0);
@@ -1689,7 +1693,7 @@ export default function RobotWorkspaceIDE({
         {/* Dynamic vertical resizer handle for explorer */}
         {sidebarOpen && (
           <div
-            onMouseDown={startResizeExplorer}
+            onPointerDown={startResizeExplorer}
             className="hidden md:block w-1 hover:w-1.5 bg-transparent hover:bg-blue-600/30 border-r border-[#1e1e23] cursor-col-resize shrink-0 transition-all relative group z-10"
             title="Drag to resize file explorer sidebar"
           >
@@ -1838,7 +1842,7 @@ export default function RobotWorkspaceIDE({
         {/* Dynamic horizontal resizer handle for terminal */}
         {!isTerminalCollapsed && (
           <div
-            onMouseDown={startResizeTerminal}
+            onPointerDown={startResizeTerminal}
             className="h-1 hover:h-1.5 bg-transparent hover:bg-blue-600/30 cursor-row-resize absolute -top-[2px] left-0 right-0 z-10 transition-all group"
             title="Drag to resize console logs terminal"
           >

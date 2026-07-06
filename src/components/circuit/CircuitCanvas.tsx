@@ -223,9 +223,9 @@ export function CircuitCanvas({
     onAddGate({ id, ...def, x: nx, y: ny });
   };
 
-  /* ---------- Mouse interaction on background ---------- */
+  /* ---------- Pointer interaction on background ---------- */
 
-  const onSvgMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+  const onSvgPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.button === 1 || (e.button === 0 && e.altKey)) {
       setInteraction({ kind: "pan", lastSX: e.clientX, lastSY: e.clientY });
       return;
@@ -254,7 +254,7 @@ export function CircuitCanvas({
     }
   };
 
-  const onSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const onSvgPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     reportCursor(e);
 
     if (interaction.kind === "pan") {
@@ -293,7 +293,7 @@ export function CircuitCanvas({
     }
   };
 
-  const onSvgMouseUp = (_e: React.MouseEvent<SVGSVGElement>) => {
+  const onSvgPointerUp = (_e: React.PointerEvent<SVGSVGElement>) => {
     if (interaction.kind === "rect-select") {
       const x0 = Math.min(interaction.startX, interaction.currentX);
       const x1 = Math.max(interaction.startX, interaction.currentX);
@@ -352,9 +352,9 @@ export function CircuitCanvas({
     setInteraction({ kind: "idle" });
   };
 
-  /* ---------- Mouse on a gate ---------- */
+  /* ---------- Pointer on a gate ---------- */
 
-  const onGateMouseDown = (e: React.MouseEvent, gate: Gate) => {
+  const onGatePointerDown = (e: React.PointerEvent, gate: Gate) => {
     e.stopPropagation();
 
     if (e.button === 1) {
@@ -419,7 +419,7 @@ export function CircuitCanvas({
 
   /* ---------- Pin interactions ---------- */
 
-  const onPinMouseDown = (e: React.MouseEvent, gate: Gate, pinIndex: number) => {
+  const onPinPointerDown = (e: React.PointerEvent, gate: Gate, pinIndex: number) => {
     e.stopPropagation();
     const pins = pinsFor(gate);
     const pin = pins[pinIndex];
@@ -437,15 +437,15 @@ export function CircuitCanvas({
     });
   };
 
-  const onPinMouseEnter = (gate: Gate, pinIndex: number) => {
+  const onPinPointerEnter = (gate: Gate, pinIndex: number) => {
     setHoverPin({ gateId: gate.id, pinIndex });
   };
 
-  const onPinMouseLeave = () => {
+  const onPinPointerLeave = () => {
     setHoverPin(null);
   };
 
-  const onPinMouseUp = (e: React.MouseEvent, gate: Gate, pinIndex: number) => {
+  const onPinPointerUp = (e: React.PointerEvent, gate: Gate, pinIndex: number) => {
     e.stopPropagation();
     if (interaction.kind !== "draw-wire") return;
     if (interaction.from.gateId === gate.id) {
@@ -627,10 +627,10 @@ export function CircuitCanvas({
         height={size.h}
         viewBox={`0 0 ${size.w} ${size.h}`}
         style={{ cursor: cursorStyle, display: "block" }}
-        onMouseDown={onSvgMouseDown}
-        onMouseMove={onSvgMouseMove}
-        onMouseUp={onSvgMouseUp}
-        onMouseLeave={() => {
+        onPointerDown={onSvgPointerDown}
+        onPointerMove={onSvgPointerMove}
+        onPointerUp={onSvgPointerUp}
+        onPointerLeave={() => {
           if (interaction.kind === "draw-wire") setInteraction({ kind: "idle" });
           if (interaction.kind === "pan") setInteraction({ kind: "idle" });
           onCursorChange?.(null);
@@ -767,7 +767,7 @@ export function CircuitCanvas({
                 <g
                   key={gate.id}
                   transform={`translate(${gate.x} ${gate.y})`}
-                  onMouseDown={(e) => onGateMouseDown(e, gate)}
+                  onPointerDown={(e) => onGatePointerDown(e, gate)}
                   onClick={(e) => onGateClick(e, gate)}
                   onContextMenu={(e) => onGateContextMenu(e, gate)}
                   style={{ cursor: isInput ? "pointer" : "grab" }}
@@ -837,10 +837,10 @@ export function CircuitCanvas({
                           r={9}
                           fill="transparent"
                           style={{ cursor: pin.type === "out" ? "crosshair" : "cell" }}
-                          onMouseDown={(e) => onPinMouseDown(e, gate, i)}
-                          onMouseUp={(e) => onPinMouseUp(e, gate, i)}
-                          onMouseEnter={() => onPinMouseEnter(gate, i)}
-                          onMouseLeave={onPinMouseLeave}
+                          onPointerDown={(e) => onPinPointerDown(e, gate, i)}
+                          onPointerUp={(e) => onPinPointerUp(e, gate, i)}
+                          onPointerEnter={() => onPinPointerEnter(gate, i)}
+                          onPointerLeave={onPinPointerLeave}
                         />
                       </g>
                     );
