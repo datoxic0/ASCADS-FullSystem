@@ -18,6 +18,7 @@ interface SchematicCanvasProps {
   onAddConnection: (from: string, fromPin: number, to: string, toPin: number, routing?: 'HVH' | 'VHV') => void;
   onUpdateConnection?: (id: string, updates: Partial<import('../types').Connection>) => void;
   onRemoveConnection: (id: string) => void;
+  onOpenProperties?: () => void;
   selectedTool: 'SELECT' | 'WIRE' | 'DELETE';
   selectedComponentId: string | null;
   onSelectComponent: (id: string | null) => void;
@@ -40,6 +41,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
   onAddConnection,
   onUpdateConnection,
   onRemoveConnection,
+  onOpenProperties,
   selectedTool,
   selectedComponentId,
   onSelectComponent,
@@ -376,15 +378,13 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
           </Group>
         );
         break;
-      case 'SWITCH':
-      case 'TOGGLE_SWITCH':
-      case 'PUSH_BUTTON': {
+      case 'SWITCH': {
         const isClosed = comp.properties.state === 'Closed';
         const switchColor = isClosed ? '#10b981' : color;
         content = (
           <Group>
-            <Circle x={0} y={0} radius={3} stroke={color} fill={bgColor} strokeWidth={2} />
-            <Circle x={30} y={0} radius={3} stroke={color} fill={bgColor} strokeWidth={2} />
+            <Circle x={0} y={0} radius={3} stroke={color} hitStrokeWidth={10} strokeWidth={2} />
+            <Circle x={30} y={0} radius={3} stroke={color} hitStrokeWidth={10} strokeWidth={2} />
             {isClosed ? (
               <Line points={[3, 0, 27, 0]} stroke={switchColor} strokeWidth={2} />
             ) : (
@@ -435,7 +435,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'INTEGRATED_CIRCUIT':
         content = (
           <Group>
-            <Rect width={60} height={80} stroke={color} strokeWidth={2} fill={bgColor} cornerRadius={4} />
+            <Rect width={60} height={80} stroke={color} strokeWidth={2} hitStrokeWidth={10} cornerRadius={4} />
             <Circle x={30} y={8} radius={4} fill={color} />
             <Text text={comp.properties.model as string || 'IC'} x={10} y={35} fontSize={8} fill={color} fontFamily="monospace" />
           </Group>
@@ -444,7 +444,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'OP_AMP':
         content = (
           <Group>
-            <Line points={[10, -10, 10, 50, 50, 20, 10, -10]} stroke={color} strokeWidth={2} fill={bgColor} />
+            <Line points={[10, -10, 10, 50, 50, 20, 10, -10]} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
             <Text text="-" x={15} y={0} fontSize={12} fill={color} />
             <Text text="+" x={15} y={25} fontSize={12} fill={color} />
           </Group>
@@ -453,7 +453,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'VOLTAGE_REGULATOR':
         content = (
           <Group>
-            <Rect width={60} height={40} stroke={color} strokeWidth={2} fill={bgColor} cornerRadius={2} />
+            <Rect width={60} height={40} stroke={color} strokeWidth={2} hitStrokeWidth={10} cornerRadius={2} />
             <Text text="IN" x={5} y={15} fontSize={7} fill={color} />
             <Text text="GND" x={20} y={30} fontSize={7} fill={color} />
             <Text text="OUT" x={40} y={15} fontSize={7} fill={color} />
@@ -467,11 +467,11 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
             <Line points={[0, 0, 30, 0]} stroke={color} strokeWidth={2} />
             <Line points={[0, 40, 30, 40]} stroke={color} strokeWidth={2} />
             <Line points={[0, 0, 0, 40]} stroke={color} strokeWidth={2} />
-            <Rect x={0} y={0} width={30} height={40} fill={bgColor} />
+            <Rect x={0} y={0} width={30} height={40} hitStrokeWidth={10} />
             <Line points={[30, 0, 30, 40]} stroke={color} strokeWidth={0} />
             {/* The D shape */}
-            <Circle x={30} y={20} radius={20} stroke={color} strokeWidth={2} fill={bgColor} />
-            <Rect x={10} y={1} width={20} height={38} fill={bgColor} />
+            <Circle x={30} y={20} radius={20} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
+            <Rect x={10} y={1} width={20} height={38} hitStrokeWidth={10} />
             <Line points={[0,0, 30,0]} stroke={color} strokeWidth={2} />
             <Line points={[0,40, 30,40]} stroke={color} strokeWidth={2} />
             <Line points={[0,0, 0,40]} stroke={color} strokeWidth={2} />
@@ -482,16 +482,16 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
         content = (
           <Group>
             <Line points={[0, 0, 20, 0, 50, 20, 20, 40, 0, 40]} stroke={color} strokeWidth={2} />
-            <Circle x={-5} y={20} radius={25} stroke={color} strokeWidth={2} fill={bgColor} />
-            <Rect x={-30} y={-10} width={30} height={60} fill={bgColor} />
+            <Circle x={-5} y={20} radius={25} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
+            <Rect x={-30} y={-10} width={30} height={60} hitStrokeWidth={10} />
           </Group>
         );
         break;
       case 'LOGIC_NOT':
         content = (
           <Group>
-            <Line points={[0, 5, 0, 35, 45, 20, 0, 5]} stroke={color} strokeWidth={2} fill={bgColor} />
-            <Circle x={52} y={20} radius={5} stroke={color} strokeWidth={2} fill={bgColor} />
+            <Line points={[0, 5, 0, 35, 45, 20, 0, 5]} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
+            <Circle x={52} y={20} radius={5} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
           </Group>
         );
         break;
@@ -522,7 +522,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'MICROPHONE':
         content = (
           <Group>
-            <Circle x={20} y={20} radius={15} stroke={color} strokeWidth={2} fill={bgColor} />
+            <Circle x={20} y={20} radius={15} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
             <Line points={[10, 12, 30, 12]} stroke={color} strokeWidth={1} />
             <Line points={[10, 16, 30, 16]} stroke={color} strokeWidth={1} />
             <Line points={[0, 10, 5, 10]} stroke={color} strokeWidth={2} />
@@ -575,7 +575,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
 
         content = (
           <Group>
-            <Rect width={50} height={60} stroke={color} strokeWidth={2} fill={bgColor} />
+            <Rect width={50} height={60} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
             {/* Segments: A, B, C, D, E, F, G */}
             <Rect x={10} y={5} width={30} height={3} fill={getSegColor(segs[0] === 1)} />
             <Rect x={42} y={10} width={3} height={18} fill={getSegColor(segs[1] === 1)} />
@@ -592,7 +592,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'MOTOR':
         content = (
           <Group>
-            <Circle x={30} y={20} radius={20} stroke={color} strokeWidth={2} fill={bgColor} />
+            <Circle x={30} y={20} radius={20} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
             <Text text="M" x={22} y={12} fontSize={16} fill={color} fontStyle="bold" />
             <Line points={[0, 20, 10, 20]} stroke={color} strokeWidth={2} />
             <Line points={[50, 20, 60, 20]} stroke={color} strokeWidth={2} />
@@ -603,7 +603,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'SOLENOID':
         content = (
           <Group>
-            <Rect x={15} y={5} width={30} height={30} stroke={color} strokeWidth={2} fill={bgColor} />
+            <Rect x={15} y={5} width={30} height={30} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
             <Line points={[20, 10, 20, 30, 25, 10, 25, 30, 30, 10, 30, 30, 35, 10, 35, 30, 40, 10, 40, 30]} stroke={color} strokeWidth={1} />
             <Rect x={isActive ? 50 : 40} y={18} width={20} height={4} fill={color} />
             <Line points={[0, 10, 15, 10]} stroke={color} strokeWidth={2} />
@@ -614,7 +614,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'RELAY':
         content = (
           <Group>
-            <Rect width={60} height={40} stroke={color} strokeWidth={2} fill={bgColor} />
+            <Rect width={60} height={40} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
             {/* Coil */}
             <Line points={[0, 10, 15, 10]} stroke={color} strokeWidth={2} />
             <Line points={[0, 30, 15, 30]} stroke={color} strokeWidth={2} />
@@ -631,7 +631,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
         const state = simulationStates?.[comp.id];
         content = (
           <Group>
-            <Rect width={60} height={40} stroke={color} strokeWidth={2} fill={bgColor} cornerRadius={2} />
+            <Rect width={60} height={40} stroke={color} strokeWidth={2} hitStrokeWidth={10} cornerRadius={2} />
             <Rect x={5} y={5} width={40} height={25} fill="#020617" stroke="#1e293b" />
             
             {/* Screen Grid */}
@@ -698,7 +698,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'MULTIMETER':
         content = (
           <Group>
-            <Rect width={40} height={40} stroke={color} strokeWidth={2} fill={bgColor} cornerRadius={4} />
+            <Rect width={40} height={40} stroke={color} strokeWidth={2} hitStrokeWidth={10} cornerRadius={4} />
             <Rect x={5} y={5} width={30} height={15} fill="#1e293b" />
             {isActive ? (
               <Text text="5.00V" x={10} y={8} fontSize={8} fill="#ef4444" fontStyle="bold" />
@@ -713,7 +713,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'SIGNAL_GENERATOR':
         content = (
           <Group>
-            <Rect width={60} height={40} stroke={color} strokeWidth={2} fill={bgColor} />
+            <Rect width={60} height={40} stroke={color} strokeWidth={2} hitStrokeWidth={10} />
             <Rect x={10} y={8} width={40} height={12} fill="#1e293b" />
             <Text text="1.00 kHz" x={15} y={11} fontSize={7} fill="#38bdf8" />
             <Line points={[10, 30, 20, 25, 30, 35, 40, 25, 50, 30]} stroke={color} strokeWidth={1} />
@@ -724,7 +724,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
       case 'SPECTRUM_ANALYZER':
         content = (
           <Group>
-            <Rect width={60} height={40} stroke={color} strokeWidth={2} fill={bgColor} cornerRadius={2} />
+            <Rect width={60} height={40} stroke={color} strokeWidth={2} hitStrokeWidth={10} cornerRadius={2} />
             <Rect x={8} y={6} width={44} height={28} fill="#020617" />
             {isActive || isSimulating ? (
                <Group>
@@ -780,7 +780,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
               data="M0,0 Q20,20 0,40 M5,0 Q35,0 55,20 Q35,40 5,40 Q25,20 5,0"
               stroke={color}
               strokeWidth={2}
-              fill={bgColor}
+              hitStrokeWidth={10}
             />
           </Group>
         );
@@ -792,9 +792,9 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
               data="M0,0 Q20,20 0,40 M5,0 Q35,0 55,20 Q35,40 5,40 Q25,20 5,0"
               stroke={color}
               strokeWidth={2}
-              fill={bgColor}
+              hitStrokeWidth={10}
             />
-            <Circle x={60} y={20} radius={4} stroke={color} fill={bgColor} />
+            <Circle x={60} y={20} radius={4} stroke={color} hitStrokeWidth={10} />
           </Group>
         );
         break;
@@ -805,9 +805,9 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
                data="M0,0 L30,0 Q55,0 55,20 Q55,40 30,40 L0,40 Z"
                stroke={color}
                strokeWidth={2}
-               fill={bgColor}
+               hitStrokeWidth={10}
             />
-            <Circle x={60} y={20} radius={4} stroke={color} fill={bgColor} />
+            <Circle x={60} y={20} radius={4} stroke={color} hitStrokeWidth={10} />
           </Group>
         );
         break;
@@ -818,9 +818,9 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
               data="M0,0 Q20,20 0,40 M5,0 Q35,0 55,20 Q35,40 5,40 Q25,20 5,0"
               stroke={color}
               strokeWidth={2}
-              fill={bgColor}
+              hitStrokeWidth={10}
             />
-            <Circle x={60} y={20} radius={4} stroke={color} fill={bgColor} />
+            <Circle x={60} y={20} radius={4} stroke={color} hitStrokeWidth={10} />
           </Group>
         );
         break;
@@ -878,7 +878,7 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
             height={def.height}
             stroke={color}
             strokeWidth={2}
-            fill={bgColor}
+            hitStrokeWidth={10}
             cornerRadius={2}
           />
         );
@@ -892,6 +892,22 @@ const SchematicCanvas = React.memo(React.forwardRef<SchematicCanvasRef, Schemati
         rotation={comp.rotation}
         draggable={!isSimulating && selectedTool === 'SELECT'}
         onDragEnd={(e) => handleDragEnd(comp.id, e)}
+        onContextMenu={(e) => {
+          e.evt.preventDefault();
+          e.cancelBubble = true;
+          if (comp.type.startsWith('SWITCH')) {
+            const currentState = comp.properties.state;
+            onUpdateComponent(comp.id, {
+              properties: { ...comp.properties, state: currentState === 'closed' ? 'open' : 'closed' }
+            });
+          }
+        }}
+        onDblClick={(e) => {
+          e.cancelBubble = true;
+          if (onOpenProperties) {
+            onOpenProperties();
+          }
+        }}
         onClick={(e) => {
           e.cancelBubble = true;
           handleComponentClick(comp.id);

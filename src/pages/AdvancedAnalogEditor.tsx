@@ -495,19 +495,18 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
                      ref={canvasRef}
                      design={design}
                      selectedTool={tool}
-                     selectedComponentId={selectedId}
-                     onSelectComponent={setSelectedId}
+                     selectedComponentId={selectedItems.length === 1 ? selectedItems[0] : null}
+                     onSelectComponent={(id) => id ? handleSelectItems([id]) : handleSelectItems([])}
                      onUpdateComponent={updateComponent}
                      onRemoveComponent={removeComponent}
                      onAddConnection={addConnection}
+                     onUpdateConnection={updateConnection}
                      onRemoveConnection={removeConnection}
-                     undo={undo}
-                     redo={redo}
-                     stageRef={stageRef}
-                     isSimulating={isSimulating || view === 'SIMULATION'}
-                     activeComponentIds={activeComponentIds}
-                     activeConnectionIds={activeConnectionIds}
-                     simulationStates={simulationStates}
+                     onOpenProperties={() => setIsSidebarOpen(true)}
+                     activeComponentIds={new Set(selectedItems)}
+                     activeConnectionIds={new Set()}
+                     simulationStates={simState}
+                     isSimulating={isRunning}
                      tick={tick}
                      scopeHistory={scopeHistory}
                    />

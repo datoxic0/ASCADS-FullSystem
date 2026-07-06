@@ -1303,7 +1303,7 @@ function ConstBody({
         width={w - 12}
         height={h - 8}
         rx={4}
-        fill="hsl(var(--card))"
+        fill="none"
         stroke="currentColor"
         strokeWidth={sw}
       />

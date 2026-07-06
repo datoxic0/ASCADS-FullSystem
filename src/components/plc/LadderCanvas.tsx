@@ -922,7 +922,6 @@ export function LadderCanvas({
       )}
       onPointerDown={handlePointerDown}
       onPointerMove={handleMouseMoveGlobal}
-      onPointerLeave={handlePointerUp}
       onWheel={handleWheel}
       onClick={handleClick}
     >

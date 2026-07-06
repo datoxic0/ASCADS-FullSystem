@@ -395,16 +395,6 @@ export function CircuitCanvas({
 
   const onGateClick = (e: React.MouseEvent, gate: Gate) => {
     e.stopPropagation();
-    if (
-      interaction.kind === "drag-gates" &&
-      !interaction.moved &&
-      (gate.kind === "INPUT" || gate.kind === "BUTTON") &&
-      !e.shiftKey &&
-      !e.metaKey &&
-      !e.ctrlKey
-    ) {
-      onUpdateGate(gate.id, { on: !gate.on }, true);
-    }
   };
 
   /** Right-click on INPUT toggles it; right-click on any gate also selects it. */
