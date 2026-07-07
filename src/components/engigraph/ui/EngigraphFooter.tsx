@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useEngigraphStore } from '../store/useEngigraphStore';
+import { Zap } from 'lucide-react';
 
 export const EngigraphFooter: React.FC = () => {
     const [command, setCommand] = useState('');
@@ -86,13 +87,6 @@ export const EngigraphFooter: React.FC = () => {
                     store.pushTerminalLog("Usage: ROT <degrees> (e.g. ROT 90)", 'system');
                 }
                 break;
-            case 'STD':
-                const standard = parts[1] || 'SANS';
-                store.pushTerminalLog(`Switched to drafting standard: ${standard}`, 'system');
-                break;
-            case 'HELP':
-                store.pushTerminalLog('Available commands: L, C, R, Z E, GRID, SNAP, THEME, BOM, EXPORT, CLS, STD, MV, ROT', 'system');
-                break;
             case 'CLS':
             case 'CLEAR':
                 if (window.confirm("Wipe workspace? This cannot be undone.")) {
@@ -109,39 +103,76 @@ export const EngigraphFooter: React.FC = () => {
     };
 
     return (
-        <footer className="flex h-8 bg-[#0e0e11] border-t border-slate-700 items-center px-4 text-[11px] shrink-0 z-50">
-            <div className="flex-1 flex items-center gap-2">
-                <span className="text-cyan-500 font-bold tracking-widest uppercase">Command:</span>
-                <form onSubmit={handleCommandSubmit} className="flex-1">
-                    <input
-                        type="text"
-                        value={command}
-                        onChange={(e) => setCommand(e.target.value)}
-                        placeholder="Type a command (e.g. L, CIRCLE, BOM, CLS)..."
-                        className="w-full bg-transparent text-slate-200 outline-none placeholder-slate-600 font-mono uppercase"
-                    />
+        <footer className="flex h-12 bg-[#1b1d20] border-t border-[#334155] items-center px-4 text-xs shrink-0 z-50 justify-between">
+            <div className="flex items-center gap-4 flex-1">
+                {/* Command Line Input */}
+                <form onSubmit={handleCommandSubmit} className="flex-1 max-w-[400px]">
+                    <div className="relative flex items-center w-full bg-[#111] border border-[#333] rounded-md px-3 py-1.5 shadow-inner">
+                        <span className="text-[#00ffcc] font-bold mr-2 whitespace-nowrap">ENG:</span>
+                        <input
+                            type="text"
+                            value={command}
+                            onChange={(e) => setCommand(e.target.value)}
+                            placeholder="Type command (e.g. LINE, CIRCLE)..."
+                            className="w-full bg-transparent text-[#00ff00] outline-none placeholder-[#00ff00]/50 font-mono text-xs"
+                            style={{ textShadow: '0 0 2px rgba(0, 255, 0, 0.4)' }}
+                        />
+                    </div>
                 </form>
+
+                {/* Toggles (Checkboxes) */}
+                <div className="flex items-center gap-4 text-slate-300 ml-2 font-sans text-xs">
+                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-white transition-colors">
+                        <input
+                            type="checkbox"
+                            checked={store.grid.snapToGrid}
+                            onChange={() => store.toggleSnap('snapToGrid')}
+                            className="w-3.5 h-3.5 accent-blue-500 cursor-pointer"
+                        />
+                        <span>Grid</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-white transition-colors">
+                        <input
+                            type="checkbox"
+                            checked={store.grid.snapToObject}
+                            onChange={() => store.toggleSnap('snapToObject')}
+                            className="w-3.5 h-3.5 accent-blue-500 cursor-pointer"
+                        />
+                        <span>Obj</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-white transition-colors">
+                        <input
+                            type="checkbox"
+                            checked={store.grid.orthoMode}
+                            onChange={() => store.toggleSnap('orthoMode')}
+                            className="w-3.5 h-3.5 accent-blue-500 cursor-pointer"
+                        />
+                        <span>Ortho</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 cursor-pointer hover:text-white transition-colors">
+                        <input
+                            type="checkbox"
+                            defaultChecked={true}
+                            className="w-3.5 h-3.5 accent-blue-500 cursor-pointer"
+                        />
+                        <span>AngleUnits: mm</span>
+                    </label>
+                </div>
             </div>
-            <div className="flex gap-4 text-slate-500 font-mono text-[10px]">
-                <span className="bg-[#1f1f23] px-2 py-0.5 rounded border border-slate-800">
-                    {`X: ${store.view.x.toFixed(1)} Y: ${store.view.y.toFixed(1)}`}
-                </span>
-                <span className="bg-[#1f1f23] px-2 py-0.5 rounded border border-slate-800">
-                    {`ZOOM: ${(store.view.zoom * 100).toFixed(0)}%`}
-                </span>
-                <button onClick={() => store.toggleSnap('snapToGrid')} className={`px-2 py-0.5 rounded border ${store.grid.snapToGrid ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800 hover:bg-slate-800 transition-colors'}`}>
-                    GRID
-                </button>
-                <button onClick={() => store.toggleSnap('snapToObject')} className={`px-2 py-0.5 rounded border ${store.grid.snapToObject ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800 hover:bg-slate-800 transition-colors'}`}>
-                    SNAP
-                </button>
-                <button onClick={() => store.toggleSnap('orthoMode')} className={`px-2 py-0.5 rounded border ${store.grid.orthoMode ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800 hover:bg-slate-800 transition-colors'}`}>
-                    ORTHO
-                </button>
-                <span className="bg-indigo-900/30 text-indigo-400 px-2 py-0.5 rounded border border-indigo-800">
-                    SANS 10111
-                </span>
+
+            {/* Right Side Status Information */}
+            <div className="flex items-center gap-6 text-slate-400 font-sans text-xs shrink-0">
+                <span>Shortcut: Color [6] applied to selection.</span>
+
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-[#1c2e21] border border-[#2e4c36] rounded text-[#4ade80] shadow-inner font-semibold">
+                    <Zap size={14} className="text-[#4ade80]" />
+                    Online
+                </div>
             </div>
         </footer>
     );
 };
+
