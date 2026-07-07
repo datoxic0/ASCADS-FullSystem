@@ -376,7 +376,7 @@ export default function UnifiedShell() {
         )}
 
         {mode === 'engigraph' && (
-          <div className="h-full">
+          <div className="flex-1 min-h-0 flex flex-col h-full w-full">
             <EngigraphPage />
           </div>
         )}

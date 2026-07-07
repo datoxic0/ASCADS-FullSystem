@@ -146,11 +146,11 @@ export default function EngigraphPage() {
         )}
       </div>
 
-      <div className="flex-1 relative">
-        <div style={{ display: mode === '3D' ? 'block' : 'none', height: '100%' }}>
+      <div className="flex-1 relative flex flex-col min-h-0">
+        <div className="w-full h-full flex flex-col min-h-0" style={{ display: mode === '3D' ? 'flex' : 'none' }}>
           <Engigraph3D />
         </div>
-        <div style={{ display: mode === '2D' ? 'block' : 'none', height: '100%' }}>
+        <div className="w-full h-full flex flex-col min-h-0" style={{ display: mode === '2D' ? 'flex' : 'none' }}>
           <SimulationProvider>
             <Engigraph2D />
           </SimulationProvider>
