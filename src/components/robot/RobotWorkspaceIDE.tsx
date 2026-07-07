@@ -65,6 +65,7 @@ interface RobotWorkspaceIDEProps {
   obstacleHeight: number;
   sensorPositionX: number;
   onCollapse?: () => void;
+  triggerRunRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export default function RobotWorkspaceIDE({
@@ -92,7 +93,8 @@ export default function RobotWorkspaceIDE({
   conveyorSpeed,
   obstacleHeight,
   sensorPositionX,
-  onCollapse
+  onCollapse,
+  triggerRunRef
 }: RobotWorkspaceIDEProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const terminalBottomRef = useRef<HTMLDivElement>(null);
@@ -450,9 +452,15 @@ export default function RobotWorkspaceIDE({
           interpreterIntervalRef.current = intervalId;
           setInterpreterIntervalId(intervalId);
         }
-      }, 1500);
-    }, 1200);
+      }, 800);
+    }, 600);
   };
+
+  useEffect(() => {
+    if (triggerRunRef) {
+      triggerRunRef.current = handleCompileAndRun;
+    }
+  }, [handleCompileAndRun, triggerRunRef]);
 
   // Real-time Interpreter & physics synchronizer for G-Code scripts!
   const startGcodeInterpreter = (resumeFromPause = false) => {
@@ -1439,164 +1447,7 @@ export default function RobotWorkspaceIDE({
             </button>
           )}
         </div>
-        
-        {/* Play/Stop & Reference Triggers */}
-        <div className="flex items-center gap-1.5 shrink-0 select-none">
-          {/* Reference Modal button as a clean circular-feel question mark square button */}
-          <button
-            onClick={() => setShowHelpModal(true)}
-            className="h-7 w-7 bg-[#0d0d0f] hover:bg-[#1a1a24] border border-emerald-300 dark:border-white/5 hover:border-emerald-400 dark:border-white/10 rounded-md flex items-center justify-center cursor-pointer transition-all shrink-0 text-blue-400 hover:text-blue-300"
-            title="Open G-Code Command Reference Guide"
-            aria-label="Open G-Code Reference Manual"
-          >
-            <HelpCircle className="w-4 h-4" />
-          </button>
 
-          {/* Export Logic to PLC */}
-          <button
-            onClick={() => {
-              const plcState = EcosystemTranslator.robotToPLC(simulationState, sortingStats);
-              localStorage.setItem('ascads_bridge_robot_plc_state', JSON.stringify(plcState));
-              addLog("success", "Successfully transpiled Robot internal variables and states to PLC Logic Pipeline.");
-            }}
-            className="h-7 px-2 bg-indigo-900/30 hover:bg-indigo-800/50 border border-indigo-500/30 hover:border-indigo-400/50 rounded-md flex items-center justify-center cursor-pointer transition-all shrink-0 text-indigo-400 hover:text-indigo-300 gap-1"
-            title="Export Robot Logic & Sensors to PLC"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="text-[9px] font-bold tracking-wider hidden sm:inline-block">TO PLC</span>
-          </button>
-
-          {/* Simulation Speed Dropdown Selector */}
-          <div className="flex items-center bg-[#0d0d0f] border border-emerald-300 dark:border-white/5 hover:border-emerald-400 dark:border-white/10 rounded-md px-1.5 h-7 select-none shrink-0 transition-all">
-            <select
-              value={simulationSpeed}
-              onChange={(e) => setSimulationSpeed(Number(e.target.value))}
-              disabled={simulationState.isRunning}
-              className="bg-transparent text-emerald-900 dark:text-slate-200 font-mono text-[9px] font-bold focus:outline-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-55 py-0.5"
-              title="Execution step speed interval"
-              aria-label="Simulation speed factor"
-            >
-              <option value="2000" className="bg-[#141417] text-emerald-900 dark:text-slate-200">0.5x</option>
-              <option value="1500" className="bg-[#141417] text-emerald-900 dark:text-slate-200">0.75x</option>
-              <option value="1000" className="bg-[#141417] text-emerald-900 dark:text-slate-200">1.0x (Calibrated)</option>
-              <option value="500" className="bg-[#141417] text-emerald-900 dark:text-slate-200">2.0x (Fast)</option>
-              <option value="250" className="bg-[#141417] text-emerald-900 dark:text-slate-200">4.0x (Turbo)</option>
-            </select>
-          </div>
-
-          {/* UNIFIED INTERACTIVE SIMULATION CONTROL SUITE */}
-          <div className="flex bg-[#0b0b0d] border border-emerald-400 dark:border-white/10 rounded-md p-0.5 gap-0.5 items-center shrink-0">
-            {/* 1. FLASH PROGRAM & RUN */}
-            <button
-              onClick={handleCompileAndRun}
-              title={
-                (simulationState.isRunning || simulationState.status === "paused")
-                  ? "Stop current G-Code line interpolation sequence (Key: F8)"
-                  : "Compile and run G-Code onto virtual PLC register array (Key: F8)"
-              }
-              aria-label={
-                (simulationState.isRunning || simulationState.status === "paused")
-                  ? "Stop Simulation"
-                  : "Flash G-Code Program"
-              }
-              className={`flex items-center justify-center w-7 h-7 text-[8px] font-extrabold rounded cursor-pointer border transition-all duration-300 shadow-sm shrink-0 ${
-                (simulationState.isRunning || simulationState.status === "paused")
-                  ? "bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/25"
-                  : "bg-blue-600 hover:bg-blue-500 text-white border-blue-700 shadow"
-              }`}
-            >
-              {(simulationState.isRunning || simulationState.status === "paused") ? (
-                <>
-                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                  <span className="sr-only">STOP</span>
-                </>
-              ) : (
-                <>
-                  <Cpu className="w-3.5 h-3.5 text-blue-200 animate-pulse shrink-0" />
-                  <span className="sr-only">FLASH [F8]</span>
-                </>
-              )}
-            </button>
-
-            {/* 2. PLAY / PAUSE / RESUME */}
-            <button
-              onClick={() => {
-                if (!simulationState.isCompiled) {
-                  handleCompileAndRun();
-                } else if (simulationState.status === "running") {
-                  pauseSimulation();
-                } else {
-                  resumeSimulation();
-                }
-              }}
-              title="Pause or Resume G-Code execution sequence step-through (Key: Spacebar)"
-              aria-label="Pause or Resume G-Code Simulation"
-              className={`flex items-center justify-center w-7 h-7 text-[8px] font-extrabold rounded cursor-pointer border transition-all duration-300 shadow-sm shrink-0 ${
-                !simulationState.isCompiled 
-                  ? "bg-[#18181b]/50 text-slate-500 border-emerald-300 dark:border-white/5 hover:bg-[#18181b]/80 hover:text-emerald-800 dark:text-slate-350"
-                  : simulationState.status === "running"
-                  ? "bg-amber-600/10 text-amber-400 border-amber-600/30 hover:bg-amber-600/20"
-                  : "bg-emerald-600/10 text-emerald-400 border-emerald-600/30 hover:bg-emerald-600/20"
-              }`}
-            >
-              {!simulationState.isCompiled ? (
-                <>
-                  <Play className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                  <span className="sr-only">RUN [SP]</span>
-                </>
-              ) : simulationState.status === "running" ? (
-                <>
-                  <Pause className="w-3.5 h-3.5 text-amber-400 fill-current shrink-0" />
-                  <span className="sr-only">PAUSE</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 text-emerald-400 fill-current shrink-0" />
-                  <span className="sr-only">RESUME</span>
-                </>
-              )}
-            </button>
-
-            {/* 3. STEP NEXT INSTRUCTION */}
-            <button
-              onClick={stepSimulationLine}
-              disabled={!simulationState.isCompiled || (simulationState.status !== "paused" && simulationState.status !== "idle")}
-              title="Advantage step to the next line of instruction (Key: S)"
-              aria-label="Execute single G-Code line instruction"
-              className={`flex items-center justify-center w-7 h-7 text-[8px] font-extrabold rounded border transition-all duration-300 shadow-sm disabled:cursor-not-allowed disabled:opacity-25 shrink-0 ${
-                simulationState.isCompiled && (simulationState.status === "paused" || simulationState.status === "idle")
-                  ? "bg-sky-600/10 text-sky-400 border-sky-500/25 hover:bg-sky-600/20"
-                  : "bg-[#141417]/80 text-slate-600 border-emerald-300 dark:border-white/5"
-              }`}
-            >
-              <ChevronRight className="w-4 h-4 text-sky-400 shrink-0" />
-              <span className="sr-only">STEP [S]</span>
-            </button>
-
-            {/* 4. EMERGENCY FORCE STOP */}
-            <button
-              onClick={() => {
-                stopSimulation();
-                if (setLogs) {
-                  setLogs([
-                    {
-                      id: "force-stop-reset",
-                      type: "error",
-                      text: "[SYSTEM RESET] EMERGENCY HARDWARE KILL TRIGGERED! All joint interpolations suspended, pneumatic vacuum system discharged, PLC registers cleared.",
-                      timestamp: new Date().toLocaleTimeString()
-                    }
-                  ]);
-                }
-              }}
-              title="Immediate Hardware Emergency Kill (Key: Esc)"
-              aria-label="Emergency Stop"
-              className="flex items-center justify-center w-7 h-7 text-[8px] font-black rounded cursor-pointer border border-[#f43f5e] bg-red-950/40 text-outline-rose hover:bg-rose-700 hover:text-white transition-all duration-300 shadow animate-pulse hover:animate-none shrink-0"
-            >
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span className="sr-only">STOP [ESC]</span>
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Main IDE grid layout */}

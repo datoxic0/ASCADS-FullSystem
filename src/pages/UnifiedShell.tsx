@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X } from 'lucide-react';
+import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X, Workflow, Layers, Share2 } from 'lucide-react';
 import Editor from '@/pages/Editor';
 import AnalogEditor from '@/pages/AnalogEditor';
 import ProjectsView from '@/components/ProjectsView';
@@ -166,33 +166,39 @@ export default function UnifiedShell() {
         </div>
 
         {/* Center mode switcher (Hidden on Mobile) */}
-        <nav className="mx-auto hidden lg:flex flex-wrap justify-center items-center bg-slate-800/60 border border-slate-700/60 rounded-lg shrink min-w-0 mx-4 gap-1 p-1">
+        <nav className="mx-auto hidden lg:flex flex-nowrap whitespace-nowrap justify-center items-center bg-slate-800/60 border border-slate-700/60 rounded-lg shrink min-w-0 mx-4 gap-1 p-1 overflow-x-auto no-scrollbar">
           {([
-            { id: 'projects', label: 'Projects',       dot: '' },
-            { id: 'plc',      label: 'Industrial PLC', dot: '#3b82f6' },
-            { id: 'robot',    label: 'Robotics',       dot: '#10b981' },
-            { id: 'analog',   label: 'Analog',         dot: '#8b5cf6' },
-            { id: 'digital',  label: 'Digital Logic',  dot: '#06b6d4' },
-            { id: 'compute',  label: 'Compute Tools',  dot: '#f59e0b' },
-            { id: 'maths',    label: 'Maths System',   dot: '#fb7185' },
-            { id: 'engigraph',label: 'EngiGraph Pro',  dot: '#fb923c' },
-            { id: 'docs',     label: 'System Docs',    dot: '#ec4899' },
-          ] as { id: TopMode; label: string; dot: string }[]).map(tab => (
+            { id: 'projects', label: 'Projects',       icon: '📁', dot: '' },
+            { id: 'plc',      label: 'Industrial PLC', icon: '🏭', dot: '#3b82f6' },
+            { id: 'robot',    label: 'Robotics',       icon: '🦾', dot: '#10b981' },
+            { id: 'analog',   label: 'Analog',         icon: '⚡', dot: '#8b5cf6' },
+            { id: 'digital',  label: 'Digital Logic',  icon: '🧮', dot: '#06b6d4' },
+            { id: 'compute',  label: 'Compute Tools',  icon: '💻', dot: '#f59e0b' },
+            { id: 'maths',    label: 'Maths System',   icon: '📐', dot: '#fb7185' },
+            { id: 'engigraph',label: 'EngiGraph Pro',  icon: '📉', dot: '#fb923c' },
+            { id: 'docs',     label: 'System Docs',    icon: '📚', dot: '#ec4899' },
+          ] as { id: TopMode; label: string; dot: string; icon?: string }[]).map(tab => (
             <button
               key={tab.id}
               onClick={() => {
                 if (tab.id !== 'projects') setMode(tab.id); else setMode('projects');
               }}
-              className={`px-3 md:px-4 py-1.5 md:py-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-md transition-all flex items-center gap-2 ${
+              title={tab.label}
+              aria-label={tab.label}
+              className={`px-3 md:px-4 py-1.5 md:py-2 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-md transition-all flex items-center justify-center gap-2 ${
                 mode === tab.id
                   ? 'bg-slate-700/50 text-white shadow-[inset_0_0_10px_rgba(255,255,255,0.05)]'
                   : 'text-slate-600 hover:text-slate-300 hover:bg-slate-700/30'
               }`}
             >
-              {tab.dot && (
-                <div className="w-2 h-2 rounded-full" style={{ background: tab.dot, boxShadow: mode === tab.id ? `0 0 8px ${tab.dot}` : 'none' }} />
+              {tab.icon ? <span className="text-sm grayscale opacity-80 group-hover:grayscale-0">{tab.icon}</span> : (
+                <>
+                  {tab.dot && (
+                    <div className="w-2 h-2 rounded-full" style={{ background: tab.dot, boxShadow: mode === tab.id ? `0 0 8px ${tab.dot}` : 'none' }} />
+                  )}
+                  {tab.label}
+                </>
               )}
-              {tab.label}
             </button>
           ))}
         </nav>

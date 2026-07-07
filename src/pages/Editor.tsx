@@ -116,6 +116,7 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
     wires: new Set(),
   }));
   const [view, setView] = useState<ViewState>({ tx: 0, ty: 0, scale: 1 });
+  const [pointerMode, setPointerMode] = useState<"select" | "pan">("select");
 
   // Signal labels toggle (persisted)
   const [showSignalLabels, setShowSignalLabels] = useState(() => loadSignalLabels());
@@ -535,6 +536,10 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
       } else if (e.key === ".") {
         e.preventDefault();
         onStep();
+      } else if (e.key.toLowerCase() === "v" && !meta) {
+        setPointerMode("select");
+      } else if (e.key.toLowerCase() === "h" && !meta) {
+        setPointerMode("pan");
       }
     };
     window.addEventListener("keydown", onKey);
@@ -622,6 +627,8 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
              toast({ title: 'No Switch Selected', description: 'Select an Input Switch first to toggle its state.' });
           }
         }}
+        pointerMode={pointerMode}
+        onPointerModeChange={setPointerMode}
       />
 
       <div className="flex-1 flex min-h-0 relative">
@@ -649,6 +656,7 @@ export default function Editor({ initialCircuit: bridgeCircuit, project, onProje
             simulation={simulation}
             pendingPlace={pendingPlace}
             setPendingPlace={setPendingPlace}
+            pointerMode={pointerMode}
             onAddGate={addGate}
             onUpdateGate={updateGate}
             onMoveGates={moveGates}

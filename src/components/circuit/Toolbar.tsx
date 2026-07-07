@@ -92,6 +92,8 @@ type Props = {
   isInspectorOpen?: boolean;
   onToggleInspector?: () => void;
   onToggleSwitch?: () => void;
+  pointerMode?: "select" | "pan";
+  onPointerModeChange?: (mode: "select" | "pan") => void;
 };
 
 export function Toolbar({
@@ -135,30 +137,24 @@ export function Toolbar({
   isInspectorOpen,
   onToggleInspector,
   onToggleSwitch,
+  pointerMode = "select",
+  onPointerModeChange,
 }: Props) {
   const [editName, setEditName] = useState(circuitName);
   useEffect(() => setEditName(circuitName), [circuitName]);
 
   return (
     <header className="min-h-14 py-2 shrink-0 border-b border-indigo-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)] bg-slate-950/80 backdrop-blur-md px-3 flex flex-wrap items-center gap-2.5 relative z-50">
-      <div className="flex items-center gap-2.5 mr-1 shrink-0">
-        <Logo size={28} />
-        <div className="flex flex-col -space-y-0.5">
-          <h1 className="font-semibold text-[15px] tracking-tight leading-none">
-            Logic Lab
-          </h1>
-          <span className="text-[10px] text-muted-foreground tracking-wide">
-            Digital Circuit Workbench
-          </span>
-        </div>
+      <div className="flex items-center justify-center w-8 h-8 bg-indigo-500/20 border border-indigo-500/30 rounded shadow-inner mr-1 shrink-0 cursor-pointer hover:bg-indigo-500/30 transition-colors" aria-label="Logic Lab: Digital Circuit Workbench" title="Logic Lab: Digital Circuit Workbench">
+        <Logo size={20} />
       </div>
 
       <Separator orientation="vertical" className="h-6" />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-1.5" data-testid="button-file-menu">
-            File <ChevronDown className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="sm" className="gap-1.5" data-testid="button-file-menu" aria-label="File">
+            <span className="hidden lg:inline-block">File</span> <ChevronDown className="h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
@@ -198,9 +194,10 @@ export function Toolbar({
         className="gap-1.5"
         onClick={onExamplesClick}
         data-testid="button-examples"
+        aria-label="Examples"
       >
         <Sparkles className="h-4 w-4 text-accent" />
-        Examples
+        <span className="hidden lg:inline-block">Examples</span>
       </Button>
 
       <Button
@@ -209,9 +206,10 @@ export function Toolbar({
         className="gap-1.5"
         onClick={onTruthTableClick}
         data-testid="button-truth-table"
+        aria-label="Truth Table"
       >
         <Table2 className="h-4 w-4" />
-        Truth Table
+        <span className="hidden lg:inline-block">Truth Table</span>
       </Button>
 
       <Tooltip>
@@ -222,9 +220,10 @@ export function Toolbar({
             className="gap-1.5"
             onClick={onImportExpr}
             data-testid="button-import-expr"
+            aria-label="f(x) → Circuit"
           >
             <FunctionSquare className="h-4 w-4 text-accent" />
-            f(x) → Circuit
+            <span className="hidden lg:inline-block">f(x) → Circuit</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent>Import circuit from boolean expression</TooltipContent>
@@ -233,7 +232,7 @@ export function Toolbar({
       <Separator orientation="vertical" className="h-6" />
 
       {/* Editable circuit name */}
-      <div className="relative min-w-0 max-w-[260px] flex-shrink">
+      <div className="relative min-w-0 max-w-[260px] flex-shrink hidden md:block">
         <Input
           value={editName}
           onChange={(e) => setEditName(e.target.value)}
@@ -300,9 +299,10 @@ export function Toolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant={pointerMode === "select" ? "secondary" : "ghost"}
               size="icon"
-              className="h-8 w-8 text-indigo-400"
+              className={`h-8 w-8 ${pointerMode === "select" ? "text-indigo-400" : "text-slate-400"}`}
+              onClick={() => onPointerModeChange?.("select")}
             >
               <MousePointer2 className="h-4 w-4" />
             </Button>
@@ -312,9 +312,10 @@ export function Toolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="ghost"
+              variant={pointerMode === "pan" ? "secondary" : "ghost"}
               size="icon"
-              className="h-8 w-8 text-slate-400"
+              className={`h-8 w-8 ${pointerMode === "pan" ? "text-indigo-400" : "text-slate-400"}`}
+              onClick={() => onPointerModeChange?.("pan")}
             >
               <Hand className="h-4 w-4" />
             </Button>
@@ -335,9 +336,10 @@ export function Toolbar({
               className="gap-1.5 h-8 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
               onClick={onToggleSwitch}
               data-testid="button-toggle-switch"
+              aria-label="Toggle Switch"
             >
               <Power className="h-3.5 w-3.5" />
-              Toggle Switch
+              <span className="hidden lg:inline-block">Toggle Switch</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>Toggle Selected Switch (T)</TooltipContent>
@@ -395,12 +397,12 @@ export function Toolbar({
               {running ? (
                 <>
                   <Pause className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium">Running</span>
+                  <span className="text-xs font-medium hidden lg:inline-block">Running</span>
                 </>
               ) : (
                 <>
                   <Play className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium">Paused</span>
+                  <span className="text-xs font-medium hidden lg:inline-block">Paused</span>
                 </>
               )}
             </Button>
@@ -543,8 +545,9 @@ export function Toolbar({
               size="sm"
               className="h-8 gap-1.5 text-[10px] text-cyan-400 hover:text-cyan-300 border border-cyan-500/20 hover:border-cyan-500/40"
               onClick={onExportToPLC}
+              aria-label="Export to PLC"
             >
-              <ArrowRightLeft className="h-3.5 w-3.5" /> → PLC
+              <ArrowRightLeft className="h-3.5 w-3.5" /> <span className="hidden lg:inline-block">→ PLC</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>Export gates to PLC ladder logic</TooltipContent>
@@ -558,8 +561,9 @@ export function Toolbar({
               size="sm"
               className="h-8 gap-1.5 text-[10px] text-blue-400 hover:text-blue-300 border border-blue-500/20 hover:border-blue-500/40"
               onClick={onImportFromPLC}
+              aria-label="Import from PLC"
             >
-              <ArrowRightLeft className="h-3.5 w-3.5" /> ← PLC
+              <ArrowRightLeft className="h-3.5 w-3.5" /> <span className="hidden lg:inline-block">← PLC</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>Import PLC ladder rungs as digital gates</TooltipContent>
@@ -573,8 +577,9 @@ export function Toolbar({
               size="sm"
               className="h-8 gap-1.5 text-[10px] text-purple-400 hover:text-purple-300 border border-purple-500/20 hover:border-purple-500/40"
               onClick={onExportToAnalog}
+              aria-label="Export to Analog"
             >
-              <ArrowRightLeft className="h-3.5 w-3.5" /> → Analog
+              <ArrowRightLeft className="h-3.5 w-3.5" /> <span className="hidden lg:inline-block">→ Analog</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>Export gates to Analog Netlist</TooltipContent>

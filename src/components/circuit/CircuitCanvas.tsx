@@ -46,6 +46,7 @@ type Props = {
   onDeleteWire?: (id: string) => void;
   onCursorChange?: (p: { x: number; y: number } | null) => void;
   showSignalLabels?: boolean;
+  pointerMode?: "select" | "pan";
 };
 
 type Interaction =
@@ -115,6 +116,7 @@ export function CircuitCanvas({
   simulation,
   pendingPlace,
   setPendingPlace,
+  pointerMode = "select",
   onAddGate,
   onUpdateGate,
   onMoveGates,
@@ -127,6 +129,8 @@ export function CircuitCanvas({
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastCursorTime = useRef(0);
+  const lastDragTime = useRef(0);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [interaction, setInteraction] = useState<Interaction>({ kind: "idle" });
   const [hoverPin, setHoverPin] = useState<WireEnd | null>(null);
@@ -158,6 +162,9 @@ export function CircuitCanvas({
 
   const reportCursor = useCallback(
     (e: React.MouseEvent | MouseEvent) => {
+      const now = performance.now();
+      if (now - lastCursorTime.current < 50) return;
+      lastCursorTime.current = now;
       const w = screenToWorld(e.clientX, e.clientY);
       onCursorChange?.(w);
     },
@@ -226,7 +233,7 @@ export function CircuitCanvas({
   /* ---------- Pointer interaction on background ---------- */
 
   const onSvgPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (e.button === 1 || (e.button === 0 && e.altKey)) {
+    if (pointerMode === "pan" || e.button === 1 || (e.button === 0 && e.altKey) || (e.button === 0 && e.pointerType === "touch")) {
       setInteraction({ kind: "pan", lastSX: e.clientX, lastSY: e.clientY });
       return;
     }
@@ -282,14 +289,19 @@ export function CircuitCanvas({
       const dx = w.x - interaction.lastX;
       const dy = w.y - interaction.lastY;
       if (!interaction.moved && Math.hypot(dx, dy) < 3) return;
-      onMoveGates(dx, dy, Array.from(selection.gates), false);
-      setInteraction({
-        kind: "drag-gates",
-        lastX: w.x,
-        lastY: w.y,
-        moved: true,
-        startedAt: interaction.startedAt,
-      });
+      
+      const now = performance.now();
+      if (now - lastDragTime.current > 32) {
+        lastDragTime.current = now;
+        onMoveGates(dx, dy, Array.from(selection.gates), false);
+        setInteraction({
+          kind: "drag-gates",
+          lastX: w.x,
+          lastY: w.y,
+          moved: true,
+          startedAt: interaction.startedAt,
+        });
+      }
     }
   };
 
@@ -312,19 +324,38 @@ export function CircuitCanvas({
         setSelection({ gates: newGates, wires: new Set() });
       }
     }
-    if (interaction.kind === "drag-gates" && interaction.moved) {
-      if (snap) {
-        for (const id of selection.gates) {
-          const g = circuit.gates[id];
-          if (!g) continue;
-          const sx = snapToGrid(g.x);
-          const sy = snapToGrid(g.y);
-          if (sx !== g.x || sy !== g.y) {
-            onUpdateGate(id, { x: sx, y: sy }, false);
+    if (interaction.kind === "drag-gates") {
+      if (interaction.moved) {
+        if (snap) {
+          for (const id of selection.gates) {
+            const g = circuit.gates[id];
+            if (!g) continue;
+            const sx = snapToGrid(g.x);
+            const sy = snapToGrid(g.y);
+            if (sx !== g.x || sy !== g.y) {
+              onUpdateGate(id, { x: sx, y: sy }, false);
+            }
+          }
+        }
+        onMoveGates(0, 0, Array.from(selection.gates), true);
+      } else {
+        // Toggle INPUT switch on simple click
+        if (selection.gates.size === 1) {
+          const id = Array.from(selection.gates)[0];
+          const gate = circuit.gates[id];
+          if (gate && gate.kind === "INPUT") {
+             onUpdateGate(id, { on: !gate.on }, true);
           }
         }
       }
-      onMoveGates(0, 0, Array.from(selection.gates), true);
+      
+      // Release any momentary BUTTONs
+      for (const id of selection.gates) {
+         const gate = circuit.gates[id];
+         if (gate && gate.kind === "BUTTON" && gate.on) {
+            onUpdateGate(id, { on: false }, false);
+         }
+      }
     }
     // If mouseup on canvas while drawing wire with a snap target, complete the wire
     if (interaction.kind === "draw-wire" && snapTarget) {
@@ -391,6 +422,11 @@ export function CircuitCanvas({
       moved: false,
       startedAt: Date.now(),
     });
+    
+    // Press momentary BUTTON
+    if (gate.kind === "BUTTON") {
+      onUpdateGate(gate.id, { on: true }, false);
+    }
   };
 
   const onGateClick = (e: React.MouseEvent, gate: Gate) => {

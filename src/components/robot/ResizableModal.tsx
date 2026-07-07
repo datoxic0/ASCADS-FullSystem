@@ -34,6 +34,7 @@ export default function ResizableModal({
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; objX: number; objY: number } | null>(null);
   const resizeStartRef = useRef<{ mouseX: number; mouseY: number; startWidth: number; startHeight: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastMoveTimeRef = useRef<number>(0);
 
   // Check mobile scale
   useEffect(() => {
@@ -112,6 +113,10 @@ export default function ResizableModal({
 
   const handleHeaderPointerMove = (e: PointerEvent) => {
     if (!dragStartRef.current) return;
+    const now = performance.now();
+    if (now - lastMoveTimeRef.current < 32) return;
+    lastMoveTimeRef.current = now;
+
     const dx = e.clientX - dragStartRef.current.mouseX;
     const dy = e.clientY - dragStartRef.current.mouseY;
 
@@ -152,14 +157,18 @@ export default function ResizableModal({
 
   const handleResizePointerMove = (e: PointerEvent) => {
     if (!resizeStartRef.current) return;
+    const now = performance.now();
+    if (now - lastMoveTimeRef.current < 32) return;
+    lastMoveTimeRef.current = now;
+
     const dx = e.clientX - resizeStartRef.current.mouseX;
     const dy = e.clientY - resizeStartRef.current.mouseY;
 
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
 
-    const nextWidth = Math.max(minWidth, Math.min(screenWidth - position.x - 20, resizeStartRef.current.startWidth + dx));
-    const nextHeight = Math.max(minHeight, Math.min(screenHeight - position.y - 20, resizeStartRef.current.startHeight + dy));
+    const nextWidth = Math.max(minWidth, Math.min(screenWidth - position.x - 10, resizeStartRef.current.startWidth + dx));
+    const nextHeight = Math.max(minHeight, Math.min(screenHeight - position.y - 10, resizeStartRef.current.startHeight + dy));
 
     setSize({ width: nextWidth, height: nextHeight });
   };

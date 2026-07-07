@@ -80,7 +80,12 @@ export default function App() {
     const startX = e.clientX;
     const startWidth = sidebarWidth;
 
+    let lastMove = 0;
     const doDrag = (dragEvent: PointerEvent) => {
+      const now = performance.now();
+      if (now - lastMove < 32) return;
+      lastMove = now;
+      
       const clientX = dragEvent.clientX;
       const newWidth = Math.max(250, Math.min(startWidth + (clientX - startX), window.innerWidth - 50));
       setSidebarWidth(newWidth);

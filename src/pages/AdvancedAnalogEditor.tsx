@@ -287,22 +287,15 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-30" />
         
         <div className="flex items-center gap-4 sm:gap-12 w-full overflow-x-auto scrollbar-hide">
-          <div className="flex items-center gap-4 group shrink-0">
+          <div className="flex items-center gap-2 group shrink-0">
             <button 
               onClick={onBack}
               className="w-8 h-8 rounded bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors"
             >
               <ChevronLeft size={16} className="text-slate-400" />
             </button>
-            <div className="flex flex-col">
-              <div className="text-white font-black uppercase text-base tracking-tighter w-32 sm:w-64 truncate">
-                {project.name}
-              </div>
-              <div className="flex items-center gap-3">
-                 <span className="text-[9px] text-indigo-400 font-black uppercase tracking-[.4em] leading-none hidden sm:inline">MATRIX SUITE v4.2 PRO</span>
-                 <div className="h-2 w-px bg-slate-800 hidden sm:block" />
-                 <span className="text-[9px] text-emerald-500 font-bold leading-none uppercase animate-pulse">Siyabonga Engine Active</span>
-              </div>
+            <div className="flex items-center justify-center w-8 h-8 bg-indigo-500/20 border border-indigo-500/30 rounded shadow-inner" aria-label={`Analog Lab: ${project.name}`} title={`Analog Lab: ${project.name}`}>
+              <Activity size={18} className="text-indigo-400" />
             </div>
           </div>
 

@@ -42,6 +42,7 @@ export default function FloatingWindow({
   // Drag and resize tracking refs
   const dragStartRef = useRef<{ mouseX: number; mouseY: number; objX: number; objY: number } | null>(null);
   const resizeStartRef = useRef<{ mouseX: number; mouseY: number; startWidth: number; startHeight: number } | null>(null);
+  const lastMoveTimeRef = useRef<number>(0);
 
   // Check mobile scale
   useEffect(() => {
@@ -75,6 +76,10 @@ export default function FloatingWindow({
 
   const handleHeaderPointerMove = (e: PointerEvent) => {
     if (!dragStartRef.current) return;
+    const now = performance.now();
+    if (now - lastMoveTimeRef.current < 32) return;
+    lastMoveTimeRef.current = now;
+
     const dx = e.clientX - dragStartRef.current.mouseX;
     const dy = e.clientY - dragStartRef.current.mouseY;
 
@@ -116,6 +121,10 @@ export default function FloatingWindow({
 
   const handleResizePointerMove = (e: PointerEvent) => {
     if (!resizeStartRef.current) return;
+    const now = performance.now();
+    if (now - lastMoveTimeRef.current < 32) return;
+    lastMoveTimeRef.current = now;
+
     const dx = e.clientX - resizeStartRef.current.mouseX;
     const dy = e.clientY - resizeStartRef.current.mouseY;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   BoardConfig, 
   ProgramLanguageConfig, 
@@ -36,10 +36,11 @@ import {
   Lightbulb,
   Settings,
   Sliders,
-  ChevronLeft,
   ChevronRight,
   Code2,
-  Minimize2
+  Minimize2,
+  Globe,
+  Link
 } from "lucide-react";
 
 import type { AnalogProject } from "@/lib/analog-types";
@@ -207,6 +208,7 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
   });
 
   const [envObjects, setEnvObjects] = useState<any[]>([]);
+  const triggerRunRef = useRef<(() => void) | null>(null);
 
   // Handle active boards selector shifting: auto-load projects file templates library lists
   const handleBoardShift = (boardId: string) => {
@@ -277,12 +279,18 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
       }
       if (e.code === 'Space') {
         e.preventDefault();
-        setSimulationState(prev => ({ ...prev, isRunning: !prev.isRunning }));
+        if (!simulationState.isRunning && simulationState.status !== "paused") {
+          if (triggerRunRef.current) {
+            triggerRunRef.current();
+          }
+        } else {
+          setSimulationState(prev => ({ ...prev, isRunning: !prev.isRunning }));
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [simulationState.isRunning, simulationState.status]);
 
 
 
@@ -292,59 +300,62 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
       {/* 1. High Density Workspace Header */}
       <header className="h-12 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center justify-between px-4 shrink-0 shadow-md">
         <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2" aria-label="VoltLogic PRO" title="VoltLogic PRO">
             <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center shadow-lg">
               <div className="w-3 h-3 bg-white rotate-45"></div>
             </div>
-            <span className="font-bold text-white tracking-tight text-sm">
-              VoltLogic<span className="text-blue-500">PRO</span>
-            </span>
           </div>
-          <nav className="flex space-x-2 text-[10px] font-mono uppercase tracking-wider items-center select-none overflow-x-auto pb-1 max-w-[50vw]">
+          
+          <div className="flex items-center space-x-3 bg-[#101014] p-1 rounded-md border border-white/5 mr-4">
+            <div className="flex items-center space-x-1.5 px-2 py-1 bg-black/40 rounded border border-emerald-400/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse"></div>
+              <span className="text-[10px] text-emerald-400 font-mono">CIM G-Code</span>
+            </div>
+            <button
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="flex items-center justify-center p-1.5 bg-[#1e1e24] hover:bg-[#2e2e38] text-slate-400 hover:text-white border border-white/10 rounded transition-all cursor-pointer"
+              title="Settings"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <nav className="flex space-x-2 text-[10px] font-mono uppercase tracking-wider items-center select-none overflow-x-auto max-w-[50vw] hide-scrollbar">
             <button
               onClick={() => setActiveMainTab("visualizer")}
-              className={`px-3 py-1 rounded transition-all cursor-pointer ${
-                activeMainTab !== "digital-twin" && activeMainTab !== "env-builder" && activeMainTab !== "chassis-builder"
-                  ? "bg-blue-600/20 border border-blue-500/40 text-blue-400 font-extrabold shadow-sm"
-                  : "text-emerald-700 dark:text-slate-400 hover:text-white"
-              }`}
+              title="Digital Twin CAD Console (2D)"
+              className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 flex-col md:flex-row leading-tight text-left ${activeMainTab !== "digital-twin" && activeMainTab !== "env-builder" && activeMainTab !== "chassis-builder" ? "bg-blue-600/20 text-blue-400 border border-blue-500/30" : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"}`}
             >
-              🌐 Digital Twin CAD Console (2D)
+              <Globe className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden md:inline">Digital Twin CAD<br/>Console (2D)</span>
             </button>
+            <Link className="w-3.5 h-3.5 text-emerald-500 shrink-0 mx-1" />
             <button
               onClick={() => setActiveMainTab("digital-twin")}
-              className={`px-3 py-1 rounded flex items-center transition-all cursor-pointer ${
-                activeMainTab === "digital-twin"
-                  ? "bg-teal-650/20 border border-teal-500/40 text-teal-300 font-extrabold shadow-md shadow-teal-500/10"
-                  : "text-emerald-700 dark:text-slate-400 hover:text-white"
-              }`}
+              title="Physical CIM Workspace (3D)"
+              className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 flex-col md:flex-row leading-tight text-left ${activeMainTab === "digital-twin" ? "bg-teal-600/20 text-teal-400 border border-teal-500/30" : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"}`}
             >
-              <Workflow className="w-3.5 h-3.5 mr-1 text-teal-400" />
-              🛠️ Physical CIM Workspace (3D)
+              <Wrench className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+              <span className="hidden md:inline">Physical CIM<br/>Workspace (3D)</span>
             </button>
             <button
               onClick={() => setActiveMainTab("env-builder")}
-              className={`px-3 py-1 rounded flex items-center transition-all cursor-pointer ${
-                activeMainTab === "env-builder"
-                  ? "bg-purple-650/20 border border-purple-500/40 text-purple-300 font-extrabold shadow-md shadow-purple-500/10"
-                  : "text-emerald-700 dark:text-slate-400 hover:text-white"
-              }`}
+              title="Environment Builder"
+              className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 flex-col md:flex-row leading-tight text-left ${activeMainTab === "env-builder" ? "bg-purple-600/20 text-purple-400 border border-purple-500/30" : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"}`}
             >
-              <Layers className="w-3.5 h-3.5 mr-1 text-purple-400" />
-              Environment Builder
+              <Layers className="w-3.5 h-3.5 shrink-0 text-purple-400" />
+              <span className="hidden md:inline">Environment<br/>Builder</span>
             </button>
             <button
               onClick={() => setActiveMainTab("chassis-builder")}
-              className={`px-3 py-1 rounded flex items-center transition-all cursor-pointer ${
-                activeMainTab === "chassis-builder"
-                  ? "bg-pink-650/20 border border-pink-500/40 text-pink-300 font-extrabold shadow-md shadow-pink-500/10"
-                  : "text-emerald-700 dark:text-slate-400 hover:text-white"
-              }`}
+              title="Chassis Builder"
+              className={`px-3 py-1.5 rounded transition-all flex items-center gap-1.5 flex-col md:flex-row leading-tight text-left ${activeMainTab === "chassis-builder" ? "bg-pink-600/20 text-pink-400 border border-pink-500/30" : "text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent"}`}
             >
-              <Cpu className="w-3.5 h-3.5 mr-1 text-pink-400" />
-              Chassis Builder
+              <Cpu className="w-3.5 h-3.5 shrink-0 text-pink-400" />
+              <span className="hidden md:inline">Chassis<br/>Builder</span>
             </button>
           </nav>
+
         </div>
 
         {/* Global Connection/Microcontroller selectors */}
@@ -368,64 +379,10 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
             <div className="w-2 h-2 rounded-full bg-green-500 mr-1 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
             <span>{activeLanguage.name}</span>
           </div>
-
-          <button
-            onClick={() => setIsSettingsModalOpen(true)}
-            className="flex items-center justify-center p-1.5 bg-[#1e1e24] hover:bg-[#2e2e38] text-emerald-800 dark:text-slate-350 hover:text-white border border-emerald-400 dark:border-white/10 rounded transition-all cursor-pointer"
-            title="Dedicated Settings & Preferences Panel"
-          >
-            <Settings className="w-4 h-4 text-emerald-700 dark:text-slate-400 hover:text-blue-400 animate-spin-slow" />
-          </button>
         </div>
       </header>
 
-      {/* 2. Responsive Workspace View-Tab Switcher (Only visible below xl) */}
-      <div className="xl:hidden flex bg-[#141417]/90 backdrop-blur border-b border-emerald-300 dark:border-white/5 p-1 px-3 shrink-0 overflow-x-auto scrollbar-none gap-1">
-        <button
-          onClick={() => setActiveMainTab("visualizer")}
-          className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
-            activeMainTab === "visualizer"
-              ? "bg-blue-600 text-white font-bold shadow-md"
-              : "text-emerald-700 dark:text-slate-400 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5"
-          }`}
-        >
-          <Compass className="w-3.5 h-3.5" />
-          <span>1. 2D Visualizer</span>
-        </button>
-        <button
-          onClick={() => setActiveMainTab("ide")}
-          className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
-            activeMainTab === "ide"
-              ? "bg-purple-650 text-white font-bold shadow-md"
-              : "text-emerald-700 dark:text-slate-400 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5"
-          }`}
-        >
-          <FileCode className="w-3.5 h-3.5" />
-          <span>2. IDE Dashboard</span>
-        </button>
-        <button
-          onClick={() => setActiveMainTab("ai")}
-          className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
-            activeMainTab === "ai"
-              ? "bg-cyan-650 text-white font-bold shadow-md"
-              : "text-emerald-700 dark:text-slate-400 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5"
-          }`}
-        >
-          <Cpu className="w-3.5 h-3.5" />
-          <span>3. AI Copilot</span>
-        </button>
-        <button
-          onClick={() => setActiveMainTab("digital-twin")}
-          className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
-            activeMainTab === "digital-twin"
-              ? "bg-teal-650 text-white font-bold shadow-md"
-              : "text-emerald-700 dark:text-slate-400 hover:text-emerald-800 dark:text-slate-300 hover:bg-white/5"
-          }`}
-        >
-          <Workflow className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
-          <span>4. CIM Room (3D)</span>
-        </button>
-      </div>
+      {/* 2. Responsive Workspace View-Tab Switcher was removed (It was useless and duplicate) */}
 
       {/* 3. Main Interactive Dashboard Column Grid */}
       {activeMainTab === "digital-twin" ? (
@@ -493,7 +450,13 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
                         </div>
                         <div className="flex items-center gap-3">
                           <button 
-                            onClick={() => setSimulationState(prev => ({ ...prev, isRunning: !prev.isRunning }))}
+                            onClick={() => {
+                              if (!simulationState.isRunning && simulationState.status !== "paused") {
+                                if (triggerRunRef.current) triggerRunRef.current();
+                              } else {
+                                setSimulationState(prev => ({ ...prev, isRunning: !prev.isRunning }));
+                              }
+                            }}
                             className={`flex items-center justify-center w-5 h-5 rounded transition-all border ${
                               simulationState.isRunning 
                                 ? 'bg-red-900/40 text-red-400 border-red-500/30 hover:bg-red-800/60' 
@@ -540,49 +503,48 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
                   </>
                 )}
                 
-                {windows.ide.isOpen && (
-                  <>
-                    <ResizablePanel minSize={20} className="relative bg-[#0d0d11] flex flex-col">
-                      <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
-                        <div className="flex items-center space-x-2 text-purple-400">
-                          <Code2 className="w-3.5 h-3.5" />
-                          <span className="font-mono text-[10px] font-bold tracking-wider">CODE IDE</span>
-                        </div>
-                        <button onClick={() => toggleWindow('ide')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
+                <>
+                  <ResizablePanel minSize={windows.ide.isOpen ? 20 : 0} className={`relative bg-[#0d0d11] flex flex-col ${windows.ide.isOpen ? '' : 'hidden'}`}>
+                    <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
+                      <div className="flex items-center space-x-2 text-purple-400">
+                        <Code2 className="w-3.5 h-3.5" />
+                        <span className="font-mono text-[10px] font-bold tracking-wider">CODE IDE</span>
                       </div>
-                      <div className="flex-1 min-h-0 relative">
-                        <RobotWorkspaceIDE
-                          activeBoard={activeBoard}
-                          setActiveBoard={setActiveBoard}
-                          activeLanguage={activeLanguage}
-                          setActiveLanguage={setActiveLanguage}
-                          files={files}
-                          setFiles={setFiles}
-                          activeFileIndex={activeFileIndex}
-                          setActiveFileIndex={setActiveFileIndex}
-                          simulationState={simulationState}
-                          setSimulationState={setSimulationState}
-                          joints={joints}
-                          setJoints={setJoints}
-                          workpieces={workpieces}
-                          setWorkpieces={setWorkpieces}
-                          logs={logs}
-                          setLogs={setLogs}
-                          onFileChange={handleFileContentChange}
-                          sortingStats={sortingStats}
-                          setSortingStats={setSortingStats}
-                          feedMode={feedMode}
-                          robotType={robotType}
-                          conveyorSpeed={conveyorSpeed}
-                          obstacleHeight={obstacleHeight}
-                          sensorPositionX={sensorPositionX}
-                          onCollapse={() => toggleWindow('ide')}
-                        />
-                      </div>
-                    </ResizablePanel>
-                    {windows.ai.isOpen && <ResizableHandle withHandle className="bg-white/10 w-1" />}
-                  </>
-                )}
+                      <button onClick={() => toggleWindow('ide')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
+                    </div>
+                    <div className="flex-1 min-h-0 relative">
+                      <RobotWorkspaceIDE
+                        activeBoard={activeBoard}
+                        setActiveBoard={setActiveBoard}
+                        activeLanguage={activeLanguage}
+                        setActiveLanguage={setActiveLanguage}
+                        files={files}
+                        setFiles={setFiles}
+                        activeFileIndex={activeFileIndex}
+                        setActiveFileIndex={setActiveFileIndex}
+                        simulationState={simulationState}
+                        setSimulationState={setSimulationState}
+                        joints={joints}
+                        setJoints={setJoints}
+                        workpieces={workpieces}
+                        setWorkpieces={setWorkpieces}
+                        logs={logs}
+                        setLogs={setLogs}
+                        onFileChange={handleFileContentChange}
+                        sortingStats={sortingStats}
+                        setSortingStats={setSortingStats}
+                        feedMode={feedMode}
+                        robotType={robotType}
+                        conveyorSpeed={conveyorSpeed}
+                        obstacleHeight={obstacleHeight}
+                        sensorPositionX={sensorPositionX}
+                        onCollapse={() => toggleWindow('ide')}
+                        triggerRunRef={triggerRunRef}
+                      />
+                    </div>
+                  </ResizablePanel>
+                  {(windows.ide.isOpen && windows.ai.isOpen) && <ResizableHandle withHandle className="bg-white/10 w-1" />}
+                </>
 
                 {windows.ai.isOpen && (
                   <ResizablePanel minSize={20} className="relative bg-[#101014] flex flex-col">

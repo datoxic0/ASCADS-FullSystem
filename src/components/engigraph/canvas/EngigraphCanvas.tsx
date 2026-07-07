@@ -308,8 +308,10 @@ export const EngigraphCanvas: React.FC = () => {
             pushHistory([...elements, newComp]);
             setTimeout(() => setSelectedIds([newId]), 50);
             return;
-        } else if (activeTool === 'dimension') {
+        } else if (activeTool === 'dimension' || activeTool === 'dim-linear' || activeTool === 'dim-radial' || activeTool === 'dim-smart' || activeTool === 'ruler') {
             setCurrentObj({ id: newId, type: 'dimension', points: [x, y, x, y], stroke: '#ff00ff', strokeWidth: 1 });
+        } else if (activeTool === 'protractor' || activeTool === 'set-square-30' || activeTool === 'set-square-45' || activeTool === 'drafter') {
+            setCurrentObj({ id: newId, type: 'protractor', points: [x, y, x, y], stroke: '#ff00ff', strokeWidth: 1 });
         }
     };
 
@@ -363,6 +365,11 @@ export const EngigraphCanvas: React.FC = () => {
                 points: [currentObj.points[0], currentObj.points[1], x, y]
             });
         } else if (currentObj.type === 'dimension' && currentObj.points) {
+            setCurrentObj({
+                ...currentObj,
+                points: [currentObj.points[0], currentObj.points[1], x, y]
+            });
+        } else if (currentObj.type === 'protractor' && currentObj.points) {
             setCurrentObj({
                 ...currentObj,
                 points: [currentObj.points[0], currentObj.points[1], x, y]
@@ -655,6 +662,11 @@ export const EngigraphCanvas: React.FC = () => {
                             }, [])}
                         </Group>
                     ))}
+                    
+                    {/* Instruments Overlays */}
+                    {(activeTool === 'ruler' || activeTool === 'drafter') && <RulerOverlay />}
+                    {(activeTool === 'protractor' || activeTool === 'set-square-30' || activeTool === 'set-square-45') && <ProtractorOverlay />}
+                    
                 </Layer>
             </Stage>
             {/* UI/Overlay Layer (Outside Konva Canvas) */}
@@ -769,6 +781,24 @@ const Shape = ({ obj, isSelectTool }: { obj: DrawingObject, isSelectTool: boolea
                 <Circle x={p1x} y={p1y} radius={3} fill={obj.stroke} />
                 <Circle x={p2x} y={p2y} radius={3} fill={obj.stroke} />
                 <Text x={(p1x + p2x) / 2} y={(p1y + p2y) / 2 - 15} text={`${distance}`} fill={obj.stroke} fontSize={12} />
+            </Group>
+        );
+    }
+    if (obj.type === 'protractor' && obj.points) {
+        const p1x = obj.points[0];
+        const p1y = obj.points[1];
+        const p2x = obj.points[2];
+        const p2y = obj.points[3];
+        const angleRad = Math.atan2(p2y - p1y, p2x - p1x);
+        let angleDeg = angleRad * (180 / Math.PI);
+        if (angleDeg < 0) angleDeg += 360;
+        return (
+            <Group id={obj.id} name="element-group" opacity={opacity} draggable={isSelectTool} listening={isSelectTool} dragBoundFunc={dragBoundFunc} {...shadowProps}>
+                <Line points={obj.points} stroke={obj.stroke} strokeWidth={obj.strokeWidth} hitStrokeWidth={HIT_STROKE} />
+                <Line points={[p1x, p1y, p1x + 30, p1y]} stroke={obj.stroke} strokeWidth={1} dash={[2, 2]} />
+                <Circle x={p1x} y={p1y} radius={3} fill={obj.stroke} />
+                <Text x={p1x + 35} y={p1y - 15} text={`${angleDeg.toFixed(1)}°`} fill={obj.stroke} fontSize={12} />
+                <Arc x={p1x} y={p1y} innerRadius={20} outerRadius={21} angle={angleDeg} stroke={obj.stroke} strokeWidth={1} />
             </Group>
         );
     }
