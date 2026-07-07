@@ -21,32 +21,23 @@ import { HybridOpsPanel } from './ui/HybridOpsPanel';
 
 export const Engigraph2D: React.FC = () => {
     const { isTerminalOpen, isScopeOpen, toggleTerminal, toggleScope, elements, setElements, isSimulationRunning } = useEngigraphStore();
-    const elementsRef = useRef(elements);
-    const simRunningRef = useRef(isSimulationRunning);
-
-    useEffect(() => {
-        elementsRef.current = elements;
-    }, [elements]);
-
-    useEffect(() => {
-        simRunningRef.current = isSimulationRunning;
-    }, [isSimulationRunning]);
 
     useEffect(() => {
         // Run Universal Ecosystem Simulation at 10Hz
         const timer = setInterval(() => {
-            if (!simRunningRef.current) return;
-            const currentElements = elementsRef.current;
+            const state = useEngigraphStore.getState();
+            if (!state.isSimulationRunning) return;
+            const currentElements = state.elements;
             if (currentElements.length === 0) return;
 
             const newElements = EcosystemAdapter.tick(currentElements);
             if (newElements !== currentElements) {
-                setElements(newElements);
+                state.setElements(newElements);
             }
         }, 100);
 
         return () => clearInterval(timer);
-    }, [setElements]);
+    }, []);
 
     return (
         <div className="flex flex-col w-full h-full bg-[#0a0b0c] text-slate-200 overflow-hidden font-sans">

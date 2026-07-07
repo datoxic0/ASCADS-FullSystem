@@ -273,7 +273,13 @@ export class EcosystemAdapter {
                         }
                     });
                     
-                    const sandbox = new Function('inputs', 'outputs', el.mcuCode);
+                    let executableCode = el.mcuCode;
+                    const loopMatch = el.mcuCode.match(/void loop\s*\([^)]*\)\s*\{([\s\S]*)\}/);
+                    if (loopMatch) {
+                        executableCode = loopMatch[1];
+                    }
+                    
+                    const sandbox = new Function('inputs', 'outputs', executableCode);
                     sandbox(inputs, outputs);
                     
                     // Force inject the output into the solver's state so connected wires pick it up next tick
@@ -331,36 +337,9 @@ export class EcosystemAdapter {
             if (el.type === 'component') {
                 // Phase 21: MCU Code Execution
                 if (el.mcuCode && ['arduino_uno', 'esp32', 'rpi_pico'].includes(el.partType || '')) {
-                    try {
-                        // Very simple sandbox evaluation for the MCU
-                        // Expecting a loop(inputs, outputs) function in mcuCode
-                        // We extract just the body of the loop or evaluate it if it's raw logic
-                        // Let's pass inputs/outputs objects
-                        const inputs: Record<string, boolean> = {};
-                        const outputs: Record<string, boolean> = {};
-                        
-                        // Populate inputs from connected wires (mocking D2 as true if any connected wire is powered)
-                        // This is a naive heuristic for demonstration:
-                        inputs['D2'] = false; 
-                        inputs['D3'] = false;
-                        
-                        // Extract just the inner logic from void loop() if it exists
-                        let executableCode = el.mcuCode;
-                        const loopMatch = el.mcuCode.match(/void loop\s*\([^)]*\)\s*\{([\s\S]*)\}/);
-                        if (loopMatch) {
-                            executableCode = loopMatch[1];
-                        }
-
-                        // Run it!
-                        const fn = new Function('inputs', 'outputs', executableCode);
-                        fn(inputs, outputs);
-
-                        // If D5 is high, we'll power the MCU object (this will light up wires connected to it)
-                        if (outputs['D5']) {
-                            isPowered = true;
-                        }
-                    } catch (err) {
-                        console.error("MCU Code Error:", err);
+                    if (mcuOverrides.has(el.id)) {
+                        isPowered = mcuOverrides.get(el.id)!;
+                        probeValue = isPowered ? 5.0 : 0.0;
                     }
                 } else if (result.analogResult && result.analogResult.converged && project.analog.nodes.find(n => n.id === el.id)) {
                      const br = result.analogResult.branchResults.find(b => b.componentId === el.id);

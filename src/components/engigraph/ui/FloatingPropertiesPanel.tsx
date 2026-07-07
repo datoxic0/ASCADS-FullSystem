@@ -17,21 +17,32 @@ export const FloatingPropertiesPanel: React.FC = () => {
     }, [selectedIds]);
 
     const handlePointerDown = (e: React.PointerEvent) => {
+        e.stopPropagation();
         setIsDragging(true);
         dragStart.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
         (e.target as HTMLElement).setPointerCapture(e.pointerId);
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
+        e.stopPropagation();
         if (isDragging) {
-            setPos({
-                x: e.clientX - dragStart.current.x,
-                y: e.clientY - dragStart.current.y
-            });
+            let newX = e.clientX - dragStart.current.x;
+            let newY = e.clientY - dragStart.current.y;
+            
+            const maxX = window.innerWidth - 256;
+            const maxY = window.innerHeight - 40;
+            
+            if (newX < 0) newX = 0;
+            if (newX > maxX) newX = maxX;
+            if (newY < 0) newY = 0;
+            if (newY > maxY) newY = maxY;
+
+            setPos({ x: newX, y: newY });
         }
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
+        e.stopPropagation();
         setIsDragging(false);
         (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     };
