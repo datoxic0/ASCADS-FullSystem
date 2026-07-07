@@ -49,7 +49,7 @@ export const Engigraph2D: React.FC = () => {
             <main className="flex-1 flex overflow-hidden relative">
                 <EngigraphSidebar />
                 
-                <div className="flex-1 relative flex flex-col">
+                <div className="flex-1 relative flex flex-col overflow-hidden">
                     {/* Top Overlay tools (like snapping/zoom readouts) could go here */}
                     
                     <EngigraphCanvas />
