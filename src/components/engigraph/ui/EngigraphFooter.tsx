@@ -129,15 +129,15 @@ export const EngigraphFooter: React.FC = () => {
                 <span className="bg-[#1f1f23] px-2 py-0.5 rounded border border-slate-800">
                     {`ZOOM: ${(store.view.zoom * 100).toFixed(0)}%`}
                 </span>
-                <span className={`px-2 py-0.5 rounded border ${store.grid.snapToGrid ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800'}`}>
+                <button onClick={() => store.toggleSnap('snapToGrid')} className={`px-2 py-0.5 rounded border ${store.grid.snapToGrid ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800 hover:bg-slate-800 transition-colors'}`}>
                     GRID
-                </span>
-                <span className={`px-2 py-0.5 rounded border ${store.grid.snapToObject ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800'}`}>
+                </button>
+                <button onClick={() => store.toggleSnap('snapToObject')} className={`px-2 py-0.5 rounded border ${store.grid.snapToObject ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800 hover:bg-slate-800 transition-colors'}`}>
                     SNAP
-                </span>
-                <span className={`px-2 py-0.5 rounded border ${store.grid.orthoMode ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800'}`}>
+                </button>
+                <button onClick={() => store.toggleSnap('orthoMode')} className={`px-2 py-0.5 rounded border ${store.grid.orthoMode ? 'bg-cyan-900/30 text-cyan-400 border-cyan-800' : 'bg-[#1f1f23] border-slate-800 hover:bg-slate-800 transition-colors'}`}>
                     ORTHO
-                </span>
+                </button>
                 <span className="bg-indigo-900/30 text-indigo-400 px-2 py-0.5 rounded border border-indigo-800">
                     SANS 10111
                 </span>

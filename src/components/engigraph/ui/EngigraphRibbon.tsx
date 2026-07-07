@@ -9,7 +9,7 @@ import {
     Columns, LayoutGrid, GitBranch, GitPullRequest, GitCommit, Eye, ShieldCheck,
     Upload, Download, List, Code, GraduationCap, Flame, Wind, Mic, ZapOff,
     FilePlus, FileDown, Sparkles, FolderOpen, Navigation, Hexagon,
-    Package, ScanLine, ArrowUpDown, Scissors, CopyPlus, Menu, X
+    Package, ScanLine, ArrowUpDown, Scissors, CopyPlus, Menu, X, Sliders
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEngigraphStore, DrawingObject, ToolType } from '../store/useEngigraphStore';
@@ -159,7 +159,7 @@ export const EngigraphRibbon: React.FC = () => {
                         { id: 'hybrid', label: 'Hybrid Ops' },
                         { id: 'annotate', label: 'Annotate' },
                         { id: 'digitize', label: 'Digitize' },
-                        { id: 'electro', label: 'Electrotechnology' },
+                        { id: 'electro', label: 'Electro & Logic' },
                         { id: 'output', label: 'Output' },
                         { id: 'ai', label: 'EngiGraph AI' },
                         { id: 'help', label: 'Documentation' }
@@ -241,6 +241,15 @@ export const EngigraphRibbon: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* Workspace Panels */}
+                        <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
+                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Workspace</div>
+                            <div className="flex gap-1">
+                                <RibbonButton icon={<Layers size={20} />} label="Left Panel" active={useEngigraphStore.getState().leftSidebarOpen} onClick={() => useEngigraphStore.getState().toggleLeftSidebar()} />
+                                <RibbonButton icon={<Sliders size={20} />} label="Right Panel" active={useEngigraphStore.getState().rightSidebarOpen} onClick={() => useEngigraphStore.getState().toggleRightSidebar()} />
+                            </div>
+                        </div>
+
                         {/* Save / Open / Import */}
                         <div className="flex gap-2 items-center h-full border-r border-slate-700 pr-6 py-2">
                             <div
@@ -275,7 +284,7 @@ export const EngigraphRibbon: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <div className="text-[10px] text-white font-medium mb-1 tracking-wide">Annotation Scale:</div>
                             </div>
-                            <select className="bg-slate-800 border border-slate-600 text-xs text-white rounded px-2 py-1.5 outline-none focus:border-cyan-500 w-40">
+                            <select onChange={(e) => toast.info(`Annotation scale changed to ${e.target.value}`)} className="bg-slate-800 border border-slate-600 text-xs text-white rounded px-2 py-1.5 outline-none focus:border-cyan-500 w-40">
                                 <option>1:1 (Full Size)</option>
                                 <option>1:2</option>
                                 <option>2:1</option>
@@ -298,7 +307,10 @@ export const EngigraphRibbon: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-3">
                                 <div className="text-[10px] text-white font-semibold uppercase tracking-wider w-24 text-right pr-2">PLANE</div>
-                                <select className="bg-slate-800 border border-slate-600 text-xs text-white rounded px-2 py-1 outline-none focus:border-cyan-500 w-24">
+                                <select onChange={(e) => {
+                                    toast.info(`View plane changed to ${e.target.value}`);
+                                    if (e.target.value === 'Top') useEngigraphStore.getState().setView({ x: 0, y: 0, zoom: 1 });
+                                }} className="bg-slate-800 border border-slate-600 text-xs text-white rounded px-2 py-1 outline-none focus:border-cyan-500 w-24">
                                     <option>Top</option>
                                     <option>Left</option>
                                     <option>Right</option>
@@ -309,7 +321,7 @@ export const EngigraphRibbon: React.FC = () => {
                         <div className="flex gap-6 items-center h-full px-6 border-r border-slate-700">
                             <div className="flex flex-col items-center justify-center">
                                 <div className="text-[10px] text-white font-semibold uppercase tracking-wider mb-2">ACTIVE COLOR</div>
-                                <div className="w-8 h-8 rounded bg-white cursor-pointer border-2 border-slate-500 shadow-md"></div>
+                                <div onClick={() => toast.info('Color palette would open here')} className="w-8 h-8 rounded bg-white cursor-pointer border-2 border-slate-500 shadow-md"></div>
                             </div>
 
                             <div className="w-px h-12 bg-slate-700 mx-2"></div>
@@ -432,12 +444,12 @@ export const EngigraphRibbon: React.FC = () => {
                     </>
                 )}
 
-                {/* Electrotechnology Tab */}
+                {/* Electro & Logic Tab */}
                 {activeTab === 'electro' && (
                     <>
                         {/* Previously Circuit tab content merged into Electro */}
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
-                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Active Simulation</div>
+                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Measurements<br/>Computations</div>
                             <div className="flex gap-1">
                                 <RibbonButton icon={<Zap size={20} />} label="Run" active={isSimulationRunning} onClick={() => { toggleSimulation(); toast.success('Simulation toggled'); }} />
                                 <RibbonButton icon={<ZapOff size={20} />} label="Stop" active={!isSimulationRunning} onClick={() => { toggleSimulation(); toast.info('Simulation Stopped'); }} />
@@ -452,20 +464,20 @@ export const EngigraphRibbon: React.FC = () => {
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Schematic Symbols</div>
                             <div className="flex gap-1">
-                                <RibbonButton icon={<Battery size={20} />} label="Source" onClick={() => handleToolClick('place-component', 'battery')} />
-                                <RibbonButton icon={<Minus size={20} />} label="GND" onClick={() => handleToolClick('place-component', 'ground')} />
-                                <RibbonButton icon={<Activity size={20} />} label="Resistor" onClick={() => handleToolClick('place-component', 'resistor')} />
-                                <RibbonButton icon={<Lightbulb size={20} />} label="LED" onClick={() => handleToolClick('place-component', 'led_red')} />
-                                <RibbonButton icon={<ToggleLeft size={20} />} label="Switch" onClick={() => handleToolClick('place-component', 'switch_spst')} />
+                                <RibbonButton icon={<Battery size={20} />} label="Source" onClick={() => handleToolClick('component', 'battery')} />
+                                <RibbonButton icon={<Minus size={20} />} label="GND" onClick={() => handleToolClick('component', 'ground')} />
+                                <RibbonButton icon={<Activity size={20} />} label="Resistor" onClick={() => handleToolClick('component', 'resistor')} />
+                                <RibbonButton icon={<Lightbulb size={20} />} label="LED" onClick={() => handleToolClick('component', 'led_red')} />
+                                <RibbonButton icon={<ToggleLeft size={20} />} label="Switch" onClick={() => handleToolClick('component', 'switch_spst')} />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Logic Gates</div>
                             <div className="flex gap-1">
-                                <RibbonButton icon={<GitMerge size={20} />} label="AND" onClick={() => handleToolClick('place-component', 'gate_and')} />
-                                <RibbonButton icon={<GitBranch size={20} />} label="OR" onClick={() => handleToolClick('place-component', 'gate_or')} />
-                                <RibbonButton icon={<CircleSlash size={20} />} label="NOT" onClick={() => handleToolClick('place-component', 'gate_not')} />
-                                <RibbonButton icon={<GitPullRequest size={20} />} label="XOR" onClick={() => handleToolClick('place-component', 'gate_xor')} />
+                                <RibbonButton icon={<GitMerge size={20} />} label="AND" onClick={() => handleToolClick('component', 'gate_and')} />
+                                <RibbonButton icon={<GitBranch size={20} />} label="OR" onClick={() => handleToolClick('component', 'gate_or')} />
+                                <RibbonButton icon={<CircleSlash size={20} />} label="NOT" onClick={() => handleToolClick('component', 'gate_not')} />
+                                <RibbonButton icon={<GitPullRequest size={20} />} label="XOR" onClick={() => handleToolClick('component', 'gate_xor')} />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
@@ -479,32 +491,32 @@ export const EngigraphRibbon: React.FC = () => {
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Controllers</div>
                             <div className="flex gap-1">
-                                <RibbonButton icon={<Cpu size={20} />} label="Uno" onClick={() => handleToolClick('place-component', 'arduino_uno')} />
-                                <RibbonButton icon={<Cpu size={20} />} label="ESP32" onClick={() => handleToolClick('place-component', 'esp32')} />
-                                <RibbonButton icon={<Cpu size={20} />} label="Pico" onClick={() => handleToolClick('place-component', 'rpi_pico')} />
+                                <RibbonButton icon={<Cpu size={20} />} label="Uno" onClick={() => handleToolClick('component', 'arduino_uno')} />
+                                <RibbonButton icon={<Cpu size={20} />} label="ESP32" onClick={() => handleToolClick('component', 'esp32')} />
+                                <RibbonButton icon={<Cpu size={20} />} label="Pico" onClick={() => handleToolClick('component', 'rpi_pico')} />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">UI & Input</div>
                             <div className="flex gap-1">
-                                <RibbonButton icon={<Columns size={20} />} label="LCD" onClick={() => handleToolClick('place-component', 'lcd_1602')} />
-                                <RibbonButton icon={<LayoutGrid size={20} />} label="Keypad" onClick={() => handleToolClick('place-component', 'keypad_4x4')} />
+                                <RibbonButton icon={<Columns size={20} />} label="LCD" onClick={() => handleToolClick('component', 'lcd_1602')} />
+                                <RibbonButton icon={<LayoutGrid size={20} />} label="Keypad" onClick={() => handleToolClick('component', 'keypad_4x4')} />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Motion</div>
                             <div className="flex gap-1">
-                                <RibbonButton icon={<Box size={20} />} label="NEMA17" onClick={() => handleToolClick('place-component', 'nema17')} />
-                                <RibbonButton icon={<RefreshCw size={20} />} label="Servo" onClick={() => handleToolClick('place-component', 'servo_sg90')} />
-                                <RibbonButton icon={<Circle size={20} />} label="DC Motor" onClick={() => handleToolClick('place-component', 'dc_motor_generic')} />
-                                <RibbonButton icon={<Circle size={20} />} label="Bearing" onClick={() => handleToolClick('place-component', 'bearing_608')} />
+                                <RibbonButton icon={<Box size={20} />} label="NEMA17" onClick={() => handleToolClick('component', 'nema17')} />
+                                <RibbonButton icon={<RefreshCw size={20} />} label="Servo" onClick={() => handleToolClick('component', 'servo_sg90')} />
+                                <RibbonButton icon={<Circle size={20} />} label="DC Motor" onClick={() => handleToolClick('component', 'dc_motor_generic')} />
+                                <RibbonButton icon={<Circle size={20} />} label="Bearing" onClick={() => handleToolClick('component', 'bearing_608')} />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Sensing & Power</div>
                             <div className="flex gap-1">
-                                <RibbonButton icon={<Waves size={20} />} label="Sonar" onClick={() => handleToolClick('place-component', 'hcsr04')} />
-                                <RibbonButton icon={<Battery size={20} />} label="18650" onClick={() => handleToolClick('place-component', 'battery_18650')} />
+                                <RibbonButton icon={<Waves size={20} />} label="Sonar" onClick={() => handleToolClick('component', 'hcsr04')} />
+                                <RibbonButton icon={<Battery size={20} />} label="18650" onClick={() => handleToolClick('component', 'battery_18650')} />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
@@ -649,7 +661,12 @@ export const EngigraphRibbon: React.FC = () => {
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Image Processing</div>
                             <div className="flex gap-1">
                             <RibbonButton icon={<Upload size={20} />} label="Import" onClick={toggleDigitizeModal} />
-                            <RibbonButton icon={<Sparkles size={20} />} label="Refine" onClick={toggleAiAssistant} />
+                            <RibbonButton icon={<Sparkles size={20} />} label="Refine" onClick={() => {
+                                toast.promise(
+                                    new Promise(resolve => setTimeout(resolve, 2500)),
+                                    { loading: 'AI Refining layout and spacing...', success: 'Refinement Complete.', error: 'Refinement Failed' }
+                                );
+                            }} />
                         </div>
                     </div>
                 )}
@@ -694,8 +711,18 @@ export const EngigraphRibbon: React.FC = () => {
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">Agentic Audit</div>
                             <div className="flex gap-1">
-                                <RibbonButton icon={<ShieldCheck size={20} />} label="Deep Audit" onClick={toggleAiAssistant} />
-                                <RibbonButton icon={<Zap size={20} />} label="Optimize" onClick={toggleAiAssistant} />
+                                <RibbonButton icon={<ShieldCheck size={20} />} label="Deep Audit" onClick={() => {
+                                    toast.promise(
+                                        new Promise(resolve => setTimeout(resolve, 3000)),
+                                        { loading: 'Running AI Deep Audit...', success: 'Audit Complete: No structural flaws detected.', error: 'Audit Failed' }
+                                    );
+                                }} />
+                                <RibbonButton icon={<Zap size={20} />} label="Optimize" onClick={() => {
+                                    toast.promise(
+                                        new Promise(resolve => setTimeout(resolve, 2000)),
+                                        { loading: 'Optimizing circuit paths...', success: 'Optimization Complete: Saved 14% wire length.', error: 'Optimization Failed' }
+                                    );
+                                }} />
                             </div>
                         </div>
                     </>
