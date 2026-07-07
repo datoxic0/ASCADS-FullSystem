@@ -2,18 +2,27 @@
 
 This file establishes strict instructions for all AI Agents working within the `ASCAD-FullSystem` repository.
 
-## 1. Dual-Repository Structure & Deployment
-This project consists of two repositories that **MUST** both be updated sequentially when a task is completed:
+## 1. Multi-Repository Structure & Deployment
+This project consists of three repositories that **MUST** be updated sequentially when a task is completed. **CRITICAL WARNING: NEVER run `git commit` without first running `git add .` to ensure ALL files are staged.**
 
 - **Public Repository (`ASCADS-FullSystem`)**
+  - **URL:** `https://github.com/datoxic0/ASCADS-FullSystem`
+  - **Live Deployment:** `https://ascads-full-system.vercel.app/`
   - **Path:** `artifacts/logic-lab`
   - **Role:** Drives the live Vercel deployment.
-  - **Action:** cd into `artifacts/logic-lab`, stage changes (`git add .`), commit, and push here FIRST.
+  - **Action:** `cd` into `artifacts/logic-lab`, stage ALL changes (**`git add .`** is mandatory), commit, and push here FIRST.
 
 - **Private Repository (`ASCAD-FullSystem`)**
+  - **URL:** `https://github.com/datoxic0/ASCAD-FullSystem`
   - **Path:** Workspace root (`/`)
   - **Role:** Master backup of all artifacts and backend systems.
-  - **Action:** cd to the root, stage the `artifacts/logic-lab` submodule update (`git add artifacts/logic-lab`) along with any other root changes, commit, and push SECOND.
+  - **Action:** `cd` to the root, stage the `artifacts/logic-lab` submodule update along with any other root changes (**`git add .`**), commit, and push SECOND.
+
+- **Legacy/Replit Repository (`Advanced-Schematic-Design-1`)**
+  - **URL:** `https://github.com/datoxic0/Advanced-Schematic-Design-1`
+  - **Live App:** `https://advanced-schematic-design-1--datoxic0.replit.app/`
+  - **Role:** The original Replit deployment where the project began. The structure is similar to the Root.
+  - **Action:** Depending on user instruction, changes to Root may also need to be synced to this repository to keep the Replit deployment up-to-date.
 
 ## 2. Authentication & Identity Rules
 The user relies on 7-day time-based access tokens for Git authentication.

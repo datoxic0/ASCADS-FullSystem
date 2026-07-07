@@ -109,7 +109,7 @@ export const EngigraphFooter: React.FC = () => {
     };
 
     return (
-        <footer className="hidden lg:flex h-8 bg-[#0e0e11] border-t border-slate-700 items-center px-4 text-[11px] shrink-0 z-50">
+        <footer className="flex h-8 bg-[#0e0e11] border-t border-slate-700 items-center px-4 text-[11px] shrink-0 z-50">
             <div className="flex-1 flex items-center gap-2">
                 <span className="text-cyan-500 font-bold tracking-widest uppercase">Command:</span>
                 <form onSubmit={handleCommandSubmit} className="flex-1">

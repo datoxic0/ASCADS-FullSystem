@@ -10,7 +10,7 @@ export const EngigraphRightSidebar: React.FC = () => {
 
     if (!rightSidebarOpen) {
         return (
-            <div className="hidden lg:flex w-10 bg-[#141618] border-l border-slate-800 flex-col items-center py-4 shrink-0 h-full">
+            <div className="flex w-10 bg-[#141618] border-l border-slate-800 flex-col items-center py-4 shrink-0 h-full">
                 <button onClick={toggleRightSidebar} className="p-2 hover:bg-slate-800 rounded text-slate-400" title="Expand Properties">
                     <SlidersHorizontal size={18} />
                 </button>
@@ -64,7 +64,7 @@ export const EngigraphRightSidebar: React.FC = () => {
     };
 
     return (
-        <aside className="absolute right-0 top-0 bottom-0 z-40 lg:relative w-64 h-full bg-[#141618] border-l border-slate-800 flex flex-col shrink-0 shadow-2xl lg:shadow-none">
+        <aside className="relative w-64 h-full bg-[#141618] border-l border-slate-800 flex flex-col shrink-0 shadow-none">
             <header className="flex items-center justify-between px-3 py-2 bg-[#0e0e11] text-slate-300 border-b border-slate-800">
                 <span className="font-bold text-[10px] tracking-widest uppercase">Component Library</span>
                 <button onClick={toggleRightSidebar} className="text-slate-500 hover:text-white" title="Collapse">
