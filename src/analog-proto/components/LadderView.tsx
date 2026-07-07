@@ -4,6 +4,7 @@ import { Stage, Layer, Rect, Text, Group, Line, Circle } from 'react-konva';
 import { motion } from 'motion/react';
 import { LadderEngine } from '../services/ladderEngine';
 import { Zap, GitBranch, RefreshCcw, Download, Cpu, Play, Server } from 'lucide-react';
+import { EcosystemTranslator } from '../../lib/EcosystemTranslator';
 
 interface LadderViewProps {
   design: CircuitDesign;
@@ -119,12 +120,14 @@ export default function LadderView({ design, onUpdateDesign }: LadderViewProps) 
   };
 
   const bridgeToDigital = () => {
-    localStorage.setItem('ascads_bridge_analog_digital', JSON.stringify(design));
+    const digitalCircuit = EcosystemTranslator.analogToDigital(design);
+    localStorage.setItem('ascads_bridge_analog_digital', JSON.stringify(digitalCircuit));
     alert("Ladder Logic mapped and bridged to Digital Logic Lab!");
   };
 
   const bridgeToPLC = () => {
-    localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(design));
+    const plcProject = EcosystemTranslator.toPLCLadder(design);
+    localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(plcProject));
     alert("Ladder Logic mapped and bridged to Industrial PLC Section!");
   };
 

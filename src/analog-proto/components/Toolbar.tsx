@@ -1,5 +1,5 @@
 import React from 'react';
-import { MousePointer2, GitCommit, Trash2, Download, RefreshCw, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Map, Power } from 'lucide-react';
+import { MousePointer2, GitCommit, Trash2, Download, RefreshCw, Undo2, Redo2, ZoomIn, ZoomOut, Maximize, Map, Power, PanelRight } from 'lucide-react';
 
 interface ToolbarProps {
   tool: 'SELECT' | 'WIRE' | 'DELETE';
@@ -15,15 +15,30 @@ interface ToolbarProps {
   onZoomOut?: () => void;
   onZoomFit?: () => void;
   onToggleSwitch?: () => void;
+  onToggleProperties?: () => void;
 }
 
 const Toolbar = React.memo(({ 
   tool, setTool, onClear, onExport, onUndo, onRedo, onRoute, canUndo, canRedo,
-  onZoomIn, onZoomOut, onZoomFit, onToggleSwitch
+  onZoomIn, onZoomOut, onZoomFit, onToggleSwitch, onToggleProperties
 }: ToolbarProps) => {
   return (
     <div className="flex flex-col border-r border-slate-800 bg-slate-900/90 backdrop-blur-md w-12 items-center py-4 gap-4 z-10 shadow-[5px_0_15px_-5px_rgba(0,0,0,0.5)] overflow-y-auto ring-1 ring-white/5">
       <div className="text-[8px] font-black text-slate-700 tracking-tighter mb-2 -rotate-90">ENGINE-V2</div>
+      
+      {onToggleProperties && (
+        <>
+          <button
+            onClick={onToggleProperties}
+            className="p-2 rounded transition-colors text-amber-400 hover:bg-slate-800 hover:text-amber-300 font-mono text-xs items-center justify-center flex shadow-[0_0_15px_rgba(251,191,36,0.2)]"
+            title="Toggle Properties Panel"
+          >
+            <PanelRight size={20} />
+          </button>
+          <div className="w-px h-8 bg-slate-800 my-1 mx-auto opacity-50" />
+        </>
+      )}
+
       <button
         onClick={() => setTool('SELECT')}
         className={`p-2 rounded transition-all duration-200 ${tool === 'SELECT' ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'text-slate-400 hover:bg-slate-800'}`}

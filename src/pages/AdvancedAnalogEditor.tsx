@@ -471,6 +471,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
                 onZoomIn={() => canvasRef.current?.zoomIn()}
                 onZoomOut={() => canvasRef.current?.zoomOut()}
                 onZoomFit={() => canvasRef.current?.zoomFit()}
+                onToggleProperties={() => setIsSidebarOpen(!isSidebarOpen)}
               />
               
               <main className="flex-1 flex flex-col relative group min-w-0">
