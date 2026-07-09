@@ -29,10 +29,10 @@ export class PCBGerberCompiler {
         // Draw footprints (Top layer only for simplicity)
         state.footprints.forEach(fp => {
             if (fp.layer !== 'top') return;
-            const def = FootprintLibrary.getFootprint(fp.footprintId);
+            const def = FootprintLibrary[fp.footprintId as keyof typeof FootprintLibrary];
             if (!def) return;
             
-            def.pads.forEach(pad => {
+            def.pads.forEach((pad: any) => {
                 // Adjust for rotation and position
                 const rad = (fp.rotation * Math.PI) / 180;
                 const px = pad.x * Math.cos(rad) - pad.y * Math.sin(rad) + fp.x;
@@ -100,10 +100,10 @@ export class PCBGerberCompiler {
         // Through-hole pads
         out += `T02\n`; // Select 1.0mm drill
         state.footprints.forEach(fp => {
-            const def = FootprintLibrary.getFootprint(fp.footprintId);
+            const def = FootprintLibrary[fp.footprintId as keyof typeof FootprintLibrary];
             if (!def) return;
             
-            def.pads.forEach(pad => {
+            def.pads.forEach((pad: any) => {
                 if (pad.shape === 'circle') { // Assumed TH pad
                     const rad = (fp.rotation * Math.PI) / 180;
                     const px = pad.x * Math.cos(rad) - pad.y * Math.sin(rad) + fp.x;

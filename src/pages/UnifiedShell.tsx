@@ -333,7 +333,7 @@ export default function UnifiedShell() {
                   bridgeCircuitRef.current = c;
                   setMode('digital');
                 }}
-                onNavigate={setMode}
+                onNavigate={(mode: string) => setMode(mode as TopMode)}
               />
             ) : (
               <ProjectLandingScreen type="analog" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />

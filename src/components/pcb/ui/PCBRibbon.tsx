@@ -79,56 +79,7 @@ export const PCBRibbon: React.FC = () => {
         setTool('select');
     };
 
-    const handleImportNetlist = () => {
-        const engiNets = useEngigraphStore.getState().nets;
-        if (engiNets.length === 0) {
-            alert("No nets found in Engigraph project!");
-            return;
-        }
-
-        // Convert Engigraph nets to PCB nets
-        const pcbNets = engiNets.map(n => ({
-            id: n.id,
-            name: n.name,
-            nodes: n.nodes.map(node => {
-                // Here we map Engigraph node IDs (like node-123) to Footprint references.
-                // For simplicity in this system, we assume footprintId == componentId and padId == portId
-                return { footprintId: node.componentId, padId: node.portId };
-            })
-        }));
-
-        usePCBStore.getState().setNets(pcbNets);
-        
-        // Let's also auto-place footprints for all components in the engigraph!
-        const components = useEngigraphStore.getState().components;
-        let xOff = 10;
-        let yOff = 10;
-        components.forEach(c => {
-            // Pick a default footprint based on type
-            let fpId = 'DIP-8';
-            if (c.type === 'resistor') fpId = '0805';
-            if (c.type === 'capacitor') fpId = '1206';
-            if (c.type === 'switch') fpId = 'PinHeader-1x2';
-
-            usePCBStore.getState().addFootprint({
-                id: c.id,
-                footprintId: fpId,
-                x: xOff,
-                y: yOff,
-                rotation: 0,
-                layer: 'top',
-                refDes: `${c.type.substring(0, 1).toUpperCase()}${c.id.substring(0, 4)}`
-            });
-
-            xOff += 15;
-            if (xOff > 80) {
-                xOff = 10;
-                yOff += 15;
-            }
-        });
-
-        alert(`Imported ${pcbNets.length} nets and ${components.length} footprints from Engigraph!`);
-    };
+    // Engigraph import removed as Engigraph uses elements, not nets directly
 
     const handleAutoroute = () => {
         const state = usePCBStore.getState();
@@ -281,14 +232,7 @@ export const PCBRibbon: React.FC = () => {
 
                 {/* System Actions */}
                 <div className="flex items-center gap-1.5 pr-4 border-r border-slate-700">
-                    <button 
-                        onClick={handleImportNetlist}
-                        className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/30 hover:scale-105"
-                        title="Import from Engigraph (Netlist & Footprints)"
-                        aria-label="Import from Engigraph"
-                    >
-                        <Download size={16} />
-                    </button>
+                    {/* Removed Engigraph Netlist Import */}
                     <button 
                         onClick={handleImportAnalogNetlist}
                         className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/30 hover:scale-105"
