@@ -3,22 +3,22 @@
 This file establishes strict instructions for all AI Agents working within the `ASCAD-FullSystem` repository.
 
 ## 1. Multi-Repository Structure & Deployment
-This project consists of three repositories that **MUST** be updated sequentially when a task is completed. **CRITICAL WARNING: NEVER run `git commit` without first running `git add .` to ensure ALL files are staged.**
+This project consists of four repositories across three distinct platforms (Vercel, Replit, Lovable) that **MUST** be updated sequentially when a task is completed. This multi-platform strategy ensures robust backups and utilizes free hosting tiers across different services. **CRITICAL WARNING: NEVER run `git commit` without first running `git add .` to ensure ALL files are staged.**
 
-- **Public Repository (`ASCADS-FullSystem`)**
+- **Public Repository (`ASCADS-FullSystem` - Vercel)**
   - **URL:** `https://github.com/datoxic0/ASCADS-FullSystem`
   - **Live Deployment:** `https://ascads-full-system.vercel.app/`
   - **Path:** `artifacts/logic-lab`
   - **Role:** Drives the live Vercel deployment.
   - **Action:** `cd` into `artifacts/logic-lab`, stage ALL changes (**`git add .`** is mandatory), commit, and push here FIRST.
 
-- **Private Repository (`ASCAD-FullSystem`)**
+- **Private Repository (`ASCAD-FullSystem` - Backup)**
   - **URL:** `https://github.com/datoxic0/ASCAD-FullSystem`
   - **Path:** Workspace root (`/`)
   - **Role:** Master backup of all artifacts and backend systems.
   - **Action:** `cd` to the root, stage the `artifacts/logic-lab` submodule update along with any other root changes (**`git add .`**), commit, and push SECOND.
 
-- **Replit Repository (`Advanced-Schematic-Design-1`)**
+- **Replit Repository (`Advanced-Schematic-Design-1` - Replit)**
   - **URL:** `https://github.com/datoxic0/Advanced-Schematic-Design-1`
   - **Live App:** `https://advanced-schematic-design-1--datoxic0.replit.app/`
   - **Role:** The Replit deployment and environment where the project began. Structure mirrors the root.
@@ -26,6 +26,7 @@ This project consists of three repositories that **MUST** be updated sequentiall
 
 - **Lovable Repository (`volt-logic-fusion` - Lovable)**
   - **URL:** `https://github.com/datoxic0/volt-logic-fusion`
+  - **Live App:** `https://volt-logic-fusion.lovable.app/`
   - **Role:** The Lovable platform deployment. Serves as a tertiary live hosting backup using the exact same system codebase.
   - **Action:** Sync the latest frontend/system codebase into this repository and push to keep the Lovable deployment identical to Vercel and Replit.
 

@@ -55,7 +55,7 @@ export const FloatingPropertiesPanel: React.FC = () => {
 
     return (
         <div 
-            className="absolute z-[100] w-64 bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 shadow-2xl rounded-lg overflow-hidden flex flex-col"
+            className="absolute z-[9999] w-64 bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 shadow-2xl rounded-lg overflow-hidden flex flex-col pointer-events-auto"
             style={{ left: pos.x, top: pos.y }}
         >
             <div 

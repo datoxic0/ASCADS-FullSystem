@@ -24,6 +24,15 @@ export interface TerminalLog {
     timestamp: number;
 }
 
+export interface DRCViolation {
+    id: string;
+    type: 'clearance' | 'width' | 'unrouted' | 'overlap';
+    message: string;
+    elementIds: string[];
+    x: number;
+    y: number;
+}
+
 export interface DrawingObject {
     id: string;
     type: ToolType | string;
@@ -56,6 +65,7 @@ export interface DrawingObject {
     isBurnedOut?: boolean;
     armLength?: number;
     isColliding?: boolean;
+    netId?: string; // PCB Logical Net Association
     resistance?: number;
     capacitance?: string;
     inductance?: string;
@@ -142,8 +152,17 @@ export interface EngigraphState {
     push3DCode: (code: string) => void;
     clear3DCode: () => void;
 
-    // Phase 18: Auto Routing
+    // Phase 18: Auto Routing & PCB rules
     triggerAutoRoute: () => void;
+    drcViolations: DRCViolation[];
+    setDrcViolations: (violations: DRCViolation[]) => void;
+    pcbRules: {
+        minClearance: number;
+        minTrackWidth: number;
+    };
+    setPcbRules: (rules: Partial<EngigraphState['pcbRules']>) => void;
+    ratsnestVisible: boolean;
+    toggleRatsnest: () => void;
 
     // Oscilloscope (Phase 16)
     probedWireId: string | null;
@@ -266,13 +285,23 @@ export const useEngigraphStore = create<EngigraphState>((set, get) => ({
     pending3DCode: null,
     push3DCode: (code) => set({ pending3DCode: code }),
     clear3DCode: () => set({ pending3DCode: null }),
+    // Phase 18
+    triggerAutoRoute: () => {
+        const { elements, setElements, pushTerminalLog } = get();
+        const newElements = AutoRouter.routeAll(elements);
+        if (newElements !== elements) {
+            setElements(newElements);
+            pushTerminalLog('Auto-Route completed.', 'system');
+        }
+    },
     
-    triggerAutoRoute: () => set(state => {
-        const newElements = AutoRouter.routeAll(state.elements);
-        return { elements: newElements };
-    }),
-
-
+    // PCB State
+    drcViolations: [],
+    setDrcViolations: (violations) => set({ drcViolations: violations }),
+    pcbRules: { minClearance: 10, minTrackWidth: 2 },
+    setPcbRules: (rules) => set((state) => ({ pcbRules: { ...state.pcbRules, ...rules } })),
+    ratsnestVisible: true,
+    toggleRatsnest: () => set((state) => ({ ratsnestVisible: !state.ratsnestVisible })),
 
     elements: [],
     undoStack: [],

@@ -57,7 +57,7 @@ export const MicrocontrollerIDE: React.FC = () => {
 
     return (
         <div 
-            className="absolute z-[100] w-72 bg-[#1f1f23] border border-slate-700 rounded-lg shadow-2xl flex flex-col pointer-events-auto overflow-hidden"
+            className="absolute z-[9999] w-72 bg-[#1f1f23] border border-slate-700 rounded-lg shadow-2xl flex flex-col pointer-events-auto overflow-hidden"
             style={{ left: pos.x, top: pos.y }}
         >
             <div 

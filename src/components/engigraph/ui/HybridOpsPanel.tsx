@@ -6,6 +6,7 @@ import {
     Eye, EyeOff, Package, ScanLine, List, Cpu
 } from 'lucide-react';
 import { useEngigraphStore } from '../store/useEngigraphStore';
+import { DRCEngine } from '../solvers/DRCEngine';
 import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────
@@ -87,6 +88,9 @@ export const HybridOpsPanel: React.FC = () => {
         push3DCode, toggle3DView,
         pushTerminalLog,
         is3DViewOpen,
+        pcbRules, setPcbRules,
+        ratsnestVisible, toggleRatsnest,
+        drcViolations, setDrcViolations, setView
     } = useEngigraphStore();
 
     const shapes2D = elements.filter(el => ['rect', 'circle', 'ellipse', 'polygon', 'roundrect', 'line', 'spline'].includes(el.type));
@@ -390,6 +394,37 @@ export const HybridOpsPanel: React.FC = () => {
                     >
                         <Download size={12} /> Export Track CSV
                     </button>
+                </Section>
+
+                {/* ── 6. PCB Routing & DRC ─────────────────────────────── */}
+                <Section title="PCB Routing & DRC" icon={<Settings size={14} />} defaultOpen={true}>
+                    <Toggle label="Show Ratsnest" value={ratsnestVisible} onChange={toggleRatsnest} />
+                    <SliderRow label="Min Clearance" value={pcbRules.minClearance} min={1} max={50} step={1} unit="mm" onChange={(v) => setPcbRules({ minClearance: v })} />
+                    <SliderRow label="Min Track Width" value={pcbRules.minTrackWidth} min={1} max={20} step={1} unit="mm" onChange={(v) => setPcbRules({ minTrackWidth: v })} />
+                    
+                    <button
+                        onClick={() => {
+                            const violations = DRCEngine.check(elements, pcbRules);
+                            setDrcViolations(violations);
+                            if (violations.length === 0) toast.success('DRC Passed: No violations found.');
+                            else toast.error(`DRC Failed: ${violations.length} violation(s) found.`);
+                        }}
+                        className="w-full mt-2 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400 text-xs font-bold uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-2"
+                    >
+                        <Zap size={12} /> Run DRC Check
+                    </button>
+                    {drcViolations && drcViolations.length > 0 && (
+                        <div className="mt-2 bg-red-900/20 border border-red-500/30 rounded p-2 max-h-32 overflow-y-auto">
+                            {drcViolations.map(v => (
+                                <div key={v.id} className="text-[10px] text-red-300 py-0.5 border-b border-red-500/10 last:border-0 flex justify-between items-start gap-2">
+                                    <span>{v.message}</span>
+                                    <button onClick={() => setView({ x: -v.x + window.innerWidth/2, y: -v.y + window.innerHeight/2 })} className="text-red-400 hover:text-white shrink-0" title="Pan to Error">
+                                        <Eye size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </Section>
 
             </div>

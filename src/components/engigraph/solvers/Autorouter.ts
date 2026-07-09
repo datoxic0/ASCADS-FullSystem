@@ -61,6 +61,71 @@ export class AutoRouter {
         };
     }
 
+    static generateRatsnest(elements: DrawingObject[]): DrawingObject[] {
+        const ratsnests: DrawingObject[] = [];
+        const pins: { pin: Pin, parentId: string, used: boolean }[] = [];
+        
+        // Collect all pins
+        for (const el of elements) {
+            if (el.type === 'component') {
+                const elPins = this.getPins(el);
+                for (const p of elPins) {
+                    pins.push({ pin: p, parentId: el.id, used: false });
+                }
+            }
+        }
+
+        // Mark pins used if there's a wire starting/ending near them (simplified)
+        const wires = elements.filter(el => el.type === 'wire' && el.points);
+        for (const w of wires) {
+            if (!w.points || w.points.length < 4) continue;
+            const pStart = { x: w.points[0], y: w.points[1] };
+            const pEnd = { x: w.points[w.points.length - 2], y: w.points[w.points.length - 1] };
+            
+            for (const p of pins) {
+                if (this.distance(p.pin.pos, pStart) < 10 || this.distance(p.pin.pos, pEnd) < 10) {
+                    p.used = true;
+                }
+            }
+        }
+
+        // Pair remaining unused outputs to unused inputs
+        const outs = pins.filter(p => p.pin.type === 'output' && !p.used);
+        const ins = pins.filter(p => p.pin.type === 'input' && !p.used);
+
+        for (const out of outs) {
+            if (out.used) continue;
+            let nearestIn = null;
+            let minDist = Infinity;
+            for (const input of ins) {
+                if (input.used || input.parentId === out.parentId) continue;
+                const dist = this.distance(out.pin.pos, input.pin.pos);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearestIn = input;
+                }
+            }
+
+            if (nearestIn) {
+                out.used = true;
+                nearestIn.used = true;
+                const netId = `net-${out.parentId}-${nearestIn.parentId}`;
+                
+                ratsnests.push({
+                    id: `ratsnest-${Date.now()}-${Math.random()}`,
+                    type: 'ratsnest',
+                    points: [out.pin.pos.x, out.pin.pos.y, nearestIn.pin.pos.x, nearestIn.pin.pos.y],
+                    stroke: '#fbbf24', // Amber for ratsnest
+                    strokeWidth: 1,
+                    dash: [4, 4],
+                    netId: netId
+                });
+            }
+        }
+
+        return ratsnests;
+    }
+
     static routeAll(elements: DrawingObject[]): DrawingObject[] {
         const newElements = [...elements];
         const pins: { pin: Pin, parentId: string, used: boolean }[] = [];
@@ -185,7 +250,8 @@ export class AutoRouter {
                         points: flatPoints,
                         stroke: '#3b82f6',
                         strokeWidth: 4,
-                        boardLayer: 'bottom' // Auto route on bottom layer by default
+                        boardLayer: 'bottom', // Auto route on bottom layer by default
+                        netId: `net-${out.parentId}-${nearestIn.parentId}`
                     };
                     newElements.push(wire);
                 } else {
@@ -201,6 +267,7 @@ export class AutoRouter {
                         stroke: '#ef4444', // Red to indicate overlapping/failing route
                         strokeWidth: 4,
                         boardLayer: 'bottom',
+                        netId: `net-${out.parentId}-${nearestIn.parentId}`,
                         isCorrupted: true
                     };
                     newElements.push(wire);

@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Konva from 'konva';
 import { Stage, Layer, Line, Rect, Circle, Ellipse, RegularPolygon, Arc, Transformer, Text, Group } from 'react-konva';
 import { useEngigraphStore, DrawingObject } from '../store/useEngigraphStore';
+import { AutoRouter } from '../solvers/Autorouter';
 import { ComponentShape } from './EngigraphPartsFactory';
 import { EcosystemAdapter } from '../solvers/EcosystemAdapter';
 import { ProtractorOverlay } from './instruments/ProtractorOverlay';
@@ -13,8 +14,15 @@ export const EngigraphCanvas: React.FC = () => {
     const { 
         activeTool, view, setView, elements, setElements, pushHistory, 
         undo, redo, removeSelected, activePartType, selectedIds, setSelectedIds,
-        pdnMode, cfdMode, acousticMode, sheetLayout
+        pdnMode, cfdMode, acousticMode, sheetLayout,
+        ratsnestVisible, drcViolations
     } = useEngigraphStore();
+    
+    // Compute ratsnest on the fly if visible
+    const ratsnests = React.useMemo(() => {
+        if (!ratsnestVisible) return [];
+        return AutoRouter.generateRatsnest(elements);
+    }, [elements, ratsnestVisible]);
     
     const [currentObj, setCurrentObj] = useState<DrawingObject | null>(null);
     const [selectionBox, setSelectionBox] = useState<{ x: number, y: number, width: number, height: number } | null>(null);
@@ -600,7 +608,17 @@ export const EngigraphCanvas: React.FC = () => {
                     {elements.map((obj) => (
                         <Shape key={obj.id} obj={obj} isSelectTool={activeTool === 'select'} />
                     ))}
+                    {ratsnests.map((obj) => (
+                        <Shape key={obj.id} obj={obj} isSelectTool={false} />
+                    ))}
                     {currentObj && <Shape obj={currentObj} isSelectTool={false} />}
+                    {drcViolations.map((v) => (
+                        <Group key={v.id} x={v.x} y={v.y} listening={false}>
+                            <Circle radius={10} stroke="#ef4444" strokeWidth={2} />
+                            <Line points={[-5, -5, 5, 5]} stroke="#ef4444" strokeWidth={2} />
+                            <Line points={[-5, 5, 5, -5]} stroke="#ef4444" strokeWidth={2} />
+                        </Group>
+                    ))}
                     {activeTool === 'protractor' && <ProtractorOverlay x={view.x * -1 / view.zoom + window.innerWidth / (2 * view.zoom)} y={view.y * -1 / view.zoom + window.innerHeight / (2 * view.zoom)} />}
                     {activeTool === 'ruler' && <RulerOverlay x={view.x * -1 / view.zoom + window.innerWidth / (2 * view.zoom) - 150} y={view.y * -1 / view.zoom + window.innerHeight / (2 * view.zoom)} />}
                     {selectionBox && activeTool === 'select' && (
@@ -779,6 +797,9 @@ const Shape = ({ obj, isSelectTool }: { obj: DrawingObject, isSelectTool: boolea
     }
     if (obj.type === 'arc') {
         return <Arc id={obj.id} name="element-group" x={obj.x} y={obj.y} innerRadius={obj.innerRadius} outerRadius={obj.outerRadius} angle={obj.angle} stroke={computedStroke} strokeWidth={obj.strokeWidth} hitStrokeWidth={HIT_STROKE} fillEnabled={false} opacity={opacity} draggable={isSelectTool} listening={isSelectTool} dragBoundFunc={dragBoundFunc} {...shadowProps} />;
+    }
+    if (obj.type === 'ratsnest') {
+        return <Line id={obj.id} name="element-group" points={obj.points || []} stroke={computedStroke} strokeWidth={obj.strokeWidth} dash={obj.dash} opacity={opacity * 0.6} hitStrokeWidth={HIT_STROKE} draggable={false} listening={false} {...shadowProps} />;
     }
     if (!obj) return null;
 
