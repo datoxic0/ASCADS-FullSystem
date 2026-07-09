@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { FootprintLibrary } from '../lib/FootprintLibrary';
 import { useEngigraphStore } from '../../engigraph/store/useEngigraphStore';
 import { PCBAutorouter } from '../solvers/PCBAutorouter';
+import { loadProjects, getActiveProjectId } from '../../../lib/analog-storage';
 
 export const PCBRibbon: React.FC = () => {
     const { activeTool, setTool, addFootprint, removeSelected, selectedIds, clearBoard } = usePCBStore();
@@ -80,6 +81,70 @@ export const PCBRibbon: React.FC = () => {
         alert(`Autorouter finished: Generated ${newTracks.length} segments.`);
     };
 
+    const handleImportAnalogNetlist = () => {
+        const activeId = getActiveProjectId();
+        if (!activeId) {
+            alert("No active Analog Project found!");
+            return;
+        }
+        const projects = loadProjects();
+        const activeProject = projects.find(p => p.id === activeId);
+        if (!activeProject || !activeProject.data) {
+            alert("Active Analog Project has no data!");
+            return;
+        }
+
+        const design = activeProject.data.design;
+        if (!design || !design.components) {
+            alert("No circuit design found in active project!");
+            return;
+        }
+
+        const components = design.components;
+        const connections = design.connections || [];
+
+        // Convert Analog connections to PCB Nets (treating each connection as a 2-point net for simplicity)
+        const pcbNets = connections.map((conn: any) => ({
+            id: conn.id,
+            name: `Net-${conn.id.substring(0, 4)}`,
+            nodes: [
+                { footprintId: conn.from, padId: String(conn.fromPin || '1') },
+                { footprintId: conn.to, padId: String(conn.toPin || '2') }
+            ]
+        }));
+
+        usePCBStore.getState().setNets(pcbNets);
+
+        // Auto-place footprints
+        let xOff = 10;
+        let yOff = 40;
+        components.forEach((c: any) => {
+            let fpId = 'DIP-8'; // default
+            if (c.type === 'RESISTOR') fpId = '0805';
+            if (c.type === 'CAPACITOR') fpId = '1206';
+            if (c.type === 'SWITCH') fpId = 'PinHeader-1x2';
+            if (c.type === 'BATTERY') fpId = 'PinHeader-1x2';
+
+            usePCBStore.getState().addFootprint({
+                id: c.id,
+                footprintId: fpId,
+                x: xOff,
+                y: yOff,
+                rotation: c.rotation || 0,
+                layer: 'top',
+                refDes: `${c.type.substring(0, 1).toUpperCase()}${c.id.substring(0, 4)}`
+            });
+
+            xOff += 15;
+            if (xOff > 120) {
+                xOff = 10;
+                yOff += 15;
+            }
+        });
+
+        alert(`Imported ${pcbNets.length} nets and ${components.length} footprints from Analog Project: ${activeProject.name}!`);
+    };
+
     return (
         <div className="absolute top-0 left-0 right-0 h-14 bg-slate-900 border-b border-slate-800 flex items-center px-4 z-50">
             <div className="flex items-center gap-4 text-white">
@@ -137,9 +202,18 @@ export const PCBRibbon: React.FC = () => {
                     <button 
                         onClick={handleImportNetlist}
                         className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 px-3 py-1.5 rounded transition-colors"
+                        title="Import from Engigraph"
                     >
                         <Download size={14} />
-                        Import Engigraph Netlist
+                        Engigraph
+                    </button>
+                    <button 
+                        onClick={handleImportAnalogNetlist}
+                        className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-3 py-1.5 rounded transition-colors"
+                        title="Import from Active Analog Project"
+                    >
+                        <Download size={14} />
+                        Analog Project
                     </button>
                     <button 
                         onClick={handleAutoroute}
