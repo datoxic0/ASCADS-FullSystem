@@ -62,8 +62,22 @@ export const GATE_CATEGORIES: PaletteCategory[] = [
     items: [
       { kind: "Q_HADAMARD", name: "Hadamard (H)" },
       { kind: "Q_PAULI_X", name: "Pauli-X (X)" },
-      { kind: "Q_CNOT", name: "CNOT" },
+      { kind: "Q_PAULI_Y", name: "Pauli-Y (Y)" },
+      { kind: "Q_PAULI_Z", name: "Pauli-Z (Z)" },
+      { kind: "Q_PHASE",   name: "Phase (S)" },
+      { kind: "Q_DEUTSCH", name: "Deutsch (U)" },
+      { kind: "Q_CNOT",    name: "CNOT" },
+      { kind: "Q_TOFFOLI", name: "Toffoli (CCX)" },
+      { kind: "Q_SWAP",    name: "SWAP" },
       { kind: "Q_MEASURE", name: "Measure" },
+    ],
+  },
+  {
+    label: "Arithmetic & Signal",
+    items: [
+      { kind: "PARITY8",   name: "Parity-8" },
+      { kind: "CMP4",      name: "4-bit Comparator" },
+      { kind: "SCHMITT",   name: "Schmitt Trigger" },
     ],
   },
   {
@@ -138,7 +152,11 @@ const COMBINATIONAL_KINDS = new Set<GateKind>([
   "DEC38", "ENC83", "ALU4",
   "VALVE_3_2", "VALVE_5_2",
   // Quantum Logic (Phase 19)
-  "Q_HADAMARD", "Q_PAULI_X", "Q_CNOT", "Q_MEASURE"
+  "Q_HADAMARD", "Q_PAULI_X", "Q_CNOT", "Q_MEASURE",
+  // Quantum Logic Extended (Phase 21)
+  "Q_PAULI_Y", "Q_PAULI_Z", "Q_TOFFOLI", "Q_SWAP", "Q_PHASE", "Q_DEUTSCH",
+  // Arithmetic & Signal (Phase 21)
+  "PARITY8", "CMP4", "SCHMITT",
 ]);
 
 const STATEFUL_KINDS = new Set<GateKind>([
@@ -175,8 +193,11 @@ export function defaultLabel(kind: GateKind): string | undefined {
 
 export function defaultInputs(kind: GateKind): number {
   if (isVariableInputKind(kind)) return 2;
-  if (kind === "NOT" || kind === "BUFFER" || kind === "Q_HADAMARD" || kind === "Q_PAULI_X" || kind === "Q_MEASURE") return 1;
-  if (kind === "Q_CNOT") return 2;
+  if (kind === "NOT" || kind === "BUFFER" || kind === "Q_HADAMARD" || kind === "Q_PAULI_X" || kind === "Q_PAULI_Y" || kind === "Q_PAULI_Z" || kind === "Q_PHASE" || kind === "Q_DEUTSCH" || kind === "Q_MEASURE" || kind === "SCHMITT") return 1;
+  if (kind === "Q_CNOT" || kind === "Q_SWAP") return 2;
+  if (kind === "Q_TOFFOLI") return 3;
+  if (kind === "PARITY8") return 8;
+  if (kind === "CMP4") return 8;
   return 0;
 }
 
@@ -229,10 +250,23 @@ export function sizeOf(g: Pick<Gate, "kind" | "inputs">): { w: number; h: number
       return { w: 70, h: 110 };
     case "Q_HADAMARD":
     case "Q_PAULI_X":
+    case "Q_PAULI_Y":
+    case "Q_PAULI_Z":
+    case "Q_PHASE":
+    case "Q_DEUTSCH":
     case "Q_MEASURE":
       return { w: GRID * 4, h: GRID * 4 };
     case "Q_CNOT":
+    case "Q_SWAP":
       return { w: GRID * 6, h: GRID * 6 };
+    case "Q_TOFFOLI":
+      return { w: GRID * 7, h: GRID * 8 };
+    case "PARITY8":
+      return { w: 80, h: 110 };
+    case "CMP4":
+      return { w: 80, h: 110 };
+    case "SCHMITT":
+      return { w: 60, h: 40 };
     case "DEMUX2":
       return { w: 60, h: 70 };
     case "DEC2":
@@ -541,6 +575,10 @@ export function pinsFor(g: Pick<Gate, "kind" | "inputs">): Pin[] {
       ];
     case "Q_HADAMARD":
     case "Q_PAULI_X":
+    case "Q_PAULI_Y":
+    case "Q_PAULI_Z":
+    case "Q_PHASE":
+    case "Q_DEUTSCH":
     case "Q_MEASURE":
       return [
         { x: 0, y: h / 2, type: "in", label: "Q" },
@@ -552,6 +590,46 @@ export function pinsFor(g: Pick<Gate, "kind" | "inputs">): Pin[] {
         { x: 0, y: h * 0.7, type: "in", label: "Targ" },
         { x: w, y: h * 0.3, type: "out", label: "Ctrl'" },
         { x: w, y: h * 0.7, type: "out", label: "Targ'" }
+      ];
+    case "Q_SWAP":
+      return [
+        { x: 0, y: h * 0.3, type: "in", label: "A" },
+        { x: 0, y: h * 0.7, type: "in", label: "B" },
+        { x: w, y: h * 0.3, type: "out", label: "A'" },
+        { x: w, y: h * 0.7, type: "out", label: "B'" }
+      ];
+    case "Q_TOFFOLI":
+      return [
+        { x: 0, y: h * 0.2, type: "in", label: "C0" },
+        { x: 0, y: h * 0.5, type: "in", label: "C1" },
+        { x: 0, y: h * 0.8, type: "in", label: "Targ" },
+        { x: w, y: h * 0.2, type: "out", label: "C0'" },
+        { x: w, y: h * 0.5, type: "out", label: "C1'" },
+        { x: w, y: h * 0.8, type: "out", label: "Targ'" }
+      ];
+    case "PARITY8": {
+      const ys = distributeInputs(8, h, 12);
+      return [
+        ...ys.map((y, i) => ({ x: 0, y, type: "in", label: `D${i}` } as Pin)),
+        { x: w, y: h * 0.3, type: "out", label: "PAR" },
+        { x: w, y: h * 0.7, type: "out", label: "CHK" },
+      ];
+    }
+    case "CMP4": {
+      const ays = distributeInputs(4, h * 0.45, 10);
+      const bys = distributeInputs(4, h * 0.45, 10);
+      return [
+        ...ays.map((y, i) => ({ x: 0, y, type: "in", label: `A${i}` } as Pin)),
+        ...bys.map((y, i) => ({ x: 0, y: y + h * 0.55, type: "in", label: `B${i}` } as Pin)),
+        { x: w, y: h * 0.2, type: "out", label: "A>B" },
+        { x: w, y: h * 0.5, type: "out", label: "A=B" },
+        { x: w, y: h * 0.8, type: "out", label: "A<B" },
+      ];
+    }
+    case "SCHMITT":
+      return [
+        { x: 0, y: h / 2, type: "in", label: "IN" },
+        { x: w, y: h / 2, type: "out", label: "OUT" },
       ];
     /* Variable input logic gates */
     default: {
@@ -635,6 +713,57 @@ export function evaluateGate(kind: GateKind, inputs: Signal[]): Signal[] {
       return [inputs[0], inputs[0] === 1 ? (inputs[1] === 1 ? 0 : 1) : inputs[1]];
     case "Q_MEASURE":
       return [inputs[0] ?? "X"];
+    // New Quantum gates (Phase 21)
+    case "Q_PAULI_Y":
+      // Y gate: |0⟩→i|1⟩, |1⟩→-i|0⟩ — in classical sim = bit-flip with phase (same as X)
+      if (inputs[0] === "X") return ["X"];
+      return [inputs[0] === 1 ? 0 : 1];
+    case "Q_PAULI_Z":
+      // Z gate: |0⟩→|0⟩, |1⟩→-|1⟩ — in classical sim, passthrough (phase is not classically observable)
+      return [inputs[0] ?? "X"];
+    case "Q_PHASE":
+      // S gate (√Z): same classical passthrough; phase π/2 not observable in 0/1 sim
+      return [inputs[0] ?? "X"];
+    case "Q_DEUTSCH":
+      // Deutsch gate (universal): randomly rotates — simulate as probabilistic flip
+      if (inputs[0] === "X") return ["X"];
+      return [Math.random() > 0.5 ? 1 : 0];
+    case "Q_SWAP": {
+      // Swaps two qubits
+      const [a, b] = inputs;
+      if (a === "X" || b === "X") return ["X", "X"];
+      return [b ?? "X", a ?? "X"];
+    }
+    case "Q_TOFFOLI": {
+      // CCNOT: flips target only when both controls = 1
+      const [c0, c1, targ] = inputs;
+      if (c0 === "X" || c1 === "X" || targ === "X") return ["X", "X", "X"];
+      const flip = c0 === 1 && c1 === 1;
+      const t: Signal = flip ? (targ === 1 ? 0 : 1) : targ ?? "X";
+      return [c0, c1, t];
+    }
+    case "PARITY8": {
+      // Even parity generator over 8 inputs; CHK = 1 if odd parity detected
+      const bits = inputs.slice(0, 8);
+      if (bits.includes("X")) return ["X", "X"];
+      const ones = bits.filter(b => b === 1).length;
+      const par: Signal = (ones % 2 === 0) ? 0 : 1;
+      return [par, par]; // PAR = parity bit, CHK = same for standalone check
+    }
+    case "CMP4": {
+      // 4-bit magnitude comparator; A[0..3] vs B[0..3]
+      const a = inputs.slice(0, 4);
+      const b = inputs.slice(4, 8);
+      if (a.includes("X") || b.includes("X")) return ["X", "X", "X"];
+      const valA = a.reduce((acc: number, bit, i) => acc | ((bit as number) << i), 0);
+      const valB = b.reduce((acc: number, bit, i) => acc | ((bit as number) << i), 0);
+      return [valA > valB ? 1 : 0, valA === valB ? 1 : 0, valA < valB ? 1 : 0];
+    }
+    case "SCHMITT": {
+      // Schmitt trigger: hysteresis buffer — passes the input with noise immunity
+      const v = inputs[0] ?? "X";
+      return [v];
+    }
     case "TRI": {
       const [d, en] = inputs;
       if (en === 1) return [d ?? "X"];
@@ -780,6 +909,15 @@ export const KIND_DESCRIPTIONS: Partial<Record<GateKind, string>> & Record<strin
   VALVE_5_2: "5/2-way Valve. S1 connects P-A/B-T2, S2 connects P-B/A-T1.",
   CYLINDER_SA: "Single-acting cylinder. Extends on pressure, spring return.",
   CYLINDER_DA: "Double-acting cylinder. Port A extends, Port B retracts.",
+  Q_PAULI_Y: "Pauli-Y gate: bit-flip with imaginary phase shift (i|1⟩ and -i|0⟩). Classical sim = bit-flip.",
+  Q_PAULI_Z: "Pauli-Z gate: phase flip |1⟩→-|1⟩. Passthrough in classical simulation.",
+  Q_TOFFOLI: "Toffoli (CCNOT): flips target qubit when both controls C0=1 AND C1=1.",
+  Q_SWAP: "SWAP gate: exchanges two qubit states A↔B.",
+  Q_PHASE: "Phase (S) gate: applies π/2 phase shift. Classical passthrough (phase not observable in 0/1 sim).",
+  Q_DEUTSCH: "Deutsch universal gate: parameterised rotation. Classical sim = random probabilistic flip.",
+  PARITY8: "8-bit Parity Generator: PAR = XOR of 8 inputs. CHK = high if odd-parity error detected.",
+  CMP4: "4-bit Magnitude Comparator. Outputs: A>B, A=B, A<B based on 4-bit unsigned comparison.",
+  SCHMITT: "Schmitt Trigger: hysteresis input buffer with noise immunity. Output mirrors input.",
 }, {
   get: (target: any, prop: string) => {
     if (target[prop]) return target[prop];
@@ -835,6 +973,15 @@ export const IEC_LABEL: Partial<Record<GateKind, string>> & Record<string, strin
   VALVE_5_2: "5/2v",
   CYLINDER_SA: "CYL-S",
   CYLINDER_DA: "CYL-D",
+  Q_PAULI_Y: "Y",
+  Q_PAULI_Z: "Z",
+  Q_TOFFOLI: "CCX",
+  Q_SWAP: "SWP",
+  Q_PHASE: "S",
+  Q_DEUTSCH: "U",
+  PARITY8: "PAR8",
+  CMP4: "CMP",
+  SCHMITT: "ST",
 };
 
 /** Index of the CLK input pin for each clocked gate, or -1 if none. */

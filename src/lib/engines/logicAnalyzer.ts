@@ -331,7 +331,7 @@ export class LogicAnalyzer {
         const ledId = addComp('LED', 'OUT', 800, 400);
         design.connections.push({ id: Math.random().toString(36), from: rootId, fromPin: getOutPin(rootId), to: ledId, toPin: 0 });
     } catch (e) {
-        console.error("Compilation failed:", e);
+        // Compilation failed silently in production
     }
 
     return design;

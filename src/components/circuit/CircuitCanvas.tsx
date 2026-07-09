@@ -338,24 +338,8 @@ export function CircuitCanvas({
           }
         }
         onMoveGates(0, 0, Array.from(selection.gates), true);
-      } else {
-        // Toggle INPUT switch on simple click
-        if (selection.gates.size === 1) {
-          const id = Array.from(selection.gates)[0];
-          const gate = circuit.gates[id];
-          if (gate && gate.kind === "INPUT") {
-             onUpdateGate(id, { on: !gate.on }, true);
-          }
-        }
       }
-      
-      // Release any momentary BUTTONs
-      for (const id of selection.gates) {
-         const gate = circuit.gates[id];
-         if (gate && gate.kind === "BUTTON" && gate.on) {
-            onUpdateGate(id, { on: false }, false);
-         }
-      }
+      // Left-click now only selects/moves — toggling is right-click only
     }
     // If mouseup on canvas while drawing wire with a snap target, complete the wire
     if (interaction.kind === "draw-wire" && snapTarget) {
@@ -423,23 +407,29 @@ export function CircuitCanvas({
       startedAt: Date.now(),
     });
     
-    // Press momentary BUTTON
-    if (gate.kind === "BUTTON") {
-      onUpdateGate(gate.id, { on: true }, false);
-    }
+    // Left-click does NOT press BUTTON — right-click does (see onGateContextMenu)
   };
 
   const onGateClick = (e: React.MouseEvent, gate: Gate) => {
     e.stopPropagation();
   };
 
-  /** Right-click on INPUT toggles it; right-click on any gate also selects it. */
+  /**
+   * RIGHT-CLICK = activate/toggle:
+   *   INPUT  → toggle on/off
+   *   BUTTON → momentary pulse (100 ms on then off)
+   * No toggle occurs on left-click — left is select/move only.
+   */
   const onGateContextMenu = (e: React.MouseEvent, gate: Gate) => {
     e.preventDefault();
     e.stopPropagation();
     setSelection({ gates: new Set([gate.id]), wires: new Set() });
-    if (gate.kind === "INPUT" || gate.kind === "BUTTON") {
+    if (gate.kind === "INPUT") {
       onUpdateGate(gate.id, { on: !gate.on }, true);
+    } else if (gate.kind === "BUTTON") {
+      // Momentary pulse: press immediately, release after 100 ms
+      onUpdateGate(gate.id, { on: true }, false);
+      setTimeout(() => onUpdateGate(gate.id, { on: false }, false), 100);
     }
   };
 

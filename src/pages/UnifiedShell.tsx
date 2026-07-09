@@ -1,16 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X, Workflow, Layers, Share2 } from 'lucide-react';
-import Editor from '@/pages/Editor';
-import AnalogEditor from '@/pages/AnalogEditor';
 import ProjectsView from '@/components/ProjectsView';
-import ComputeTools from '@/pages/ComputeTools';
-import PLCPage from '@/pages/PLCPage';
-import RobotPage from '@/components/robot/RobotPage';
-import MathsTools from '@/pages/MathsTools';
-import EngigraphPage from '@/pages/EngigraphPage';
-import DocsPage from '@/pages/DocsPage';
 import ProjectLandingScreen from '@/components/ProjectLandingScreen';
 import AIAssistant from '@/components/AIAssistant';
+
+/* Lazy-load heavy modes to reduce initial bundle */
+const Editor         = React.lazy(() => import('@/pages/Editor'));
+const AnalogEditor   = React.lazy(() => import('@/pages/AnalogEditor'));
+const ComputeTools   = React.lazy(() => import('@/pages/ComputeTools'));
+const PLCPage        = React.lazy(() => import('@/pages/PLCPage'));
+const RobotPage      = React.lazy(() => import('@/components/robot/RobotPage'));
+const MathsTools     = React.lazy(() => import('@/pages/MathsTools'));
+const EngigraphPage  = React.lazy(() => import('@/pages/EngigraphPage'));
+const DocsPage       = React.lazy(() => import('@/pages/DocsPage'));
 import type { Circuit } from '@/lib/types';
 import {
   loadProjects,
@@ -296,96 +298,105 @@ export default function UnifiedShell() {
 
       {/* ── Main Content ── */}
       <div className="flex-1 min-h-0 flex flex-col overflow-visible">
-        {mode === 'projects' && (
-          <ProjectsView
-            projects={projects}
-            onNew={handleNewProject}
-            onOpen={handleOpenProject}
-            onDelete={handleDeleteProject}
-            onImport={handleImportProject}
-            onNavigate={setMode}
-          />
-        )}
-
-        {mode === 'analog' && (
-          activeProject?.type === 'analog' ? (
-            <AnalogEditor
-              project={activeProject}
-              onProjectChange={handleProjectChange}
-              onBack={() => setMode('projects')}
-              onBridgeToDigital={(c) => {
-                bridgeCircuitRef.current = c;
-                setMode('digital');
-              }}
+        <Suspense fallback={
+          <div className="flex-1 flex items-center justify-center bg-slate-950">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Loading Module...</span>
+            </div>
+          </div>
+        }>
+          {mode === 'projects' && (
+            <ProjectsView
+              projects={projects}
+              onNew={handleNewProject}
+              onOpen={handleOpenProject}
+              onDelete={handleDeleteProject}
+              onImport={handleImportProject}
+              onNavigate={setMode}
             />
-          ) : (
-            <ProjectLandingScreen type="analog" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
-          )
-        )}
+          )}
 
-        {mode === 'digital' && (
-          activeProject?.type === 'digital' ? (
-            <div className="h-full">
-              <Editor 
-                initialCircuit={bridgeCircuitRef.current ?? undefined} 
-                project={activeProject} 
-                onProjectChange={handleProjectChange} 
+          {mode === 'analog' && (
+            activeProject?.type === 'analog' ? (
+              <AnalogEditor
+                project={activeProject}
+                onProjectChange={handleProjectChange}
+                onBack={() => setMode('projects')}
+                onBridgeToDigital={(c) => {
+                  bridgeCircuitRef.current = c;
+                  setMode('digital');
+                }}
               />
-            </div>
-          ) : (
-            <ProjectLandingScreen type="digital" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
-          )
-        )}
+            ) : (
+              <ProjectLandingScreen type="analog" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
+            )
+          )}
 
-        {mode === 'compute' && (
-          <div className="h-full">
-            <ComputeTools />
-          </div>
-        )}
+          {mode === 'digital' && (
+            activeProject?.type === 'digital' ? (
+              <div className="h-full">
+                <Editor
+                  initialCircuit={bridgeCircuitRef.current ?? undefined}
+                  project={activeProject}
+                  onProjectChange={handleProjectChange}
+                />
+              </div>
+            ) : (
+              <ProjectLandingScreen type="digital" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
+            )
+          )}
 
-        {mode === 'plc' && (
-          activeProject?.type === 'plc' ? (
+          {mode === 'compute' && (
             <div className="h-full">
-              <PLCPage 
-                project={activeProject} 
-                onProjectChange={handleProjectChange} 
-              />
+              <ComputeTools />
             </div>
-          ) : (
-            <ProjectLandingScreen type="plc" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
-          )
-        )}
+          )}
 
-        {mode === 'robot' && (
-          activeProject?.type === 'robot' ? (
+          {mode === 'plc' && (
+            activeProject?.type === 'plc' ? (
+              <div className="h-full">
+                <PLCPage
+                  project={activeProject}
+                  onProjectChange={handleProjectChange}
+                />
+              </div>
+            ) : (
+              <ProjectLandingScreen type="plc" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
+            )
+          )}
+
+          {mode === 'robot' && (
+            activeProject?.type === 'robot' ? (
+              <div className="h-full">
+                <RobotPage
+                  project={activeProject}
+                  onProjectChange={handleProjectChange}
+                />
+              </div>
+            ) : (
+              <ProjectLandingScreen type="robot" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
+            )
+          )}
+
+          {mode === 'maths' && (
             <div className="h-full">
-              <RobotPage 
-                project={activeProject} 
-                onProjectChange={handleProjectChange} 
-              />
+              <MathsTools />
             </div>
-          ) : (
-            <ProjectLandingScreen type="robot" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />
-          )
-        )}
+          )}
 
-        {mode === 'maths' && (
-          <div className="h-full">
-            <MathsTools />
-          </div>
-        )}
+          {mode === 'engigraph' && (
+            <div className="flex-1 min-h-0 flex flex-col h-full w-full">
+              <EngigraphPage />
+            </div>
+          )}
 
-        {mode === 'engigraph' && (
-          <div className="flex-1 min-h-0 flex flex-col h-full w-full">
-            <EngigraphPage />
-          </div>
-        )}
-
-        {mode === 'docs' && (
-          <div className="h-full">
-            <DocsPage />
-          </div>
-        )}
+          {mode === 'docs' && (
+            <div className="h-full">
+              <DocsPage />
+            </div>
+          )}
+        </Suspense>
       </div>
 
       {/* ── Footer Status Bar ── */}

@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+export { GoogleGenAI };
 
 export type AIEngine = 'power' | 'economy';
 

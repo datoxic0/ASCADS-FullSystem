@@ -550,7 +550,7 @@ export default function RightControlPanel({
         aiText = data.choices?.[0]?.message?.content ?? "No response generated.";
       } else {
         if (!key) throw new Error("Gemini API Key is missing! Please configure it in settings.");
-        const { GoogleGenAI } = await import('@google/genai');
+        const { GoogleGenAI } = await import('../../lib/ai');
         const client = new GoogleGenAI({ apiKey: key });
         const res = await client.models.generateContent({
           model: model || "gemini-2.0-flash",

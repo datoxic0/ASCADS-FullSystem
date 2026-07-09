@@ -442,6 +442,63 @@ const RAW_TEMPLATES: ComponentTemplate[] = [
     ],
     defaultValues: { address: '0x27', interface: 'I2C', size: '16×2' },
   },
+  /* ── Quantum / Advanced RF & Power ──────────────────────────────────────── */
+  {
+    id: 'rf-transformer', name: 'RF Transformer', category: 'Passive', symbol: 'transformer',
+    pins: [
+      { id: 'p1', name: 'P1', position: { x: -1, y: -0.4 }, direction: 'bidir' },
+      { id: 'p2', name: 'P2', position: { x: -1, y: 0.4 },  direction: 'bidir' },
+      { id: 's1', name: 'S1', position: { x: 1, y: -0.4 },  direction: 'bidir' },
+      { id: 's2', name: 'S2', position: { x: 1, y: 0.4 },   direction: 'bidir' },
+    ],
+    defaultValues: { ratio: '1:1', coupling: '0.99', freq: '100MHz' },
+  },
+  {
+    id: 'varactor', name: 'Varactor Diode', category: 'Active', symbol: 'diode',
+    pins: [
+      { id: 'a', name: 'A', position: { x: -1, y: 0 }, direction: 'in' },
+      { id: 'k', name: 'K', position: { x: 1, y: 0 },  direction: 'in' },
+    ],
+    defaultValues: { capacitance: '5-100pF', Vr: '0-20V', type: 'BB105' },
+  },
+  {
+    id: 'igbt', name: 'IGBT', category: 'Active', symbol: 'transistor-n',
+    pins: [
+      { id: 'g', name: 'G (Gate)',     position: { x: -1, y: 0 },    direction: 'in' },
+      { id: 'c', name: 'C (Collector)',position: { x: 0, y: -1 },    direction: 'in' },
+      { id: 'e', name: 'E (Emitter)', position: { x: 0, y: 1 },     direction: 'out' },
+    ],
+    defaultValues: { voltage: '600V', current: '50A', type: 'N-Channel' },
+  },
+  {
+    id: 'hall-sensor', name: 'Hall Effect Sensor', category: 'Sensor', symbol: 'sensor',
+    pins: [
+      { id: 'vcc',  name: 'VCC',   position: { x: -1, y: -0.5 }, direction: 'in' },
+      { id: 'gnd',  name: 'GND',   position: { x: -1, y: 0.5 },  direction: 'in' },
+      { id: 'vout', name: 'VOUT',  position: { x: 1, y: 0 },     direction: 'out' },
+    ],
+    defaultValues: { sensitivity: '1.3mV/G', type: 'A1302', supply: '5V' },
+  },
+  {
+    id: 'optocoupler', name: 'Optocoupler', category: 'Active', symbol: 'optocoupler',
+    pins: [
+      { id: 'a',   name: 'A (LED+)',  position: { x: -1, y: -0.4 }, direction: 'in' },
+      { id: 'k',   name: 'K (LED-)',  position: { x: -1, y: 0.4 },  direction: 'in' },
+      { id: 'c',   name: 'C (Collector)', position: { x: 1, y: -0.4 }, direction: 'out' },
+      { id: 'e',   name: 'E (Emitter)',   position: { x: 1, y: 0.4 },  direction: 'out' },
+    ],
+    defaultValues: { CTR: '100%', Viso: '2500Vrms', type: 'PC817' },
+  },
+  {
+    id: 'ct-sensor', name: 'Current Transformer', category: 'Sensor', symbol: 'transformer',
+    pins: [
+      { id: 'p1', name: 'P1 (Primary+)',   position: { x: -1, y: -0.4 }, direction: 'bidir' },
+      { id: 'p2', name: 'P2 (Primary-)',   position: { x: -1, y: 0.4 },  direction: 'bidir' },
+      { id: 's1', name: 'S1 (Secondary+)', position: { x: 1, y: -0.4 },  direction: 'out' },
+      { id: 's2', name: 'S2 (Secondary-)', position: { x: 1, y: 0.4 },   direction: 'out' },
+    ],
+    defaultValues: { ratio: '100:5A', class: '0.5', burden: '5Ω' },
+  },
   {
     id: 'seg7-display', name: '7-Seg Display', category: 'Other', symbol: 'seg7-display',
     pins: [

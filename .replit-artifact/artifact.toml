@@ -19,7 +19,7 @@ run = "pnpm --filter @workspace/logic-lab run dev"
 
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/logic-lab", "run", "build" ]
-publicDir = "artifacts/logic-lab/dist/public"
+publicDir = "artifacts/logic-lab/dist"
 serve = "static"
 
 [[services.production.rewrites]]

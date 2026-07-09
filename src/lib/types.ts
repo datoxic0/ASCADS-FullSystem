@@ -49,6 +49,17 @@ export type GateKind =
   | "Q_PAULI_X"
   | "Q_CNOT"
   | "Q_MEASURE"
+  // Quantum Logic Extended (Phase 21)
+  | "Q_PAULI_Y"    // Pauli-Y (Y gate — bit+phase flip)
+  | "Q_PAULI_Z"    // Pauli-Z (Z gate — phase flip)
+  | "Q_TOFFOLI"    // Toffoli / CCNOT (3-qubit controlled-controlled-NOT)
+  | "Q_SWAP"       // SWAP gate (exchange two qubit states)
+  | "Q_PHASE"      // Phase / S gate (π/2 phase shift)
+  | "Q_DEUTSCH"    // Deutsch gate (universal 1-qubit with phase θ)
+  // New Digital Components (Phase 21)
+  | "PARITY8"      // 8-bit Parity Generator / Checker
+  | "CMP4"         // 4-bit Magnitude Comparator (A>B, A=B, A<B)
+  | "SCHMITT"      // Schmitt Trigger (hysteresis buffer)
   // Interactive I/O
   | "BUTTON"   // momentary push button
   | "RGBLED"   // RGB LED (3 inputs: R, G, B)

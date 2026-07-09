@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { useHardwareBus } from "../../lib/hardware-bus";
 import { EcosystemTranslator } from "../../lib/EcosystemTranslator";
+import { safeEvalMath, safeEvalCondition } from "../../lib/safe-eval";
 
 interface RobotWorkspaceIDEProps {
   activeBoard: BoardConfig;
@@ -613,13 +614,7 @@ export default function RobotWorkspaceIDE({
               for (const [key, value] of Object.entries(variableMap)) {
                 resolvedExpr = resolvedExpr.replace(new RegExp(key.replace("#", "\\#"), "g"), value.toString());
               }
-              try {
-                // Safely evaluate simple math expressions
-                const sanitizedExpr = resolvedExpr.replace(/[^0-9\+\-\*\/\(\)\. ]/g, "");
-                numVal = parseFloat(new Function(`return (${sanitizedExpr})`)());
-              } catch (e) {
-                numVal = 0;
-              }
+              numVal = safeEvalMath(resolvedExpr, 0);
             }
           }
 
@@ -678,14 +673,9 @@ export default function RobotWorkspaceIDE({
               for (const [key, value] of Object.entries(variableMap)) {
                 resolvedCond = resolvedCond.replace(new RegExp(key.replace("#", "\\#"), "g"), value.toString());
               }
-              // Replace logical operators
+              // Replace logical operators and validate
               resolvedCond = resolvedCond.replace(/AND/gi, "&&").replace(/OR/gi, "||");
-              try {
-                const cleanExpr = resolvedCond.replace(/==/g, "===").replace(/<=/g, "<=").replace(/>=/g, ">=").replace(/!=/g, "!==");
-                conditionMet = !!(new Function(`return (${cleanExpr})`)());
-              } catch (e) {
-                conditionMet = true; // nominal fallback
-              }
+              conditionMet = safeEvalCondition(resolvedCond, true);
             }
           }
 

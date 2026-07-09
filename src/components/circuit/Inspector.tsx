@@ -230,20 +230,51 @@ export function Inspector({
             <div className="flex items-baseline justify-between">
               <Label className="text-xs">Frequency</Label>
               <span className="text-xs font-mono text-foreground/90">
-                {gate.hz?.toFixed(1) ?? 1} Hz
+                {(gate.hz ?? 1) >= 1000000
+                  ? `${((gate.hz ?? 1) / 1000000).toFixed(3)} MHz`
+                  : (gate.hz ?? 1) >= 1000
+                  ? `${((gate.hz ?? 1) / 1000).toFixed(3)} kHz`
+                  : `${(gate.hz ?? 1).toFixed(3)} Hz`}
               </span>
             </div>
             <Slider
-              value={[gate.hz ?? 1]}
-              min={0.5}
-              max={20}
-              step={0.5}
+              value={[Math.min(gate.hz ?? 1, 10000)]}
+              min={0.001}
+              max={10000}
+              step={0.001}
               onValueChange={([v]) => onUpdateGate(gate.id, { hz: v })}
               className="mt-2"
               data-testid="slider-clock-hz"
             />
+            <div className="flex items-center gap-1.5 mt-2">
+              <Label className="text-[10px] text-muted-foreground shrink-0">Custom Hz</Label>
+              <input
+                type="number"
+                min={0.000001}
+                step="any"
+                value={gate.hz ?? 1}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  if (!isNaN(v) && v > 0) onUpdateGate(gate.id, { hz: v });
+                }}
+                className="flex-1 px-2 py-0.5 text-[11px] font-mono bg-background border border-border rounded text-right focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="e.g. 1000000"
+                data-testid="input-clock-hz-custom"
+              />
+            </div>
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {[0.5, 1, 10, 100, 1000, 10000, 1000000, 1000000000].map(preset => (
+                <button
+                  key={preset}
+                  onClick={() => onUpdateGate(gate.id, { hz: preset })}
+                  className="px-1.5 py-0.5 text-[9px] font-mono font-black uppercase bg-muted hover:bg-accent border border-border rounded transition-colors"
+                >
+                  {preset >= 1000000000 ? '1GHz' : preset >= 1000000 ? '1MHz' : preset >= 1000 ? `${preset/1000}k` : `${preset}Hz`}
+                </button>
+              ))}
+            </div>
             <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
-              The clock toggles {((gate.hz ?? 1) * 2).toFixed(1)} times per second.
+              Toggles {((gate.hz ?? 1) * 2).toLocaleString()} times/sec. Slider capped at 10 kHz; type any value above.
             </p>
           </div>
         )}

@@ -34,7 +34,7 @@ class AudioEngine {
 
     osc.start();
     this.oscillators.set(id, { osc, gain });
-    console.log(`[AUDIO] Buzzer ${id} started at ${frequency}Hz`);
+    // Audio started (removed production console.log)
   }
 
   stopBuzzer(id: string) {
