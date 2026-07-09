@@ -5,7 +5,7 @@ import { X, GripHorizontal } from 'lucide-react';
 export const FloatingPropertiesPanel: React.FC = () => {
     const { elements, selectedIds, updateElement, probeData, openIde } = useEngigraphStore();
     
-    const [pos, setPos] = useState({ x: 20, y: 80 });
+    const [pos, setPos] = useState({ x: 300, y: 150 });
     const [isDragging, setIsDragging] = useState(false);
     const dragStart = useRef({ x: 0, y: 0 });
     const [isVisible, setIsVisible] = useState(true);
@@ -55,7 +55,7 @@ export const FloatingPropertiesPanel: React.FC = () => {
 
     return (
         <div 
-            className="absolute z-50 w-64 bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 shadow-2xl rounded-lg overflow-hidden flex flex-col"
+            className="absolute z-[100] w-64 bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 shadow-2xl rounded-lg overflow-hidden flex flex-col"
             style={{ left: pos.x, top: pos.y }}
         >
             <div 
