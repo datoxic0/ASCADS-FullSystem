@@ -154,15 +154,6 @@ export interface EngigraphState {
 
     // Phase 18: Auto Routing & PCB rules
     triggerAutoRoute: () => void;
-    drcViolations: DRCViolation[];
-    setDrcViolations: (violations: DRCViolation[]) => void;
-    pcbRules: {
-        minClearance: number;
-        minTrackWidth: number;
-    };
-    setPcbRules: (rules: Partial<EngigraphState['pcbRules']>) => void;
-    ratsnestVisible: boolean;
-    toggleRatsnest: () => void;
 
     // Oscilloscope (Phase 16)
     probedWireId: string | null;
@@ -294,14 +285,6 @@ export const useEngigraphStore = create<EngigraphState>((set, get) => ({
             pushTerminalLog('Auto-Route completed.', 'system');
         }
     },
-    
-    // PCB State
-    drcViolations: [],
-    setDrcViolations: (violations) => set({ drcViolations: violations }),
-    pcbRules: { minClearance: 10, minTrackWidth: 2 },
-    setPcbRules: (rules) => set((state) => ({ pcbRules: { ...state.pcbRules, ...rules } })),
-    ratsnestVisible: true,
-    toggleRatsnest: () => set((state) => ({ ratsnestVisible: !state.ratsnestVisible })),
 
     elements: [],
     undoStack: [],

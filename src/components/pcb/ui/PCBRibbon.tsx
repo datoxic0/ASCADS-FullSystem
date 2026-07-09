@@ -6,6 +6,7 @@ import { FootprintLibrary } from '../lib/FootprintLibrary';
 import { useEngigraphStore } from '../../engigraph/store/useEngigraphStore';
 import { PCBAutorouter } from '../solvers/PCBAutorouter';
 import { loadProjects, getActiveProjectId } from '../../../lib/analog-storage';
+import { PCBGerberCompiler } from '../services/PCBGerberCompiler';
 
 export const PCBRibbon: React.FC = () => {
     const { activeTool, setTool, addFootprint, removeSelected, selectedIds, clearBoard } = usePCBStore();
@@ -145,6 +146,32 @@ export const PCBRibbon: React.FC = () => {
         alert(`Imported ${pcbNets.length} nets and ${components.length} footprints from Analog Project: ${activeProject.name}!`);
     };
 
+    const handleExportGerber = () => {
+        const state = usePCBStore.getState();
+        const gtl = PCBGerberCompiler.compileGTL(state);
+        const gto = PCBGerberCompiler.compileGTO(state);
+        const drl = PCBGerberCompiler.compileDRL(state);
+        const payload = JSON.stringify({ gtl, gto, drl }, null, 2);
+        
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ASCAD_Gerber_${Date.now()}.json`;
+        link.click();
+    };
+
+    const handleExportGCode = () => {
+        const state = usePCBStore.getState();
+        const gcode = PCBGerberCompiler.generateGCode(state);
+        const blob = new Blob([gcode], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ASCAD_IsolationRouting_${Date.now()}.gcode`;
+        link.click();
+    };
+
     return (
         <div className="absolute top-0 left-0 right-0 h-14 bg-slate-900 border-b border-slate-800 flex items-center px-4 z-50">
             <div className="flex items-center gap-4 text-white">
@@ -221,6 +248,22 @@ export const PCBRibbon: React.FC = () => {
                     >
                         <Zap size={14} />
                         Autoroute Board
+                    </button>
+                    <button 
+                        onClick={handleExportGerber}
+                        className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 px-3 py-1.5 rounded transition-colors"
+                        title="Export RS-274X Gerber Files"
+                    >
+                        <Download size={14} />
+                        Gerber (ZIP)
+                    </button>
+                    <button 
+                        onClick={handleExportGCode}
+                        className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 px-3 py-1.5 rounded transition-colors"
+                        title="Export G-Code for CNC Milling"
+                    >
+                        <Download size={14} />
+                        G-Code
                     </button>
                 </div>
 

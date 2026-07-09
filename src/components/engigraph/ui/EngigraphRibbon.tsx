@@ -431,7 +431,7 @@ export const EngigraphRibbon: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Group 2: Netlist & PCB */}
+                        {/* Group 2: Netlist */}
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-14 text-right leading-tight">Netlist</div>
                             <div className="flex gap-1">
@@ -441,28 +441,6 @@ export const EngigraphRibbon: React.FC = () => {
                                     onClick={() => {
                                         generateNetlist();
                                         toast.success('Netlist generated — open Hybrid Panel for details.');
-                                    }}
-                                />
-                                <RibbonButton
-                                    icon={<Layers size={20} />}
-                                    label="Wire→Track"
-                                    onClick={() => {
-                                        const s = useEngigraphStore.getState();
-                                        const wires = s.elements.filter(el => el.type === 'wire');
-                                        if (wires.length === 0) { toast.error('No wires to export.'); return; }
-                                        let csv = `Track_ID,Start_X,Start_Y,End_X,End_Y,Width,Layer\n`;
-                                        wires.forEach((w, i) => {
-                                            const pts = w.points || [];
-                                            for (let p = 0; p < pts.length - 3; p += 2) {
-                                                csv += `TRK_${i}_${p},${pts[p].toFixed(2)},${pts[p+1].toFixed(2)},${pts[p+2].toFixed(2)},${pts[p+3].toFixed(2)},${s.wireTrackWidth},${w.boardLayer || 'top'}\n`;
-                                            }
-                                        });
-                                        const blob = new Blob([csv], { type: 'text/csv' });
-                                        const url = URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url; a.download = 'tracks.csv'; a.click();
-                                        URL.revokeObjectURL(url);
-                                        toast.success(`${wires.length} wire(s) exported as PCB tracks.`);
                                     }}
                                 />
                             </div>
@@ -488,27 +466,6 @@ export const EngigraphRibbon: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Group 4: Auto-Route */}
-                        <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
-                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-14 text-right leading-tight">Auto-Route</div>
-                            <div className="flex gap-1">
-                                <RibbonButton
-                                    icon={<GitMerge size={20} />}
-                                    label="Auto-Route"
-                                    onClick={handleAutoRoute}
-                                />
-                                <RibbonButton
-                                    icon={<Cpu size={20} />}
-                                    label="Ratsnest"
-                                    onClick={() => {
-                                        const state = useEngigraphStore.getState();
-                                        const comps = state.elements.filter(el => el.type === 'component');
-                                        if (comps.length < 2) { toast.error('Need at least 2 components.'); return; }
-                                        toast.success(`Ratsnest: ${comps.length} component(s) — ${comps.length * (comps.length - 1) / 2} possible connections.`);
-                                    }}
-                                />
-                            </div>
-                        </div>
 
                         {/* Group 5: Hybrid Panel */}
                         <div className="flex items-center gap-4 pl-2">
@@ -658,7 +615,7 @@ export const EngigraphRibbon: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Group 2: Netlist & PCB */}
+                        {/* Group 2: Netlist */}
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-14 text-right leading-tight">Netlist</div>
                             <div className="flex gap-1">
@@ -668,28 +625,6 @@ export const EngigraphRibbon: React.FC = () => {
                                     onClick={() => {
                                         generateNetlist();
                                         toast.success('Netlist generated — open Hybrid Panel for details.');
-                                    }}
-                                />
-                                <RibbonButton
-                                    icon={<Layers size={20} />}
-                                    label="Wire→Track"
-                                    onClick={() => {
-                                        const s = useEngigraphStore.getState();
-                                        const wires = s.elements.filter(el => el.type === 'wire');
-                                        if (wires.length === 0) { toast.error('No wires to export.'); return; }
-                                        let csv = `Track_ID,Start_X,Start_Y,End_X,End_Y,Width,Layer\n`;
-                                        wires.forEach((w, i) => {
-                                            const pts = w.points || [];
-                                            for (let p = 0; p < pts.length - 3; p += 2) {
-                                                csv += `TRK_${i}_${p},${pts[p].toFixed(2)},${pts[p+1].toFixed(2)},${pts[p+2].toFixed(2)},${pts[p+3].toFixed(2)},${s.wireTrackWidth},${w.boardLayer || 'top'}\n`;
-                                            }
-                                        });
-                                        const blob = new Blob([csv], { type: 'text/csv' });
-                                        const url = URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url; a.download = 'tracks.csv'; a.click();
-                                        URL.revokeObjectURL(url);
-                                        toast.success(`${wires.length} wire(s) exported as PCB tracks.`);
                                     }}
                                 />
                             </div>
@@ -720,27 +655,7 @@ export const EngigraphRibbon: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Group 4: Auto-Route */}
-                        <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
-                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-14 text-right leading-tight">Auto-Route</div>
-                            <div className="flex gap-1">
-                                <RibbonButton
-                                    icon={<GitMerge size={20} />}
-                                    label="Auto-Route"
-                                    onClick={handleAutoRoute}
-                                />
-                                <RibbonButton
-                                    icon={<Cpu size={20} />}
-                                    label="Ratsnest"
-                                    onClick={() => {
-                                        const state = useEngigraphStore.getState();
-                                        const comps = state.elements.filter(el => el.type === 'component');
-                                        if (comps.length < 2) { toast.error('Need at least 2 components.'); return; }
-                                        toast.success(`Ratsnest: ${comps.length} component(s) — ${comps.length * (comps.length - 1) / 2} possible connections.`);
-                                    }}
-                                />
-                            </div>
-                        </div>
+
 
                         {/* Group 5: Hybrid Panel */}
                         <div className="flex items-center gap-4 pl-2">

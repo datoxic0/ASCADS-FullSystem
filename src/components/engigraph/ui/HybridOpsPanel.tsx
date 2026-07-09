@@ -1,12 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import {
-    Box, Grid, Layers, Download, Zap, Settings, X,
+    Box, X,
     ChevronDown, ChevronRight, AlertTriangle, CheckCircle2,
-    Code, CopyPlus, Scissors, GitMerge, Maximize2, ArrowUpDown,
-    Eye, EyeOff, Package, ScanLine, List, Cpu
+    GitMerge, Package, ScanLine, List
 } from 'lucide-react';
 import { useEngigraphStore } from '../store/useEngigraphStore';
-import { DRCEngine } from '../solvers/DRCEngine';
 import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────
@@ -79,18 +77,13 @@ export const HybridOpsPanel: React.FC = () => {
         enclosureHasMountHoles, toggleEnclosureHasMountHoles,
         enclosureHasVents, toggleEnclosureHasVents,
         enclosureMode, toggleEnclosureMode,
-        wireTrackWidth, setWireTrackWidth,
-        wireTrackCopperWeight, setWireTrackCopperWeight,
         netlist, generateNetlist,
         crossSectionEnabled, toggleCrossSection,
         crossSectionAxis, setCrossSectionAxis,
         crossSectionOffset, setCrossSectionOffset,
         push3DCode, toggle3DView,
         pushTerminalLog,
-        is3DViewOpen,
-        pcbRules, setPcbRules,
-        ratsnestVisible, toggleRatsnest,
-        drcViolations, setDrcViolations, setView
+        is3DViewOpen
     } = useEngigraphStore();
 
     const shapes2D = elements.filter(el => ['rect', 'circle', 'ellipse', 'polygon', 'roundrect', 'line', 'spline'].includes(el.type));
@@ -195,32 +188,6 @@ export const HybridOpsPanel: React.FC = () => {
         toast.success('Netlist exported as .net');
     }, [netlist, components]);
 
-    // ── Export wires as PCB track data (CSV) ──────────────────────────────
-    const handleExportTracks = useCallback(() => {
-        if (wires.length === 0) {
-            toast.error('No wires to export as tracks.');
-            return;
-        }
-        let csv = `Track_ID,Start_X_mm,Start_Y_mm,End_X_mm,End_Y_mm,Width_mm,Layer,Copper\n`;
-        wires.forEach((w, i) => {
-            const pts = w.points || [];
-            for (let p = 0; p < pts.length - 3; p += 2) {
-                const sx = (pts[p] / extrudeScale).toFixed(3);
-                const sy = (pts[p + 1] / extrudeScale).toFixed(3);
-                const ex = (pts[p + 2] / extrudeScale).toFixed(3);
-                const ey = (pts[p + 3] / extrudeScale).toFixed(3);
-                csv += `TRK_${i}_${p},${sx},${sy},${ex},${ey},${wireTrackWidth},${w.boardLayer || 'top'},${wireTrackCopperWeight}\n`;
-            }
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'EngiGraph_Tracks.csv'; a.click();
-        URL.revokeObjectURL(url);
-        toast.success(`Exported ${wires.length} wire(s) as PCB track data.`);
-        pushTerminalLog(`PCB Track Export: ${wires.length} tracks @ ${wireTrackWidth}mm width, ${wireTrackCopperWeight}.`, 'system');
-    }, [wires, wireTrackWidth, wireTrackCopperWeight, extrudeScale, pushTerminalLog]);
-
     if (!isHybridPanelOpen) return null;
 
     return (
@@ -243,7 +210,6 @@ export const HybridOpsPanel: React.FC = () => {
             <div className="flex items-center gap-4 px-4 py-2 bg-slate-900/60 border-b border-slate-800 text-[10px] font-mono">
                 <span className="text-slate-400">Shapes: <span className="text-cyan-400">{shapes2D.length}</span></span>
                 <span className="text-slate-400">Components: <span className="text-purple-400">{components.length}</span></span>
-                <span className="text-slate-400">Wires: <span className="text-green-400">{wires.length}</span></span>
             </div>
 
             {/* Scrollable content */}
@@ -340,89 +306,16 @@ export const HybridOpsPanel: React.FC = () => {
                         disabled={components.length === 0}
                         className="w-full py-2 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 text-xs font-bold uppercase tracking-wider rounded transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
                     >
-                        <Cpu size={12} /> Generate Netlist
+                        <List size={12} /> Generate Netlist
                     </button>
                     {netlist.length > 0 && (
-                        <>
-                            <div className="bg-slate-900 border border-slate-700 rounded p-2 max-h-28 overflow-y-auto">
-                                {netlist.map(n => (
-                                    <div key={n.id} className="flex items-center gap-2 py-0.5">
-                                        <span className="text-[9px] font-mono text-cyan-400 w-16 shrink-0">{n.id}</span>
-                                        <span className="text-[9px] font-mono text-slate-300 truncate">{n.label}</span>
-                                        <span className="text-[9px] text-slate-500 shrink-0">({n.nets.length} nodes)</span>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="mt-2">
                             <button
                                 onClick={handleExportNetlist}
                                 className="w-full py-1.5 bg-slate-700/60 hover:bg-slate-600/60 text-slate-300 text-xs font-bold uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-2"
                             >
-                                <Download size={12} /> Export .net (KiCad)
+                                <List size={12} /> Export .net (KiCad)
                             </button>
-                        </>
-                    )}
-                </Section>
-
-                {/* ── 5. Wire → PCB Track Export ─────────────────────────── */}
-                <Section title="Wire → PCB Track Export" icon={<Layers size={14} />} defaultOpen={false}>
-                    <p className="text-[10px] text-slate-500 leading-relaxed">
-                        Converts your 2D schematic wires into PCB copper track data at the configured width and copper weight. Exports as CSV for import into PCB tools.
-                    </p>
-                    <SliderRow label="Track Width" value={wireTrackWidth} min={0.1} max={3.0} step={0.05} unit="mm" onChange={setWireTrackWidth} />
-                    <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-400 w-28 shrink-0">Copper Weight</span>
-                        <div className="flex gap-1">
-                            {(['1oz', '2oz'] as const).map(w => (
-                                <button
-                                    key={w}
-                                    onClick={() => setWireTrackCopperWeight(w)}
-                                    className={`px-3 py-1 text-xs font-bold rounded transition-colors ${wireTrackCopperWeight === w ? 'bg-amber-500 text-black' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
-                                >
-                                    {w}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    {wires.length === 0
-                        ? <span className="flex items-center gap-1 text-[10px] text-amber-400"><AlertTriangle size={10} /> No wires on canvas</span>
-                        : <span className="flex items-center gap-1 text-[10px] text-emerald-400"><CheckCircle2 size={10} /> {wires.length} wire segment(s) ready</span>
-                    }
-                    <button
-                        onClick={handleExportTracks}
-                        disabled={wires.length === 0}
-                        className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-400 text-xs font-bold uppercase tracking-wider rounded transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
-                    >
-                        <Download size={12} /> Export Track CSV
-                    </button>
-                </Section>
-
-                {/* ── 6. PCB Routing & DRC ─────────────────────────────── */}
-                <Section title="PCB Routing & DRC" icon={<Settings size={14} />} defaultOpen={true}>
-                    <Toggle label="Show Ratsnest" value={ratsnestVisible} onChange={toggleRatsnest} />
-                    <SliderRow label="Min Clearance" value={pcbRules.minClearance} min={1} max={50} step={1} unit="mm" onChange={(v) => setPcbRules({ minClearance: v })} />
-                    <SliderRow label="Min Track Width" value={pcbRules.minTrackWidth} min={1} max={20} step={1} unit="mm" onChange={(v) => setPcbRules({ minTrackWidth: v })} />
-                    
-                    <button
-                        onClick={() => {
-                            const violations = DRCEngine.check(elements, pcbRules);
-                            setDrcViolations(violations);
-                            if (violations.length === 0) toast.success('DRC Passed: No violations found.');
-                            else toast.error(`DRC Failed: ${violations.length} violation(s) found.`);
-                        }}
-                        className="w-full mt-2 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400 text-xs font-bold uppercase tracking-wider rounded transition-colors flex items-center justify-center gap-2"
-                    >
-                        <Zap size={12} /> Run DRC Check
-                    </button>
-                    {drcViolations && drcViolations.length > 0 && (
-                        <div className="mt-2 bg-red-900/20 border border-red-500/30 rounded p-2 max-h-32 overflow-y-auto">
-                            {drcViolations.map(v => (
-                                <div key={v.id} className="text-[10px] text-red-300 py-0.5 border-b border-red-500/10 last:border-0 flex justify-between items-start gap-2">
-                                    <span>{v.message}</span>
-                                    <button onClick={() => setView({ x: -v.x + window.innerWidth/2, y: -v.y + window.innerHeight/2 })} className="text-red-400 hover:text-white shrink-0" title="Pan to Error">
-                                        <Eye size={12} />
-                                    </button>
-                                </div>
-                            ))}
                         </div>
                     )}
                 </Section>

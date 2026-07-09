@@ -34,7 +34,7 @@ export const FloatingPropertiesPanel: React.FC = () => {
             
             if (newX < 0) newX = 0;
             if (newX > maxX) newX = maxX;
-            if (newY < 0) newY = 0;
+            if (newY < 100) newY = 100; // clamp to 100 to avoid ribbon
             if (newY > maxY) newY = maxY;
 
             setPos({ x: newX, y: newY });
@@ -55,7 +55,7 @@ export const FloatingPropertiesPanel: React.FC = () => {
 
     return (
         <div 
-            className="absolute z-[9999] w-64 bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 shadow-2xl rounded-lg overflow-hidden flex flex-col pointer-events-auto"
+            className="fixed z-[99999] w-64 bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 shadow-2xl rounded-lg overflow-hidden flex flex-col pointer-events-auto"
             style={{ left: pos.x, top: pos.y }}
         >
             <div 

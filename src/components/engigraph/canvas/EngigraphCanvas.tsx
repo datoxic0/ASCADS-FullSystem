@@ -14,16 +14,8 @@ export const EngigraphCanvas: React.FC = () => {
     const { 
         activeTool, view, setView, elements, setElements, pushHistory, 
         undo, redo, removeSelected, activePartType, selectedIds, setSelectedIds,
-        pdnMode, cfdMode, acousticMode, sheetLayout,
-        ratsnestVisible, drcViolations
+        pdnMode, cfdMode, acousticMode, sheetLayout
     } = useEngigraphStore();
-    
-    // Compute ratsnest on the fly if visible
-    const ratsnests = React.useMemo(() => {
-        if (!ratsnestVisible) return [];
-        return AutoRouter.generateRatsnest(elements);
-    }, [elements, ratsnestVisible]);
-    
     const [currentObj, setCurrentObj] = useState<DrawingObject | null>(null);
     const [selectionBox, setSelectionBox] = useState<{ x: number, y: number, width: number, height: number } | null>(null);
     const selectionStart = useRef<{ x: number, y: number } | null>(null);
@@ -608,17 +600,7 @@ export const EngigraphCanvas: React.FC = () => {
                     {elements.map((obj) => (
                         <Shape key={obj.id} obj={obj} isSelectTool={activeTool === 'select'} />
                     ))}
-                    {ratsnests.map((obj) => (
-                        <Shape key={obj.id} obj={obj} isSelectTool={false} />
-                    ))}
                     {currentObj && <Shape obj={currentObj} isSelectTool={false} />}
-                    {drcViolations.map((v) => (
-                        <Group key={v.id} x={v.x} y={v.y} listening={false}>
-                            <Circle radius={10} stroke="#ef4444" strokeWidth={2} />
-                            <Line points={[-5, -5, 5, 5]} stroke="#ef4444" strokeWidth={2} />
-                            <Line points={[-5, 5, 5, -5]} stroke="#ef4444" strokeWidth={2} />
-                        </Group>
-                    ))}
                     {activeTool === 'protractor' && <ProtractorOverlay x={view.x * -1 / view.zoom + window.innerWidth / (2 * view.zoom)} y={view.y * -1 / view.zoom + window.innerHeight / (2 * view.zoom)} />}
                     {activeTool === 'ruler' && <RulerOverlay x={view.x * -1 / view.zoom + window.innerWidth / (2 * view.zoom) - 150} y={view.y * -1 / view.zoom + window.innerHeight / (2 * view.zoom)} />}
                     {selectionBox && activeTool === 'select' && (
