@@ -7,11 +7,11 @@ import { LED_BLINKER_TEMPLATE, POWER_SUPPLY_TEMPLATE, ARDUINO_SHIELD_TEMPLATE, P
 
 interface Props {
   projects: AnalogProject[];
-  onNew: (name: string, type?: 'analog' | 'plc' | 'digital' | 'robot', data?: any) => void;
+  onNew: (name: string, type?: 'analog' | 'plc' | 'digital' | 'robot' | 'pcb' | 'engigraph', data?: any) => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onImport?: (project: AnalogProject) => void;
-  onNavigate: (mode: 'analog' | 'digital' | 'plc' | 'robot' | 'compute' | 'maths' | 'engigraph' | 'docs') => void;
+  onNavigate: (mode: 'analog' | 'digital' | 'plc' | 'robot' | 'compute' | 'maths' | 'engigraph' | 'pcb' | 'docs') => void;
 }
 
 const TEMPLATES = [
@@ -22,6 +22,7 @@ const TEMPLATES = [
   { name: 'Traffic Sequencer', desc: 'Timer-based intersection control', icon: '🚦', type: 'plc' as const, data: TRAFFIC_SEQUENCER_TEMPLATE },
   { name: '4-bit ALU', desc: 'Digital arithmetic logic unit', icon: '🧮', type: 'digital' as const, data: EXAMPLES.find(e => e.name === "2-bit Ripple Adder")?.build() },
   { name: 'Pick & Place', desc: 'Robotic arm sorting sequence', icon: '🦾', type: 'robot' as const, data: PICK_AND_PLACE_TEMPLATE },
+  { name: 'Blank PCB', desc: 'Professional PCB Designer', icon: '📐', type: 'pcb' as const, data: {} },
 ];
 
 export default function ProjectsView({ projects, onNew, onOpen, onDelete, onImport, onNavigate }: Props) {
@@ -153,8 +154,18 @@ export default function ProjectsView({ projects, onNew, onOpen, onDelete, onImpo
                   onClick={() => onOpen(p.id)}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-900/50 to-blue-900/50 border border-cyan-800/30 rounded-lg flex items-center justify-center">
-                      <Cpu className="w-4 h-4 text-cyan-500" />
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
+                      p.type === 'pcb' ? 'bg-gradient-to-br from-teal-900/50 to-emerald-900/50 border-teal-800/30 text-teal-500' :
+                      p.type === 'plc' ? 'bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-blue-800/30 text-blue-500' :
+                      p.type === 'robot' ? 'bg-gradient-to-br from-emerald-900/50 to-green-900/50 border-emerald-800/30 text-emerald-500' :
+                      p.type === 'digital' ? 'bg-gradient-to-br from-cyan-900/50 to-blue-900/50 border-cyan-800/30 text-cyan-500' :
+                      'bg-gradient-to-br from-violet-900/50 to-fuchsia-900/50 border-violet-800/30 text-violet-500'
+                    }`}>
+                      {p.type === 'pcb' ? <CircuitBoard className="w-4 h-4" /> :
+                       p.type === 'plc' ? <Factory className="w-4 h-4" /> :
+                       p.type === 'robot' ? <Bot className="w-4 h-4" /> :
+                       p.type === 'digital' ? <Binary className="w-4 h-4" /> :
+                       <Zap className="w-4 h-4" />}
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                       <button

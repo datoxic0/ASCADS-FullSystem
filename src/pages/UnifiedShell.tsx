@@ -72,7 +72,7 @@ export default function UnifiedShell() {
     saveProjects(projects);
   }, [projects]);
 
-  const handleNewProject = (name: string, type?: 'analog' | 'plc' | 'digital' | 'robot', data?: any) => {
+  const handleNewProject = (name: string, type?: 'analog' | 'plc' | 'digital' | 'robot' | 'pcb' | 'engigraph', data?: any) => {
     const p = createProject(name, type, data);
     const updated = upsertProject(projects, p);
     setProjects(updated);
@@ -120,6 +120,7 @@ export default function UnifiedShell() {
     : mode === 'compute'  ? 'Compute Tools'
     : mode === 'maths'    ? 'Maths System'
     : mode === 'engigraph'? 'EngiGraph Pro'
+    : mode === 'pcb' && activeProject?.type === 'pcb' ? `PCB Lab · ${activeProject.name}`
     : mode === 'pcb'      ? 'PCB Lab'
     : mode === 'docs'     ? 'System Documentation'
     : 'Digital Logic Lab';
