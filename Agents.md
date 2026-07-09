@@ -3,22 +3,22 @@
 This file establishes strict instructions for all AI Agents working within the `ASCAD-FullSystem` repository.
 
 ## 1. Multi-Repository Structure & Deployment
-This project consists of four repositories across three distinct platforms (Vercel, Replit, Lovable) that **MUST** be updated sequentially when a task is completed. This multi-platform strategy ensures robust backups and utilizes free hosting tiers across different services. **CRITICAL WARNING: NEVER run `git commit` without first running `git add .` to ensure ALL files are staged.**
+This project consists of three repositories that **MUST** be updated sequentially when a task is completed. **CRITICAL WARNING: NEVER run `git commit` without first running `git add .` to ensure ALL files are staged.**
 
-- **Public Repository (`ASCADS-FullSystem` - Vercel)**
+- **Public Repository (`ASCADS-FullSystem`)**
   - **URL:** `https://github.com/datoxic0/ASCADS-FullSystem`
   - **Live Deployment:** `https://ascads-full-system.vercel.app/`
   - **Path:** `artifacts/logic-lab`
   - **Role:** Drives the live Vercel deployment.
   - **Action:** `cd` into `artifacts/logic-lab`, stage ALL changes (**`git add .`** is mandatory), commit, and push here FIRST.
 
-- **Private Repository (`ASCAD-FullSystem` - Backup)**
+- **Private Repository (`ASCAD-FullSystem`)**
   - **URL:** `https://github.com/datoxic0/ASCAD-FullSystem`
   - **Path:** Workspace root (`/`)
   - **Role:** Master backup of all artifacts and backend systems.
   - **Action:** `cd` to the root, stage the `artifacts/logic-lab` submodule update along with any other root changes (**`git add .`**), commit, and push SECOND.
 
-- **Replit Repository (`Advanced-Schematic-Design-1` - Replit)**
+- **Replit Repository (`Advanced-Schematic-Design-1`)**
   - **URL:** `https://github.com/datoxic0/Advanced-Schematic-Design-1`
   - **Live App:** `https://advanced-schematic-design-1--datoxic0.replit.app/`
   - **Role:** The Replit deployment and environment where the project began. Structure mirrors the root.

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Grid, Environment } from '@react-three/drei';
+import { OrbitControls, Grid, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import { CSG } from 'three-csg-ts';
 import { Play, Download, Save, RefreshCw, BookOpen, ChevronRight, Wand2, Loader2, Upload } from 'lucide-react';
@@ -584,27 +584,49 @@ export default function Engigraph3D() {
         </div>
 
         <Canvas
-          camera={{ position: [150, 150, 150], fov: 45 }}
-          dpr={[1, 1.5]}
+          camera={{ position: [180, 160, 220], fov: 40 }}
+          dpr={[1, 2]}
           gl={{
-            antialias: false,
+            antialias: true,
             powerPreference: 'high-performance',
             preserveDrawingBuffer: false,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.05,
           }}
-          shadows={{ type: THREE.PCFShadowMap }}
+          shadows
           onCreated={({ gl }) => {
             gl.shadowMap.enabled = true;
-            gl.shadowMap.type = THREE.PCFShadowMap;
+            gl.shadowMap.type = THREE.PCFSoftShadowMap;
           }}
         >
-          <color attach="background" args={['#0a0b0c']} />
-          <ambientLight intensity={0.7} />
-          <directionalLight position={[100, 100, 50]} intensity={1} castShadow shadow-mapSize={[512, 512]} />
-          <directionalLight position={[-100, -100, -50]} intensity={0.3} />
-          
-          <Grid infiniteGrid fadeDistance={400} sectionColor="#334155" cellColor="#1e293b" />
-          
-          <OrbitControls makeDefault />
+          <color attach="background" args={['#0d1117']} />
+          <fog attach="fog" args={['#0d1117', 600, 1800]} />
+
+          {/* Studio 3-point rig */}
+          <ambientLight intensity={0.35} />
+          <directionalLight
+            position={[180, 260, 140]} intensity={2.2} castShadow
+            shadow-mapSize={[2048, 2048]}
+            shadow-camera-left={-300} shadow-camera-right={300}
+            shadow-camera-top={300} shadow-camera-bottom={-300}
+            shadow-bias={-0.0005}
+          />
+          <directionalLight position={[-160, 120, -120]} intensity={0.55} color="#9ab8ff" />
+          <directionalLight position={[0, -80, 200]} intensity={0.2} color="#ffd8a8" />
+
+          {/* Workbench floor */}
+          <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
+            <planeGeometry args={[4000, 4000]} />
+            <meshStandardMaterial color="#0a0e14" roughness={0.9} metalness={0.05} />
+          </mesh>
+          <Grid
+            infiniteGrid position={[0, -0.49, 0]}
+            fadeDistance={800} fadeStrength={2}
+            sectionColor="#3b4a63" cellColor="#1a2333"
+            sectionSize={50} cellSize={10}
+          />
+
+          <OrbitControls makeDefault enableDamping dampingFactor={0.08} />
 
           {externalMeshes.map((mesh, i) => (
             <mesh key={`ext-${i}`} geometry={mesh.geometry} material={mesh.material} position={mesh.position} rotation={mesh.rotation} scale={mesh.scale} castShadow receiveShadow />
@@ -613,19 +635,22 @@ export default function Engigraph3D() {
           {geometry && (
             <mesh key={geometry.uuid} geometry={geometry} castShadow receiveShadow>
               {materialType === 'Standard' && (
-                <meshStandardMaterial color="#3b82f6" roughness={0.4} metalness={0.1} envMapIntensity={1} />
+                <meshPhysicalMaterial color="#4a7fc9" roughness={0.35} metalness={0.15} clearcoat={0.4} clearcoatRoughness={0.3} envMapIntensity={1.2} />
               )}
               {materialType === 'Metallic' && (
-                <meshStandardMaterial color="#94a3b8" roughness={0.1} metalness={0.9} envMapIntensity={2} />
+                <meshPhysicalMaterial color="#b8bec8" roughness={0.18} metalness={0.95} clearcoat={0.6} envMapIntensity={2} />
               )}
               {materialType === 'Glass' && (
-                <meshPhysicalMaterial color="#38bdf8" transmission={0.95} opacity={1} transparent roughness={0.1} ior={1.5} thickness={5} envMapIntensity={1} />
+                <meshPhysicalMaterial color="#7cc9e8" transmission={0.95} opacity={1} transparent roughness={0.05} ior={1.5} thickness={8} clearcoat={1} envMapIntensity={1.5} />
               )}
               {materialType === 'Neon' && (
-                <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={2} toneMapped={false} />
+                <meshStandardMaterial color="#10b981" emissive="#10b981" emissiveIntensity={2.5} toneMapped={false} />
               )}
             </mesh>
           )}
+
+          <ContactShadows position={[0, -0.4, 0]} opacity={0.5} scale={800} blur={2.5} far={80} resolution={1024} />
+          <Environment preset="warehouse" />
         </Canvas>
       </div>
     </div>

@@ -350,23 +350,24 @@ function Scene3D({
         <OrthographicCamera makeDefault position={camConfig.position} zoom={1.5} near={-5000} far={10000} />
       )}
 
-      <ambientLight intensity={0.55} color="#d0e8ff" />
-      <hemisphereLight args={['#1e3a5f', '#060a0e', 0.7]} />
+      <ambientLight intensity={0.4} color="#d0e8ff" />
+      <hemisphereLight args={['#2a4a70', '#050810', 0.6]} />
       <directionalLight
-        position={[150, 300, 200]} intensity={1.8} castShadow
+        position={[150, 400, 200]} intensity={2.4} castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-near={1} shadow-camera-far={3000}
         shadow-camera-left={-500} shadow-camera-right={500}
         shadow-camera-top={500} shadow-camera-bottom={-500}
         shadow-bias={-0.0003}
       />
-      <directionalLight position={[-100, 200, -100]} intensity={0.45} color="#8ab4ff" />
-      <Environment preset="studio" />
+      <directionalLight position={[-120, 200, -100]} intensity={0.55} color="#8ab4ff" />
+      <directionalLight position={[0, -50, 250]} intensity={0.2} color="#ffd8a8" />
+      <Environment preset="warehouse" />
 
-      {/* Floor */}
+      {/* Floor — brushed workbench */}
       <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -1, 0]} receiveShadow onClick={() => onSelectObj(null as any, '')}>
         <planeGeometry args={[5000, 5000]} />
-        <meshStandardMaterial color="#090d12" roughness={0.95} metalness={0 } />
+        <meshStandardMaterial color="#0c1218" roughness={0.85} metalness={0.15} />
       </mesh>
 
       {/* Print bed */}
@@ -919,9 +920,9 @@ export default function Engigraph3DSketch() {
         {/* 3D Canvas */}
         <div className="flex-1 relative bg-[#080b0f]">
           <Canvas
-            shadows={{ type: THREE.PCFShadowMap }}
-            dpr={[1, 1.5]}
-            gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.15 }}
+            shadows={{ type: THREE.PCFSoftShadowMap }}
+            dpr={[1, 2]}
+            gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
           >
             <Scene3D
               objects={objects}
