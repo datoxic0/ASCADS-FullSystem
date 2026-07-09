@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X, Workflow, Layers, Share2 } from 'lucide-react';
+import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X, Workflow, Layers, Share2, FolderOpen, Zap, Binary, Factory, Bot, Wrench, Sigma, Box, CircuitBoard, BookOpen } from 'lucide-react';
 import ProjectsView from '@/components/ProjectsView';
 import ProjectLandingScreen from '@/components/ProjectLandingScreen';
 import AIAssistant from '@/components/AIAssistant';
@@ -36,6 +36,7 @@ const BRIDGE_KEYS = [
   { key: 'ascads_bridge_engigraph_plc',    label: 'E→P', color: '#f87171', title: 'Engigraph→PLC' },
   { key: 'ascads_bridge_engigraph_robot',  label: 'E→R', color: '#c084fc', title: 'Engigraph→Robot' },
   { key: 'ascads_bridge_robot_plc_state',  label: 'R→P(L)', color: '#818cf8', title: 'Robot→PLC(Logic)' },
+  { key: 'ascads_bridge_analog_pcb',       label: 'A→PCB', color: '#2dd4bf', title: 'Analog→PCB' },
 ];
 
 function useBridgeStatus() {
@@ -173,17 +174,17 @@ export default function UnifiedShell() {
         {/* Center mode switcher (Hidden on Mobile) */}
         <nav className="mx-auto hidden lg:flex flex-nowrap whitespace-nowrap justify-center items-center bg-slate-800/60 border border-slate-700/60 rounded-lg shrink min-w-0 mx-4 gap-1 p-1 overflow-x-auto no-scrollbar">
           {([
-            { id: 'projects', label: 'Projects',       icon: '📁', dot: '' },
-            { id: 'plc',      label: 'Industrial PLC', icon: '🏭', dot: '#3b82f6' },
-            { id: 'robot',    label: 'Robotics',       icon: '🦾', dot: '#10b981' },
-            { id: 'analog',   label: 'Analog',         icon: '⚡', dot: '#8b5cf6' },
-            { id: 'digital',  label: 'Digital Logic',  icon: '🧮', dot: '#06b6d4' },
-            { id: 'compute',  label: 'Compute Tools',  icon: '💻', dot: '#f59e0b' },
-            { id: 'maths',    label: 'Maths System',   icon: '📐', dot: '#fb7185' },
-            { id: 'engigraph',label: 'EngiGraph Pro',  icon: '📉', dot: '#fb923c' },
-            { id: 'pcb',      label: 'PCB Lab',        icon: '🖨️', dot: '#14b8a6' },
-            { id: 'docs',     label: 'System Docs',    icon: '📚', dot: '#ec4899' },
-          ] as { id: TopMode; label: string; dot: string; icon?: string }[]).map(tab => (
+            { id: 'projects', label: 'Projects',       icon: <FolderOpen className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '' },
+            { id: 'plc',      label: 'Industrial PLC', icon: <Factory className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#3b82f6' },
+            { id: 'robot',    label: 'Robotics',       icon: <Bot className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#10b981' },
+            { id: 'analog',   label: 'Analog',         icon: <Zap className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#8b5cf6' },
+            { id: 'digital',  label: 'Digital Logic',  icon: <Binary className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#06b6d4' },
+            { id: 'compute',  label: 'Compute Tools',  icon: <Wrench className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#f59e0b' },
+            { id: 'maths',    label: 'Maths System',   icon: <Sigma className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#fb7185' },
+            { id: 'engigraph',label: 'EngiGraph Pro',  icon: <Box className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#fb923c' },
+            { id: 'pcb',      label: 'PCB Lab',        icon: <CircuitBoard className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#14b8a6' },
+            { id: 'docs',     label: 'System Docs',    icon: <BookOpen className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#ec4899' },
+          ] as { id: TopMode; label: string; dot: string; icon?: React.ReactNode }[]).map(tab => (
             <button
               key={tab.id}
               onClick={() => {
@@ -332,6 +333,7 @@ export default function UnifiedShell() {
                   bridgeCircuitRef.current = c;
                   setMode('digital');
                 }}
+                onNavigate={setMode}
               />
             ) : (
               <ProjectLandingScreen type="analog" projects={projects} onNew={handleNewProject} onOpen={handleOpenProject} onImport={handleImportProject} />

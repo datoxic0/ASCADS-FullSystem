@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePCBStore } from '../store/usePCBStore';
-import { MousePointer2, GitCommit, Search, PlusSquare, Trash2, Crosshair, Map, Download, Zap } from 'lucide-react';
+import { MousePointer2, GitCommit, Search, PlusSquare, Trash2, Crosshair, Map, Download, Zap, Archive, Cpu } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { FootprintLibrary } from '../lib/FootprintLibrary';
 import { useEngigraphStore } from '../../engigraph/store/useEngigraphStore';
@@ -10,6 +10,61 @@ import { PCBGerberCompiler } from '../services/PCBGerberCompiler';
 
 export const PCBRibbon: React.FC = () => {
     const { activeTool, setTool, addFootprint, removeSelected, selectedIds, clearBoard } = usePCBStore();
+
+    useEffect(() => {
+        const raw = localStorage.getItem('ascads_bridge_analog_pcb');
+        if (raw) {
+            try {
+                const design = JSON.parse(raw);
+                if (design && design.components) {
+                    clearBoard();
+                    
+                    const components = design.components;
+                    const connections = design.connections || [];
+            
+                    const pcbNets = connections.map((conn: any) => ({
+                        id: conn.id,
+                        name: `Net-${conn.id.substring(0, 4)}`,
+                        nodes: [
+                            { footprintId: conn.from, padId: String(conn.fromPin || '1') },
+                            { footprintId: conn.to, padId: String(conn.toPin || '2') }
+                        ]
+                    }));
+            
+                    usePCBStore.getState().setNets(pcbNets);
+            
+                    let xOff = 10;
+                    let yOff = 40;
+                    components.forEach((c: any) => {
+                        let fpId = 'DIP-8';
+                        if (c.type === 'RESISTOR') fpId = '0805';
+                        if (c.type === 'CAPACITOR') fpId = '1206';
+                        if (c.type === 'SWITCH' || c.type === 'BATTERY') fpId = 'PinHeader-1x2';
+            
+                        usePCBStore.getState().addFootprint({
+                            id: c.id,
+                            footprintId: fpId,
+                            x: xOff,
+                            y: yOff,
+                            rotation: c.rotation || 0,
+                            layer: 'top',
+                            refDes: `${(c.type || 'U').substring(0, 1).toUpperCase()}${c.id.substring(0, 4)}`
+                        });
+            
+                        xOff += 15;
+                        if (xOff > 120) {
+                            xOff = 10;
+                            yOff += 15;
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to parse cross-lab bridging payload for PCB Lab", err);
+            }
+            // Clear payload after ingestion
+            localStorage.removeItem('ascads_bridge_analog_pcb');
+        }
+    }, [clearBoard]);
 
     const handleAddFootprint = (fpId: string) => {
         addFootprint({
@@ -225,45 +280,48 @@ export const PCBRibbon: React.FC = () => {
                 <div className="flex-1" />
 
                 {/* System Actions */}
-                <div className="flex items-center gap-2 pr-4 border-r border-slate-700">
+                <div className="flex items-center gap-1.5 pr-4 border-r border-slate-700">
                     <button 
                         onClick={handleImportNetlist}
-                        className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 px-3 py-1.5 rounded transition-colors"
-                        title="Import from Engigraph"
+                        className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/30 hover:scale-105"
+                        title="Import from Engigraph (Netlist & Footprints)"
+                        aria-label="Import from Engigraph"
                     >
-                        <Download size={14} />
-                        Engigraph
+                        <Download size={16} />
                     </button>
                     <button 
                         onClick={handleImportAnalogNetlist}
-                        className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 px-3 py-1.5 rounded transition-colors"
+                        className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/30 hover:scale-105"
                         title="Import from Active Analog Project"
+                        aria-label="Import from Analog Project"
                     >
-                        <Download size={14} />
-                        Analog Project
+                        <Download size={16} />
                     </button>
+                    <div className="w-px h-4 bg-slate-700 mx-1" />
                     <button 
                         onClick={handleAutoroute}
-                        className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 px-3 py-1.5 rounded transition-colors"
+                        className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-orange-500/10 text-orange-400 hover:bg-orange-500/30 hover:scale-105"
+                        title="Autoroute Board (Manhattan Distance)"
+                        aria-label="Autoroute Board"
                     >
-                        <Zap size={14} />
-                        Autoroute Board
+                        <Zap size={16} />
                     </button>
+                    <div className="w-px h-4 bg-slate-700 mx-1" />
                     <button 
                         onClick={handleExportGerber}
-                        className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 px-3 py-1.5 rounded transition-colors"
-                        title="Export RS-274X Gerber Files"
+                        className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-purple-500/10 text-purple-400 hover:bg-purple-500/30 hover:scale-105"
+                        title="Export RS-274X Gerber Files (.json payload)"
+                        aria-label="Export Gerber"
                     >
-                        <Download size={14} />
-                        Gerber (ZIP)
+                        <Archive size={16} />
                     </button>
                     <button 
                         onClick={handleExportGCode}
-                        className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 px-3 py-1.5 rounded transition-colors"
-                        title="Export G-Code for CNC Milling"
+                        className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-pink-500/10 text-pink-400 hover:bg-pink-500/30 hover:scale-105"
+                        title="Export G-Code for CNC Isolation Routing"
+                        aria-label="Export G-Code"
                     >
-                        <Download size={14} />
-                        G-Code
+                        <Cpu size={16} />
                     </button>
                 </div>
 

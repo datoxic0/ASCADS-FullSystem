@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Cpu, Plus, Trash2, FolderOpen, Clock, ChevronRight, Download } from 'lucide-react';
+import { Cpu, Plus, Trash2, FolderOpen, Clock, ChevronRight, Download, Zap, Binary, Factory, Bot, Wrench, Sigma, Box, CircuitBoard, BookOpen } from 'lucide-react';
 import type { AnalogProject } from '@/lib/analog-types';
 import { EXAMPLES } from '@/lib/examples';
 import { MOTOR_STARTER_TEMPLATE, TRAFFIC_SEQUENCER_TEMPLATE } from '@/lib/plc-templates';
@@ -101,21 +101,23 @@ export default function ProjectsView({ projects, onNew, onOpen, onDelete, onImpo
         <section>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {[
-              { id: 'analog', label: 'Analog Design', desc: 'Circuit Schematics', icon: '⚡', 
+              { id: 'analog', label: 'Analog Design', desc: 'Circuit Schematics', icon: <Zap className="w-10 h-10" />, 
                 border: 'hover:border-violet-500/50', bg: 'hover:bg-violet-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(139,92,246,0.25)]', color: 'text-violet-400' },
-              { id: 'digital', label: 'Digital Logic', desc: 'Logic Gates & ALUs', icon: '🧮', 
+              { id: 'digital', label: 'Digital Logic', desc: 'Logic Gates & ALUs', icon: <Binary className="w-10 h-10" />, 
                 border: 'hover:border-cyan-500/50', bg: 'hover:bg-cyan-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(6,182,212,0.25)]', color: 'text-cyan-400' },
-              { id: 'plc', label: 'Industrial PLC', desc: 'Ladder Logic', icon: '🏭', 
+              { id: 'plc', label: 'Industrial PLC', desc: 'Ladder Logic', icon: <Factory className="w-10 h-10" />, 
                 border: 'hover:border-blue-500/50', bg: 'hover:bg-blue-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(59,130,246,0.25)]', color: 'text-blue-400' },
-              { id: 'robot', label: 'Robotics', desc: 'Kinematics & CIM', icon: '🦾', 
+              { id: 'robot', label: 'Robotics', desc: 'Kinematics & CIM', icon: <Bot className="w-10 h-10" />, 
                 border: 'hover:border-emerald-500/50', bg: 'hover:bg-emerald-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(16,185,129,0.25)]', color: 'text-emerald-400' },
-              { id: 'compute', label: 'Compute Tools', desc: 'Converters & IEEE', icon: '🔧', 
+              { id: 'compute', label: 'Compute Tools', desc: 'Converters & IEEE', icon: <Wrench className="w-10 h-10" />, 
                 border: 'hover:border-amber-500/50', bg: 'hover:bg-amber-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(245,158,11,0.25)]', color: 'text-amber-400' },
-              { id: 'maths', label: 'Maths System', desc: 'Symbolic Math', icon: '∑', 
+              { id: 'maths', label: 'Maths System', desc: 'Symbolic Math', icon: <Sigma className="w-10 h-10" />, 
                 border: 'hover:border-rose-500/50', bg: 'hover:bg-rose-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(244,63,94,0.25)]', color: 'text-rose-400' },
-              { id: 'engigraph', label: 'EngiGraph Pro', desc: '3D Code CAD', icon: '📐', 
+              { id: 'engigraph', label: 'EngiGraph Pro', desc: '3D Code CAD', icon: <Box className="w-10 h-10" />, 
                 border: 'hover:border-orange-500/50', bg: 'hover:bg-orange-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(249,115,22,0.25)]', color: 'text-orange-400' },
-              { id: 'docs', label: 'Documentation', desc: 'Manuals & Legal', icon: '📚', 
+              { id: 'pcb', label: 'PCB Lab', desc: 'Fabrication & Routing', icon: <CircuitBoard className="w-10 h-10" />, 
+                border: 'hover:border-teal-500/50', bg: 'hover:bg-teal-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(20,184,166,0.25)]', color: 'text-teal-400' },
+              { id: 'docs', label: 'Documentation', desc: 'Manuals & Legal', icon: <BookOpen className="w-10 h-10" />, 
                 border: 'hover:border-pink-500/50', bg: 'hover:bg-pink-500/10', shadow: 'group-hover:shadow-[0_0_30px_rgba(236,72,153,0.25)]', color: 'text-pink-400' },
             ].map(app => (
               <button

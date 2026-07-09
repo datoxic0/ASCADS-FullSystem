@@ -73,8 +73,9 @@ export interface Commit {
 export interface AnalogProject {
   id: string;
   name: string;
-  type?: 'analog' | 'plc' | 'digital' | 'robot';
+  type?: 'analog' | 'plc' | 'digital' | 'robot' | 'pcb' | 'engigraph';
   data?: any;
+  linkedProjects?: { type: string; id: string }[];
   sheets: Sheet[];
   activeSheetId: string;
   history: Commit[];

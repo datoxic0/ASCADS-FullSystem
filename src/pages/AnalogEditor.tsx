@@ -7,9 +7,10 @@ interface Props {
   onProjectChange: (p: AnalogProject) => void;
   onBack: () => void;
   onBridgeToDigital?: (circuit: Circuit) => void;
+  onNavigate?: (mode: string) => void;
 }
 
-export default function AnalogEditor({ project, onProjectChange, onBack, onBridgeToDigital }: Props) {
+export default function AnalogEditor({ project, onProjectChange, onBack, onBridgeToDigital, onNavigate }: Props) {
   // AnalogEditor now strictly routes to the Advanced Matrix Simulator as the single source of truth
   return (
     <AdvancedAnalogEditor 
@@ -17,6 +18,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
       onProjectChange={onProjectChange} 
       onBack={onBack} 
       onBridgeToDigital={onBridgeToDigital} 
+      onNavigate={onNavigate}
     />
   );
 }

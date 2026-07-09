@@ -12,7 +12,7 @@ import MatrixStatus from '../analog-proto/components/MatrixStatus';
 import { SidebarTab } from '../analog-proto/types';
 import { audioEngine } from '../analog-proto/services/audioEngine';
 import { jsPDF } from 'jspdf';
-import { Cpu, Share2, Save, Menu, X, ChevronDown, FileText, Activity, Shield, Box, Zap, Globe, Github, Facebook, MessageSquare, Twitter, GitBranch, Braces, ChevronLeft, Play, StopCircle, PanelRight } from 'lucide-react';
+import { Cpu, Share2, Save, Menu, X, ChevronDown, FileText, Activity, Shield, Box, Zap, Globe, Github, Facebook, MessageSquare, Twitter, GitBranch, Braces, ChevronLeft, Play, StopCircle, PanelRight, Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { AnalogProject } from '@/lib/analog-types';
 import type { Circuit } from '@/lib/types';
@@ -26,9 +26,10 @@ interface Props {
   onProjectChange: (p: AnalogProject) => void;
   onBack: () => void;
   onBridgeToDigital?: (circuit: Circuit) => void;
+  onNavigate?: (mode: string) => void;
 }
 
-export default function AnalogEditor({ project, onProjectChange, onBack, onBridgeToDigital }: Props) {
+export default function AnalogEditor({ project, onProjectChange, onBack, onBridgeToDigital, onNavigate }: Props) {
   const [view, setView] = useState<View>('DESIGN');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -343,6 +344,7 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
               onClick={() => {
                 const circuit = EcosystemTranslator.analogToDigital(design);
                 if (onBridgeToDigital) onBridgeToDigital(circuit);
+                if (onNavigate) onNavigate('digital');
               }}
               className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 rounded-xl transition-all border border-cyan-500/30 active:scale-95 group"
               title="Send to Digital Logic Lab"
@@ -353,11 +355,23 @@ export default function AnalogEditor({ project, onProjectChange, onBack, onBridg
               onClick={() => {
                  const plcProject = EcosystemTranslator.toPLCLadder(design);
                  localStorage.setItem('ascads_bridge_analog_plc', JSON.stringify(plcProject));
+                 if (onNavigate) onNavigate('plc');
               }}
               className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-fuchsia-600/20 hover:bg-fuchsia-600/40 text-fuchsia-400 rounded-xl transition-all border border-fuchsia-500/30 active:scale-95 group"
               title="Send to Industrial PLC"
             >
               <Share2 size={16} className="group-hover:scale-110 transition-transform" />
+            </button>
+            <button 
+              onClick={() => {
+                 // Trigger PCB Lab bridging
+                 localStorage.setItem('ascads_bridge_analog_pcb', JSON.stringify(design));
+                 if (onNavigate) onNavigate('pcb');
+              }}
+              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-teal-600/20 hover:bg-teal-600/40 text-teal-400 rounded-xl transition-all border border-teal-500/30 active:scale-95 group"
+              title="Send to PCB Lab"
+            >
+              <Map size={16} className="group-hover:scale-110 transition-transform" />
             </button>
             <button 
               onClick={handlePDFExport}

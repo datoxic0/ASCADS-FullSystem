@@ -138,6 +138,9 @@ function pyToJs(code: string): string {
     indentStack.pop();
     out.push('}');
   }
+  if (declared.size > 0) {
+    out.unshift(`let ${Array.from(declared).join(', ')};`);
+  }
   return out.join('\n');
 }
 
@@ -184,18 +187,18 @@ function pyLineToJs(line: string, vars: Set<string>): string {
     const parts = splitArgs(args);
     vars.add(v);
     if (parts.length === 1)
-      return `for (let ${v}=0; ${v}<${pyExpr(parts[0])}; ${v}++) {${trail}`;
+      return `for (${v}=0; ${v}<${pyExpr(parts[0])}; ${v}++) {${trail}`;
     if (parts.length === 2)
-      return `for (let ${v}=${pyExpr(parts[0])}; ${v}<${pyExpr(parts[1])}; ${v}++) {${trail}`;
+      return `for (${v}=${pyExpr(parts[0])}; ${v}<${pyExpr(parts[1])}; ${v}++) {${trail}`;
     const [a, b, s] = parts;
-    return `for (let ${v}=${pyExpr(a)}; +${pyExpr(s)}>0?${v}<${pyExpr(b)}:${v}>${pyExpr(b)}; ${v}+=${pyExpr(s)}) {${trail}`;
+    return `for (${v}=${pyExpr(a)}; +${pyExpr(s)}>0?${v}<${pyExpr(b)}:${v}>${pyExpr(b)}; ${v}+=${pyExpr(s)}) {${trail}`;
   }
   // for ... in list/tuple
   const forInM = code.match(/^for\s+(\w+)\s+in\s+(.+):$/);
   if (forInM) {
     const [, v, it] = forInM;
     vars.add(v);
-    return `for (const ${v} of ${pyExpr(it)}) {${trail}`;
+    return `for (${v} of ${pyExpr(it)}) {${trail}`;
   }
 
   // while
@@ -252,9 +255,8 @@ function pyLineToJs(line: string, vars: Set<string>): string {
   const assignM = code.match(/^([a-zA-Z_]\w*(?:\[.*\])?)\s*=\s*(.+)$/);
   if (assignM && !/^(if|while|for|elif)\s/.test(code)) {
     const [, v, val] = assignM;
-    if (/^[a-zA-Z_]\w*$/.test(v) && !vars.has(v)) {
+    if (/^[a-zA-Z_]\w*$/.test(v) && !['self', 'robot', 'math'].includes(v)) {
       vars.add(v);
-      return `let ${v} = ${pyExpr(val)};${trail}`;
     }
     return `${v} = ${pyExpr(val)};${trail}`;
   }

@@ -55,10 +55,10 @@ export function saveProjects(projects: AnalogProject[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 }
 
-export function createProject(name: string, type: 'analog' | 'plc' | 'digital' | 'robot' = 'analog', data: any = null): AnalogProject {
+export function createProject(name: string, type: 'analog' | 'plc' | 'digital' | 'robot' | 'pcb' | 'engigraph' = 'analog', data: any = null, linkedProjects?: {type: string, id: string}[]): AnalogProject {
   const defaultSheet: Sheet = {
     id: generateId(),
-    name: 'Sheet_1',
+    name: 'Sheet 1',
     nodes: [],
     edges: [],
   };
@@ -85,6 +85,7 @@ export function createProject(name: string, type: 'analog' | 'plc' | 'digital' |
     name,
     type,
     data: initialData,
+    linkedProjects: linkedProjects || [],
     sheets: initialSheets,
     activeSheetId,
     history: [initCommit],

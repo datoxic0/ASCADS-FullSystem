@@ -273,23 +273,38 @@ export class EcosystemAdapter {
                         }
                     });
                     
-                    let executableCode = el.mcuCode;
-                    const loopMatch = el.mcuCode.match(/void loop\s*\([^)]*\)\s*\{([\s\S]*)\}/);
-                    if (loopMatch) {
-                        executableCode = loopMatch[1];
-                    }
+                    // Robust parser: Transform C++ structure to JS
+                    let jsCode = el.mcuCode
+                        .replace(/void setup\s*\([^)]*\)/g, 'function setup()')
+                        .replace(/void loop\s*\([^)]*\)/g, 'function loop(inputs, outputs)')
+                        .replace(/\bint\b|\bfloat\b|\bdouble\b|\bbool\b|\bchar\b|\blong\b/g, 'let');
+
+                    const sandbox = new Function('inputs', 'outputs', `
+                        ${jsCode}
+                        if (typeof loop === 'function') {
+                            loop(inputs, outputs);
+                        }
+                    `);
                     
-                    const sandbox = new Function('inputs', 'outputs', executableCode);
                     sandbox(inputs, outputs);
                     
                     // Force inject the output into the solver's state so connected wires pick it up next tick
-                    // For now, we will just visually power the MCU if any output is true.
+                    pins.forEach(pin => {
+                        if (pin.role === 'out') {
+                            const outVal = outputs[pin.name || `pin${pin.pinIndex}`];
+                            if (outVal !== undefined) {
+                                result.digitalResult.pinValues.set(`${el.id}:${pin.pinIndex}`, outVal ? 1 : 0);
+                            }
+                        }
+                    });
+
+                    // Visually power the MCU if any output is true
                     const hasOutput = Object.values(outputs).some(val => val === true);
                     if (hasOutput) {
                         mcuOverrides.set(el.id, true);
                     }
                 } catch(e) {
-                    // Silent catch for sandbox errors
+                    console.error("MCU Parser Syntax Error:", e);
                 }
             }
         });
