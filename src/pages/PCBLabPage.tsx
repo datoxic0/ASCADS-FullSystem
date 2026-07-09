@@ -1,20 +1,24 @@
 import React from 'react';
 import { PCBCanvas } from '../components/pcb/canvas/PCBCanvas';
 import { PCBRibbon } from '../components/pcb/ui/PCBRibbon';
-import { PCBLayerManager } from '../components/pcb/ui/PCBLayerManager';
+import { PCBSidebar } from '../components/pcb/ui/PCBSidebar';
+import { PCB3DViewer } from '../components/pcb/canvas/PCB3DViewer';
+import { usePCBStore } from '../components/pcb/store/usePCBStore';
 
 export default function PCBLabPage() {
+    const viewMode = usePCBStore(state => state.viewMode);
+
     return (
         <div className="relative w-full h-[calc(100vh-4rem)] bg-[#0e0e11] overflow-hidden text-slate-300">
             {/* Top Toolbar */}
             <PCBRibbon />
             
-            {/* Layer Control Panel */}
-            <PCBLayerManager />
+            {/* Right Sidebar */}
+            <PCBSidebar />
             
             {/* Interactive Canvas */}
-            <div className="absolute inset-0 pt-14">
-                <PCBCanvas />
+            <div className="absolute inset-0 pt-14 pr-72">
+                {viewMode === '3d' ? <PCB3DViewer /> : <PCBCanvas />}
             </div>
             
             {/* Status Bar */}

@@ -150,11 +150,43 @@ export const PCBCanvas: React.FC = () => {
     const updateCursor = () => {
         if (isDrawingTrack) {
             setCursorPos(getPointerPosMM());
+        } else if (activeTool !== 'select') {
+            setCursorPos(getPointerPosMM());
         }
     };
 
+    // Generate Grid Dots based on view bounds
+    const gridDots = React.useMemo(() => {
+        const dots = [];
+        // Approximate visible area
+        const startX = snap((-view.x / view.scale) / MM_TO_PX) - 20;
+        const endX = startX + (window.innerWidth / view.scale / MM_TO_PX) + 40;
+        
+        const startY = snap((-view.y / view.scale) / MM_TO_PX) - 20;
+        const endY = startY + (window.innerHeight / view.scale / MM_TO_PX) + 40;
+
+        for(let x = startX; x <= endX; x += gridSnap) {
+            for(let y = startY; y <= endY; y += gridSnap) {
+                // Precision floating point issues workaround
+                const rx = Math.round(x * 100) / 100;
+                const ry = Math.round(y * 100) / 100;
+                const isMajor = rx % 10 === 0 && ry % 10 === 0;
+                dots.push(
+                    <Circle 
+                        key={`${rx}-${ry}`} 
+                        x={rx * MM_TO_PX} 
+                        y={ry * MM_TO_PX} 
+                        radius={isMajor ? 0.8 : 0.4} 
+                        fill={isMajor ? "#334155" : "#1e293b"} 
+                    />
+                );
+            }
+        }
+        return dots;
+    }, [view.x, view.y, view.scale, gridSnap]);
+
     return (
-        <div className="w-full h-full bg-[#111318]" onMouseMove={updateCursor}>
+        <div className="w-full h-full bg-[#0c1021]" onMouseMove={updateCursor} style={{ cursor: activeTool === 'select' ? 'default' : 'none' }}>
             <Stage
                 width={window.innerWidth}
                 height={window.innerHeight}
@@ -169,6 +201,11 @@ export const PCBCanvas: React.FC = () => {
                 ref={stageRef}
                 draggable={activeTool === 'select' && !isDrawingTrack}
             >
+                {/* Background Grid Layer */}
+                <Layer>
+                    {gridDots}
+                </Layer>
+
                 {/* Board Outline Layer (Bottom-most) */}
                 <Layer>
                     {visibleLayers.board_outline && boardOutline.length >= 4 && (
@@ -219,6 +256,24 @@ export const PCBCanvas: React.FC = () => {
                             lineCap="round"
                             lineJoin="round"
                         />
+                    )}
+
+                    {/* Crosshairs for precise placing/routing */}
+                    {activeTool !== 'select' && cursorPos && (
+                        <Group>
+                            <Line
+                                points={[cursorPos.x * MM_TO_PX, -10000, cursorPos.x * MM_TO_PX, 10000]}
+                                stroke="#cbd5e1"
+                                strokeWidth={1 / view.scale}
+                                opacity={0.3}
+                            />
+                            <Line
+                                points={[-10000, cursorPos.y * MM_TO_PX, 10000, cursorPos.y * MM_TO_PX]}
+                                stroke="#cbd5e1"
+                                strokeWidth={1 / view.scale}
+                                opacity={0.3}
+                            />
+                        </Group>
                     )}
                 </Layer>
             </Stage>

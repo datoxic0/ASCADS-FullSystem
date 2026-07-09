@@ -39,7 +39,10 @@ export default function DocsPage() {
           category: isLegal ? 'Legal' : 'System'
         } as DocItem;
       })
-      .filter(doc => doc.name.toLowerCase() !== 'myfooter' && doc.name.toLowerCase() !== 'task' && doc.name.toLowerCase() !== 'implementation plan' && doc.name.toLowerCase() !== 'walkthrough')
+      .filter(doc => {
+        const lowerName = doc.name.toLowerCase();
+        return !['myfooter', 'task', 'implementation plan', 'walkthrough', 'agents', 'nexttask'].includes(lowerName) && !doc.path.includes('.agents');
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
   }, []);
 

@@ -141,7 +141,32 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
       setHistory([]);
       setFuture([]);
     } else if (!project) {
-       // if we unmount project or go to raw PLC page, maybe load localstorage?
+       // Auto-import from bridge
+       try {
+         let raw = localStorage.getItem('ascads_bridge_digital_plc');
+         if (!raw) raw = localStorage.getItem('ascads_bridge_analog_plc');
+         if (!raw) raw = localStorage.getItem('ascads_bridge_robot_plc');
+         
+         if (raw) {
+           const bridge = JSON.parse(raw);
+           if (bridge.nodes && bridge.wires) {
+             setState(prev => {
+               // RUNG_HEIGHT is 100, Rung 0 starts at y=96
+               const nextY = prev.nodes.length > 0 ? Math.max(...prev.nodes.map(n => n.y)) + 100 : 96;
+               const offsetY = nextY - 96;
+               const newNodes = bridge.nodes.map((n: any) => ({ ...n, id: `bridge-${Date.now()}-${n.id}`, y: n.y + offsetY }));
+               const newWires = bridge.wires.map((w: any) => ({ ...w, id: `bridge-${Date.now()}-${w.id}`, fromId: `bridge-${Date.now()}-${w.fromId}`, toId: `bridge-${Date.now()}-${w.toId}` }));
+               return { ...prev, nodes: [...prev.nodes, ...newNodes], wires: [...prev.wires, ...newWires] };
+             });
+             localStorage.removeItem('ascads_bridge_digital_plc');
+             localStorage.removeItem('ascads_bridge_analog_plc');
+             localStorage.removeItem('ascads_bridge_robot_plc');
+             addNotification('Bridge Import Successful', 'success');
+           }
+         }
+       } catch (e) {
+         console.error('Failed to parse bridge auto-import', e);
+       }
     }
   }, [project?.id]);
 
@@ -1633,8 +1658,8 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                     if (bridge.nodes && bridge.wires) {
                       // It's a LadderState
                       setState(prev => {
-                        let nextY = prev.nodes.length > 0 ? Math.max(...prev.nodes.map(n => n.y)) + RUNG_HEIGHT : RUNG_HEIGHT / 2 - NODE_HEIGHT / 2;
-                        const offsetY = nextY - 96; // 96 is rung 0
+                        const nextY = prev.nodes.length > 0 ? Math.max(...prev.nodes.map(n => n.y)) + 100 : 96;
+                        const offsetY = nextY - 96; 
                         const newNodes = bridge.nodes.map((n: any) => ({ ...n, id: `bridge-${Date.now()}-${n.id}`, y: n.y + offsetY }));
                         const newWires = bridge.wires.map((w: any) => ({ ...w, id: `bridge-${Date.now()}-${w.id}`, fromId: `bridge-${Date.now()}-${w.fromId}`, toId: `bridge-${Date.now()}-${w.toId}` }));
                         return { ...prev, nodes: [...prev.nodes, ...newNodes], wires: [...prev.wires, ...newWires] };

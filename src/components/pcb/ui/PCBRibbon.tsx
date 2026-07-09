@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { usePCBStore } from '../store/usePCBStore';
-import { MousePointer2, GitCommit, Search, PlusSquare, Trash2, Crosshair, Map, Download, Zap, Archive, Cpu } from 'lucide-react';
+import { MousePointer2, GitCommit, Search, PlusSquare, Trash2, Crosshair, Map, Download, Zap, Archive, Cpu, Box, LayoutGrid } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { FootprintLibrary } from '../lib/FootprintLibrary';
 import { useEngigraphStore } from '../../engigraph/store/useEngigraphStore';
@@ -9,7 +9,7 @@ import { loadProjects, getActiveProjectId } from '../../../lib/analog-storage';
 import { PCBGerberCompiler } from '../services/PCBGerberCompiler';
 
 export const PCBRibbon: React.FC = () => {
-    const { activeTool, setTool, addFootprint, removeSelected, selectedIds, clearBoard } = usePCBStore();
+    const { activeTool, setTool, addFootprint, removeSelected, selectedIds, clearBoard, viewMode, setViewMode } = usePCBStore();
 
     useEffect(() => {
         const raw = localStorage.getItem('ascads_bridge_analog_pcb');
@@ -214,18 +214,41 @@ export const PCBRibbon: React.FC = () => {
 
                 <div className="w-px h-6 bg-slate-700 mx-2" />
 
-                {/* Add Footprints */}
+                {/* Add Footprints Select */}
                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Add Part:</span>
-                    {Object.keys(FootprintLibrary).map(fpId => (
-                        <button 
-                            key={fpId}
-                            onClick={() => handleAddFootprint(fpId)}
-                            className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded border border-slate-700 transition-colors"
-                        >
-                            {fpId}
-                        </button>
-                    ))}
+                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Library:</span>
+                    <select 
+                        onChange={(e) => {
+                            if (e.target.value) {
+                                handleAddFootprint(e.target.value);
+                                e.target.value = '';
+                            }
+                        }}
+                        className="text-xs bg-slate-800 text-slate-200 border border-slate-700 rounded px-2 py-1 outline-none focus:border-teal-500"
+                    >
+                        <option value="">+ Add Component</option>
+                        {Object.keys(FootprintLibrary).map(fpId => (
+                            <option key={fpId} value={fpId}>{FootprintLibrary[fpId].name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="w-px h-6 bg-slate-700 mx-2" />
+
+                {/* View Mode Toggle */}
+                <div className="flex bg-[#12141a] p-0.5 rounded-lg border border-white/5">
+                    <button
+                        onClick={() => setViewMode(viewMode === '2d' ? '3d' : '2d')}
+                        className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded transition-all active:scale-95 ${
+                            viewMode === '3d' 
+                                ? 'bg-indigo-500 hover:bg-indigo-400 text-white shadow-md shadow-indigo-500/20' 
+                                : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                        }`}
+                        title={viewMode === '3d' ? "Switch to 2D Routing" : "Switch to 3D Viewer"}
+                    >
+                        {viewMode === '3d' ? <LayoutGrid size={14} /> : <Box size={14} />}
+                        <span className="tracking-wider uppercase">{viewMode === '3d' ? '2D Editor' : '3D View'}</span>
+                    </button>
                 </div>
 
                 <div className="flex-1" />

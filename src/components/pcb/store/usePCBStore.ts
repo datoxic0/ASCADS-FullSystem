@@ -40,6 +40,7 @@ export interface PCBNet {
 export interface PCBState {
     activeTool: 'select' | 'track' | 'via' | 'footprint' | 'outline' | 'zone';
     activeLayer: PCBLayer;
+    viewMode: '2d' | '3d';
     
     // Board Data
     boardOutline: number[]; // [x1, y1, x2, y2, ...]
@@ -56,6 +57,7 @@ export interface PCBState {
     // Actions
     setTool: (tool: PCBState['activeTool']) => void;
     setActiveLayer: (layer: PCBLayer) => void;
+    setViewMode: (mode: '2d' | '3d') => void;
     setGridSnap: (snap: number) => void;
     toggleLayerVisible: (layer: PCBLayer) => void;
     
@@ -75,6 +77,7 @@ export const usePCBStore = create<PCBState>()(
         (set, get) => ({
             activeTool: 'select',
             activeLayer: 'top_copper',
+            viewMode: '2d',
             boardOutline: [0, 0, 100, 0, 100, 80, 0, 80, 0, 0], // Default 100x80mm board
             footprints: [],
             tracks: [],
@@ -95,6 +98,7 @@ export const usePCBStore = create<PCBState>()(
 
             setTool: (tool) => set({ activeTool: tool }),
             setActiveLayer: (layer) => set({ activeLayer: layer }),
+            setViewMode: (mode) => set({ viewMode: mode }),
             setGridSnap: (snap) => set({ gridSnap: snap }),
             toggleLayerVisible: (layer) => set((state) => ({
                 visibleLayers: { ...state.visibleLayers, [layer]: !state.visibleLayers[layer] }

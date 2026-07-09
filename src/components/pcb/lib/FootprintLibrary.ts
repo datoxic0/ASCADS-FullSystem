@@ -78,5 +78,53 @@ export const FootprintLibrary: Record<string, FootprintDefinition> = {
         silkscreen: [
             { points: [-2.54, -1.27, 2.54, -1.27, 2.54, 1.27, -2.54, 1.27, -2.54, -1.27], width: 0.2 }
         ]
+    },
+    'SOIC-8': {
+        id: 'SOIC-8',
+        name: 'SOIC-8 (SMD)',
+        type: 'smd',
+        pads: [
+            { id: '1', x: -2.7, y: 1.905, width: 1.5, height: 0.6, shape: 'rect', layer: 'top' },
+            { id: '2', x: -2.7, y: 0.635, width: 1.5, height: 0.6, shape: 'rect', layer: 'top' },
+            { id: '3', x: -2.7, y: -0.635, width: 1.5, height: 0.6, shape: 'rect', layer: 'top' },
+            { id: '4', x: -2.7, y: -1.905, width: 1.5, height: 0.6, shape: 'rect', layer: 'top' },
+            { id: '5', x: 2.7, y: -1.905, width: 1.5, height: 0.6, shape: 'rect', layer: 'top' },
+            { id: '6', x: 2.7, y: -0.635, width: 1.5, height: 0.6, shape: 'rect', layer: 'top' },
+            { id: '7', x: 2.7, y: 0.635, width: 1.5, height: 0.6, shape: 'rect', layer: 'top' },
+            { id: '8', x: 2.7, y: 1.905, width: 1.5, height: 0.6, shape: 'rect', layer: 'top' }
+        ],
+        silkscreen: [
+            { points: [-1.9, 2.5, 1.9, 2.5, 1.9, -2.5, -1.9, -2.5, -1.9, 2.5], width: 0.15 },
+            { points: [-2.5, 2.5, -2.5, 2.5], width: 0.5 } // Pin 1 dot
+        ]
+    },
+    'TerminalBlock-2P': {
+        id: 'TerminalBlock-2P',
+        name: 'Terminal Block 2-Pin (5.08mm)',
+        type: 'tht',
+        pads: [
+            { id: '1', x: -2.54, y: 0, width: 2.5, height: 2.5, shape: 'rect', layer: 'thruhole', drill: 1.5 },
+            { id: '2', x: 2.54, y: 0, width: 2.5, height: 2.5, shape: 'circle', layer: 'thruhole', drill: 1.5 }
+        ],
+        silkscreen: [
+            { points: [-5.08, -4, 5.08, -4, 5.08, 4, -5.08, 4, -5.08, -4], width: 0.2 },
+            { points: [-5.08, 2, 5.08, 2], width: 0.2 } // Front wire entry line
+        ]
+    },
+    'E-Cap-8mm': {
+        id: 'E-Cap-8mm',
+        name: 'Electrolytic Cap (8mm)',
+        type: 'tht',
+        pads: [
+            { id: '1', x: -1.75, y: 0, width: 1.6, height: 1.6, shape: 'rect', layer: 'thruhole', drill: 0.8 }, // Positive
+            { id: '2', x: 1.75, y: 0, width: 1.6, height: 1.6, shape: 'circle', layer: 'thruhole', drill: 0.8 } // Negative
+        ],
+        silkscreen: [
+            { points: [4, 0, 4, 0.1], width: 0.2 }, // Circle approximation logic will use radius in canvas if needed
+            { points: [-4, -4, 4, -4, 4, 4, -4, 4, -4, -4], width: 0.15 }, // Simple bounding box for now
+            // Draw a circle for silkscreen (approximate using arc in canvas or square here)
+            { points: [-2.5, -1, -2.5, 1], width: 0.2 }, // Plus sign V
+            { points: [-3.5, 0, -1.5, 0], width: 0.2 }   // Plus sign H
+        ]
     }
 };
