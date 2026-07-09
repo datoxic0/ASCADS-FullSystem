@@ -494,6 +494,113 @@ void loop() {
     conveyor(false);
     Serial.println("Production run complete.");
     while (1) { delay(1000); }
+}
+}
+`;
+
+/* ─── PIC C Compiler (CCS C / XC8) ─────────────────────────────────── */
+
+export function compilePIC(code: string): { gen?: () => InterpreterGen; error?: string } {
+  try {
+    const js = picToJs(code);
+    const src = `
+${SHARED_API}
+${js}
+function* _userProgram(){
+  if(typeof main==='function') yield* main();
+  yield {cmd:'done'};
+}
+return _userProgram;
+`;
+    const factory = new Function(src)() as () => InterpreterGen;
+    return { gen: factory };
+  } catch (e: any) {
+    return { error: `PIC C compile error: ${e.message ?? String(e)}` };
+  }
+}
+
+function picToJs(src: string): string {
+  // #include, #use, #pragma → comment
+  src = src.replace(/^(#include|#use|#pragma|#fuses)\s+.*/gm, '// $&');
+  // #define NAME VALUE → const NAME = VALUE;
+  src = src.replace(/^#define\s+(\w+)\s+(.+)$/gm, 'const $1 = $2;');
+  src = src.replace(/^#define\s+(\w+)\s*$/gm, 'const $1 = 1;');
+
+  // Function declarations
+  src = src.replace(
+    /\b(?:void|int|float|double|long|unsigned|short|int8|int16|int32)\s+(\w+)\s*\(([^)]*)\)\s*\{/g,
+    'function* $1($2) {'
+  );
+
+  // Variables
+  const typePattern = /\b(?:int|float|double|long|unsigned|short|int8|int16|int32|char)\s+(\w+)(?=\s*[=;,\[])/g;
+  src = src.replace(typePattern, 'let $1');
+  src = src.replace(/\bconst\s+(?:int|float|double|long|unsigned|short|int8|int16|int32|char)\s+(\w+)/g, 'const $1');
+
+  // I/O & Delay API
+  src = src.replace(/\boutput_high\s*\(/g, 'yield* digitalWrite(');
+  src = src.replace(/\boutput_low\s*\(/g, 'yield* digitalWrite(');
+  src = src.replace(/\boutput_toggle\s*\(/g, '/* toggle not fully supported */');
+  src = src.replace(/\bdelay_ms\s*\(/g, 'yield* delay(');
+  src = src.replace(/\bdelay_us\s*\(/g, 'yield* delay('); // Treat us as ms for sim purposes
+
+  // Printf to serial
+  src = src.replace(/\bprintf\s*\(/g, 'yield* Serial_print(');
+
+  // Motion / Robot API
+  src = src.replace(/\brobot\.move\s*\(/g,  'yield* robot.move(');
+  src = src.replace(/\brobot\.joint\s*\(/, 'yield* robot.joint(');
+  src = src.replace(/\brobot\.home\s*\(\s*\)/g, 'yield* robot.home()');
+  src = src.replace(/\bgripper\s*\(/g,      'yield* gripper(');
+  src = src.replace(/\bconveyor\s*\(/g,     'yield* conveyor(');
+
+  // C-style while(1) loop for PIC main
+  src = src.replace(/\bwhile\s*\(\s*(?:1|true|TRUE)\s*\)/g, 'let _lc=0; while(_lc++<99999)');
+
+  return src;
+}
+
+export const PIC_STARTER = `// ASCADS PIC C (CCS C) — Robot Controller
+#include <16F877A.h>
+#use delay(clock=20000000)
+
+const int SPEED = 1000;
+int cycleCount = 0;
+
+void main() {
+  printf("ASCADS PIC Controller online.\\n");
+  robot.home();
+  delay_ms(500);
+  conveyor(1);
+
+  while(1) {
+    cycleCount++;
+    printf("Cycle starting...\\n");
+
+    output_high(PIN_B0);
+    delay_ms(600);
+
+    robot.move(120, 0, -30);
+    delay_ms(200);
+    gripper(1);
+    delay_ms(150);
+
+    robot.move(120, 0, 60);
+    delay_ms(200);
+    robot.move(-80, 0, -20);
+    delay_ms(200);
+    gripper(0);
+    delay_ms(150);
+
+    robot.home();
+    output_low(PIN_B0);
+    delay_ms(300);
+
+    if (cycleCount >= 4) {
+      conveyor(0);
+      printf("Production complete.\\n");
+      while(1) { delay_ms(1000); }
+    }
   }
 }
 `;

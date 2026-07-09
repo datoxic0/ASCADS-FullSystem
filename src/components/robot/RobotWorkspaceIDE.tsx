@@ -39,6 +39,7 @@ import {
 import { useHardwareBus } from "../../lib/hardware-bus";
 import { EcosystemTranslator } from "../../lib/EcosystemTranslator";
 import { safeEvalMath, safeEvalCondition } from "../../lib/safe-eval";
+import { compilePython, compileArduino, compilePIC, InterpreterGen, StepResult } from "../../lib/code-interpreters";
 
 interface RobotWorkspaceIDEProps {
   activeBoard: BoardConfig;
@@ -381,6 +382,95 @@ export default function RobotWorkspaceIDE({
     reader.readAsText(file);
   };
 
+  const interpreterGenRef = useRef<InterpreterGen | null>(null);
+
+  const startNativeInterpreter = (genFn: () => InterpreterGen, resumeFromPause = false) => {
+    if (!resumeFromPause) {
+      interpreterGenRef.current = genFn();
+    }
+    const gen = interpreterGenRef.current;
+    if (!gen) return;
+
+    if (interpreterIntervalRef.current) clearInterval(interpreterIntervalRef.current);
+    
+    // Default base coordinates
+    const baseX = 300;
+    const baseY = 230;
+
+    const intervalId = setInterval(() => {
+      // If we got paused or stopped, cancel interval
+      if (simulationStateRef.current.status !== "running") {
+        clearInterval(intervalId);
+        return;
+      }
+      
+      try {
+        const res = gen.next();
+        if (res.done) {
+          clearInterval(intervalId);
+          setSimulationState(prev => ({ ...prev, isRunning: false, status: "stopped" }));
+          addLog("success", "Program execution completed.");
+          setConveyorRunning(false);
+          return;
+        }
+
+        const step = res.value;
+        if (!step) return;
+
+        switch (step.cmd) {
+          case 'log':
+            addLog(step.level, step.text);
+            break;
+          case 'move':
+            setJoints(prev => {
+              // Quick Inverse Kinematics wrapper
+              const { angles } = solveInverseKinematics(baseX + step.x, baseY + step.y, step.z, prev);
+              return prev.map((j, i) => ({ ...j, targetAngle: angles[i] }));
+            });
+            break;
+          case 'joint':
+            setJoints(prev => prev.map(j => j.id === step.id ? { ...j, targetAngle: step.angle } : j));
+            break;
+          case 'delay':
+            clearInterval(intervalId);
+            setTimeout(() => {
+               if (simulationStateRef.current.status === "running") {
+                  startNativeInterpreter(genFn, true);
+               }
+            }, step.ms);
+            break;
+          case 'io':
+            addLog("info", `[Hardware IO] Pin ${step.pin} set to ${step.value} (${step.mode})`);
+            break;
+          case 'gripper':
+            setGripperClosed(step.active);
+            break;
+          case 'conveyor':
+            setConveyorRunning(step.running);
+            break;
+          case 'error':
+            addLog("error", `Runtime Exception: ${step.message}`);
+            clearInterval(intervalId);
+            setSimulationState(prev => ({ ...prev, isRunning: false, status: "stopped" }));
+            break;
+          case 'done':
+            clearInterval(intervalId);
+            setSimulationState(prev => ({ ...prev, isRunning: false, status: "stopped" }));
+            addLog("success", "Execution sequence terminated.");
+            setConveyorRunning(false);
+            break;
+        }
+      } catch (err: any) {
+        addLog("error", `Fatal Exception: ${err.message}`);
+        clearInterval(intervalId);
+        setSimulationState(prev => ({ ...prev, isRunning: false, status: "stopped" }));
+      }
+    }, 50) as any;
+    
+    interpreterIntervalRef.current = intervalId;
+    setInterpreterIntervalId(intervalId);
+  };
+
   // Compile & Upload simulation sequence triggers
   const handleCompileAndRun = () => {
     // Prevent double clicking compilation sequences and overlapping timers
@@ -422,6 +512,22 @@ export default function RobotWorkspaceIDE({
       { id: `wp-${Date.now()}`, color: firstColor, positionX: -20, status: "approaching" }
     ]);
 
+    // PRE-COMPILE CHECK for native languages
+    let genFn: (() => InterpreterGen) | undefined = undefined;
+    if (activeFile.language !== "gcode") {
+      let result;
+      if (activeFile.language === "python") result = compilePython(activeFile.content);
+      else if (activeFile.language === "pic") result = compilePIC(activeFile.content);
+      else result = compileArduino(activeFile.content);
+
+      if (result.error) {
+        addLog("error", result.error);
+        setSimulationState((prev) => ({ ...prev, status: "stopped" }));
+        return;
+      }
+      genFn = result.gen;
+    }
+
     compileTimeoutRef.current = setTimeout(() => {
       addLog("success", "Code validation parsed successfully. Built binary sizes: 142 KB (6.7% capacity).");
       setSimulationState((prev) => ({ ...prev, status: "uploading" }));
@@ -441,17 +547,8 @@ export default function RobotWorkspaceIDE({
 
         if (activeFile.language === "gcode") {
           startGcodeInterpreter();
-        } else {
-          // General generic board animation blinker logs
-          if (interpreterIntervalRef.current) {
-            clearInterval(interpreterIntervalRef.current);
-          }
-          const intervalId = setInterval(() => {
-            const pinState = Math.random() > 0.5 ? "HIGH" : "LOW";
-            addLog("info", `[Firmware Loop] Pin D13 voltage set to -> [${pinState}]`);
-          }, 3000) as any;
-          interpreterIntervalRef.current = intervalId;
-          setInterpreterIntervalId(intervalId);
+        } else if (genFn) {
+          startNativeInterpreter(genFn);
         }
       }, 800);
     }, 600);
