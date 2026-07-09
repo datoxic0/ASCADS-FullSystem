@@ -12,6 +12,7 @@ const PLCPage        = React.lazy(() => import('@/pages/PLCPage'));
 const RobotPage      = React.lazy(() => import('@/components/robot/RobotPage'));
 const MathsTools     = React.lazy(() => import('@/pages/MathsTools'));
 const EngigraphPage  = React.lazy(() => import('@/pages/EngigraphPage'));
+const PCBLabPage     = React.lazy(() => import('@/pages/PCBLabPage'));
 const DocsPage       = React.lazy(() => import('@/pages/DocsPage'));
 import type { Circuit } from '@/lib/types';
 import {
@@ -24,7 +25,7 @@ import {
 } from '@/lib/analog-storage';
 import type { AnalogProject } from '@/lib/analog-types';
 
-type TopMode = 'projects' | 'analog' | 'digital' | 'compute' | 'plc' | 'robot' | 'maths' | 'engigraph' | 'docs';
+type TopMode = 'projects' | 'analog' | 'digital' | 'compute' | 'plc' | 'robot' | 'maths' | 'engigraph' | 'pcb' | 'docs';
 
 const BRIDGE_KEYS = [
   { key: 'ascads_bridge_analog_plc',   label: 'A→P', color: '#a78bfa', title: 'Analog→PLC' },
@@ -118,6 +119,7 @@ export default function UnifiedShell() {
     : mode === 'compute'  ? 'Compute Tools'
     : mode === 'maths'    ? 'Maths System'
     : mode === 'engigraph'? 'EngiGraph Pro'
+    : mode === 'pcb'      ? 'PCB Lab'
     : mode === 'docs'     ? 'System Documentation'
     : 'Digital Logic Lab';
 
@@ -130,6 +132,7 @@ export default function UnifiedShell() {
     compute:  'text-amber-400',
     maths:    'text-rose-400',
     engigraph:'text-orange-400',
+    pcb:      'text-teal-400',
     docs:     'text-pink-500',
   };
 
@@ -178,6 +181,7 @@ export default function UnifiedShell() {
             { id: 'compute',  label: 'Compute Tools',  icon: '💻', dot: '#f59e0b' },
             { id: 'maths',    label: 'Maths System',   icon: '📐', dot: '#fb7185' },
             { id: 'engigraph',label: 'EngiGraph Pro',  icon: '📉', dot: '#fb923c' },
+            { id: 'pcb',      label: 'PCB Lab',        icon: '🖨️', dot: '#14b8a6' },
             { id: 'docs',     label: 'System Docs',    icon: '📚', dot: '#ec4899' },
           ] as { id: TopMode; label: string; dot: string; icon?: string }[]).map(tab => (
             <button
@@ -259,6 +263,7 @@ export default function UnifiedShell() {
             { id: 'compute',  label: 'Compute Tools',  dot: '#f59e0b' },
             { id: 'maths',    label: 'Maths System',   dot: '#fb7185' },
             { id: 'engigraph',label: 'EngiGraph Pro',  dot: '#fb923c' },
+            { id: 'pcb',      label: 'PCB Lab',        dot: '#14b8a6' },
             { id: 'docs',     label: 'System Docs',    dot: '#ec4899' },
           ] as { id: TopMode; label: string; dot: string }[]).map(tab => (
             <button
@@ -396,6 +401,12 @@ export default function UnifiedShell() {
               <DocsPage />
             </div>
           )}
+
+          {mode === 'pcb' && (
+            <div className="flex-1 min-h-0 flex flex-col h-full w-full">
+              <PCBLabPage />
+            </div>
+          )}
         </Suspense>
       </div>
 
@@ -412,6 +423,7 @@ export default function UnifiedShell() {
               : mode === 'compute' ? 'Compute Tools — Base · Binary · Logic · IEEE 754 · ASCII'
               : mode === 'maths'   ? 'Beyond CAS — Scientific Engine'
               : mode === 'engigraph'? 'EngiGraph Pro — Visual Engineering'
+              : mode === 'pcb'     ? 'PCB Lab — Layout & Routing'
               : mode === 'docs'    ? 'ASCADS Knowledge Base & Legal Docs'
               : 'Project Browser'}
           </span>
