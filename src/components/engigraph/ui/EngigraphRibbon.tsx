@@ -409,15 +409,117 @@ export const EngigraphRibbon: React.FC = () => {
                         <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
                             <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-16 text-right leading-tight">3D Generation</div>
                             <div className="flex gap-1">
-                                <RibbonButton 
-                                    icon={<Box size={20} />} 
-                                    label="Hybrid Panel" 
-                                    active={isHybridPanelOpen} 
-                                    onClick={toggleHybridPanel} 
+                                <RibbonButton
+                                    icon={<Box size={20} />}
+                                    label="Extrude 3D"
+                                    active={is3DViewOpen}
+                                    onClick={() => { triggerHybridExtrude(); toggle3DView(); }}
+                                />
+                                <RibbonButton
+                                    icon={<Package size={20} />}
+                                    label="Enclosure"
+                                    active={enclosureMode}
+                                    onClick={toggleEnclosureMode}
+                                />
+                                <RibbonButton icon={<Waves size={20} />} label="Sculpt" active={activeTool === 'sculpt'} onClick={() => handleToolClick('sculpt')} />
+                                <RibbonButton
+                                    icon={<ScanLine size={20} />}
+                                    label="Cross-Sect"
+                                    active={useEngigraphStore.getState().crossSectionEnabled}
+                                    onClick={() => useEngigraphStore.getState().toggleCrossSection()}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Group 2: Netlist & PCB */}
+                        <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
+                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-14 text-right leading-tight">Netlist</div>
+                            <div className="flex gap-1">
+                                <RibbonButton
+                                    icon={<List size={20} />}
+                                    label="Gen Netlist"
+                                    onClick={() => {
+                                        generateNetlist();
+                                        toast.success('Netlist generated — open Hybrid Panel for details.');
+                                    }}
+                                />
+                                <RibbonButton
+                                    icon={<Layers size={20} />}
+                                    label="Wire→Track"
+                                    onClick={() => {
+                                        const s = useEngigraphStore.getState();
+                                        const wires = s.elements.filter(el => el.type === 'wire');
+                                        if (wires.length === 0) { toast.error('No wires to export.'); return; }
+                                        let csv = `Track_ID,Start_X,Start_Y,End_X,End_Y,Width,Layer\n`;
+                                        wires.forEach((w, i) => {
+                                            const pts = w.points || [];
+                                            for (let p = 0; p < pts.length - 3; p += 2) {
+                                                csv += `TRK_${i}_${p},${pts[p].toFixed(2)},${pts[p+1].toFixed(2)},${pts[p+2].toFixed(2)},${pts[p+3].toFixed(2)},${s.wireTrackWidth},${w.boardLayer || 'top'}\n`;
+                                            }
+                                        });
+                                        const blob = new Blob([csv], { type: 'text/csv' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url; a.download = 'tracks.csv'; a.click();
+                                        URL.revokeObjectURL(url);
+                                        toast.success(`${wires.length} wire(s) exported as PCB tracks.`);
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Group 3: Layer Isolation */}
+                        <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
+                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-14 text-right leading-tight">Layers</div>
+                            <div className="flex gap-1">
+                                <RibbonButton
+                                    icon={<Eye size={20} />}
+                                    label="Top Layer"
+                                    active={useEngigraphStore.getState().activeLayer === 'top'}
+                                    onClick={() => useEngigraphStore.getState().setActiveLayer('top')}
+                                />
+                                <RibbonButton
+                                    icon={<Eye size={20} />}
+                                    label="Bot Layer"
+                                    active={useEngigraphStore.getState().activeLayer === 'bottom'}
+                                    onClick={() => useEngigraphStore.getState().setActiveLayer('bottom')}
                                 />
                                 <RibbonButton icon={<GitMerge size={20} />} label="Divide" active={activeTool === 'subdivide'} onClick={() => handleToolClick('subdivide')} />
-                                <RibbonButton icon={<Waves size={20} />} label="Sculpt" active={activeTool === 'sculpt'} onClick={() => handleToolClick('sculpt')} />
-                                <RibbonButton icon={<Box size={20} />} label="Mount Gen" active={enclosureMode} onClick={toggleEnclosureMode} />
+                            </div>
+                        </div>
+
+                        {/* Group 4: Auto-Route */}
+                        <div className="flex items-center gap-4 border-r border-slate-700 pr-6 pl-2">
+                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-14 text-right leading-tight">Auto-Route</div>
+                            <div className="flex gap-1">
+                                <RibbonButton
+                                    icon={<GitMerge size={20} />}
+                                    label="Auto-Route"
+                                    onClick={handleAutoRoute}
+                                />
+                                <RibbonButton
+                                    icon={<Cpu size={20} />}
+                                    label="Ratsnest"
+                                    onClick={() => {
+                                        const state = useEngigraphStore.getState();
+                                        const comps = state.elements.filter(el => el.type === 'component');
+                                        if (comps.length < 2) { toast.error('Need at least 2 components.'); return; }
+                                        toast.success(`Ratsnest: ${comps.length} component(s) — ${comps.length * (comps.length - 1) / 2} possible connections.`);
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Group 5: Hybrid Panel */}
+                        <div className="flex items-center gap-4 pl-2">
+                            <div className="text-[9px] text-slate-400 font-medium uppercase tracking-wider w-14 text-right leading-tight">Panel</div>
+                            <div className="flex gap-1">
+                                <RibbonButton
+                                    icon={<Settings size={20} />}
+                                    label="Hybrid Panel"
+                                    active={isHybridPanelOpen}
+                                    onClick={toggleHybridPanel}
+                                />
                             </div>
                         </div>
                     </>

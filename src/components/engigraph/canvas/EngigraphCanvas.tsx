@@ -145,6 +145,22 @@ export const EngigraphCanvas: React.FC = () => {
     const handlePointerDown = (e: any) => {
         const stage = e.target.getStage();
         const pointer = stage.getPointerPosition();
+
+        // Right-Click Toggle Logic
+        if (e.evt.button === 2) {
+            e.evt.preventDefault();
+            let id = e.target.id() || e.target.parent?.id();
+            if (id) {
+                const storeState = useEngigraphStore.getState();
+                const el = storeState.elements.find((el: any) => el.id === id);
+                if (el && el.type === 'component') {
+                    // Toggle state
+                    const newState = el.state === 'closed' ? 'open' : 'closed';
+                    storeState.updateElement(id, { state: newState });
+                }
+            }
+            return;
+        }
         
         // Adjust for pan and zoom
         let x = (pointer.x - view.x) / view.zoom;
@@ -502,7 +518,7 @@ export const EngigraphCanvas: React.FC = () => {
     };
 
     return (
-        <div className="w-full h-full bg-[#0a0b0c] cursor-crosshair touch-none">
+        <div className="w-full h-full bg-[#0a0b0c] cursor-crosshair touch-none" onContextMenu={(e) => e.preventDefault()}>
             <Stage 
                 width={window.innerWidth} 
                 height={window.innerHeight}
