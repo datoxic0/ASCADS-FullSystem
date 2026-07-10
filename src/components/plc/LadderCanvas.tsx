@@ -155,7 +155,7 @@ const MemoizedLadderNode = React.memo<{
                   fontSize={10} 
                   fill="#cbd5e1" 
                   fontWeight="bold"
-                  className="font-sans tracking-wide drop-shadow-sm select-all pointer-events-auto hover:fill-white"
+                  className="font-sans tracking-wide drop-shadow-sm select-all hover:fill-white"
                 >
                   {node.tag || "TAG"}
                 </text>
@@ -183,7 +183,7 @@ const MemoizedLadderNode = React.memo<{
                   textAnchor="middle" 
                   fontSize={8.5} 
                   fill="#94a3b8" 
-                  className="font-mono tracking-wider pointer-events-auto hover:fill-white"
+                  className="font-mono tracking-wider hover:fill-white"
                 >
                   {node.address || "I:0/0"}
                 </text>
