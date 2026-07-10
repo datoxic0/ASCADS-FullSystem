@@ -84,7 +84,6 @@ const MemoizedLadderNode = React.memo<{
       )}
       transform={`translate(${node.x}, ${node.y})`}
       onPointerDown={(e) => {
-        e.stopPropagation();
         onSelect(node.id);
         clickStartRef.current = { x: e.clientX, y: e.clientY };
       }}
