@@ -316,6 +316,9 @@ export function LadderCanvas({
   const [editState, setEditState] = useState<{ id: string | null, field: 'tag' | 'address' | 'rung', value: string, x: number, y: number, w: number } | null>(null);
   const editStateRef = useRef(editState);
 
+  const onUpdateNodeRef = useRef(onUpdateNode);
+  const onUpdateNodeDraggingRef = useRef(onUpdateNodeDragging);
+
   useEffect(() => {
     viewportRef.current = viewport;
     stateRef.current = state;
@@ -323,7 +326,9 @@ export function LadderCanvas({
     wiringStateRef.current = wiringState;
     activeSnapRef.current = activeSnap;
     editStateRef.current = editState;
-  }, [viewport, state, placementType, wiringState, activeSnap, editState]);
+    onUpdateNodeRef.current = onUpdateNode;
+    onUpdateNodeDraggingRef.current = onUpdateNodeDragging;
+  }, [viewport, state, placementType, wiringState, activeSnap, editState, onUpdateNode, onUpdateNodeDragging]);
 
   const commitEdit = useCallback(() => {
     if (!editState) return;
@@ -412,7 +417,7 @@ export function LadderCanvas({
           if (snappedX !== lastX || snappedY !== lastY) {
             event.target.setAttribute('data-last-snapped-x', snappedX.toString());
             event.target.setAttribute('data-last-snapped-y', snappedY.toString());
-            onUpdateNodeDragging?.(id, { x: snappedX, y: snappedY });
+            onUpdateNodeDraggingRef.current?.(id, { x: snappedX, y: snappedY });
             playClick(); // High-fidelity grid tactile micro-feedback!
           }
         },
@@ -432,7 +437,7 @@ export function LadderCanvas({
           const snappedX = Math.round(rawEndX / GRID_SIZE) * GRID_SIZE;
           const snappedY = Math.round(rawEndY / GRID_SIZE) * GRID_SIZE;
 
-          onUpdateNode(id, { x: snappedX, y: snappedY });
+          onUpdateNodeRef.current(id, { x: snappedX, y: snappedY });
           playConnect(); // Positive chime on snapped lock-in
         }
       }
@@ -441,7 +446,7 @@ export function LadderCanvas({
     return () => {
       interactable.unset();
     };
-  }, [onUpdateNode, onUpdateNodeDragging]); 
+  }, []);
 
 
   // Panning logic - improved for reliability
