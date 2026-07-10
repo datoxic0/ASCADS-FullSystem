@@ -54,6 +54,9 @@ const MemoizedLadderNode = React.memo<{
   editState: { id: string | null, field: 'tag' | 'address' | 'rung', value: string, x: number, y: number, w: number } | null;
   setEditState: (state: any) => void;
   onCommitEdit: () => void;
+  zoom: number;
+  onDragUpdate: (id: string, x: number, y: number) => void;
+  onDragEnd: (id: string, x: number, y: number) => void;
 }>(({ 
   node, 
   selected, 
@@ -70,7 +73,10 @@ const MemoizedLadderNode = React.memo<{
   renderSymbol,
   editState,
   setEditState,
-  onCommitEdit
+  onCommitEdit,
+  zoom,
+  onDragUpdate,
+  onDragEnd
 }) => {
   const isConducting = isPowerActive;
   const clickStartRef = React.useRef<{ x: number; y: number } | null>(null);
@@ -86,6 +92,48 @@ const MemoizedLadderNode = React.memo<{
       onPointerDown={(e) => {
         onSelect(node.id);
         clickStartRef.current = { x: e.clientX, y: e.clientY };
+
+        if (placementType && placementType !== 'wire') return;
+
+        e.stopPropagation();
+
+        const startNodeX = node.x;
+        const startNodeY = node.y;
+        const startClientX = e.clientX;
+        const startClientY = e.clientY;
+        
+        let lastSnappedX = startNodeX;
+        let lastSnappedY = startNodeY;
+
+        const handlePointerMove = (mv: PointerEvent) => {
+          const dx = (mv.clientX - startClientX) / zoom;
+          const dy = (mv.clientY - startClientY) / zoom;
+          
+          const currentX = startNodeX + dx;
+          const currentY = startNodeY + dy;
+
+          const snappedX = Math.round(currentX / GRID_SIZE) * GRID_SIZE;
+          const snappedY = Math.round(currentY / GRID_SIZE) * GRID_SIZE;
+
+          if (snappedX !== lastSnappedX || snappedY !== lastSnappedY) {
+            lastSnappedX = snappedX;
+            lastSnappedY = snappedY;
+            onDragUpdate(node.id, snappedX, snappedY);
+            playClick();
+          }
+        };
+
+        const handlePointerUp = () => {
+          window.removeEventListener('pointermove', handlePointerMove);
+          window.removeEventListener('pointerup', handlePointerUp);
+          
+          if (lastSnappedX !== startNodeX || lastSnappedY !== startNodeY) {
+            onDragEnd(node.id, lastSnappedX, lastSnappedY);
+          }
+        };
+
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
       }}
       onMouseUp={(e) => {
         e.stopPropagation();
@@ -364,89 +412,7 @@ export function LadderCanvas({
     return rungs;
   }, [state.nodes]);
 
-  // Initialize interactjs for dragging
-  useEffect(() => {
-    const interactable = interact('.ladder-node-g');
-    
-    interactable.draggable({
-      inertia: false,
-      autoScroll: true,
-      listeners: {
-        start(event) {
-          const id = event.target.dataset.id;
-          if (!id) return;
-          const node = stateRef.current.nodes.find(n => n.id === id);
-          if (!node) return;
-          
-          event.target.setAttribute('data-start-x', node.x.toString());
-          event.target.setAttribute('data-start-y', node.y.toString());
-          event.target.setAttribute('data-drag-dx', '0');
-          event.target.setAttribute('data-drag-dy', '0');
-          event.target.setAttribute('data-last-snapped-x', node.x.toString());
-          event.target.setAttribute('data-last-snapped-y', node.y.toString());
-        },
-        move(event) {
-          if (placementTypeRef.current === 'wire') return;
-
-          const id = event.target.dataset.id;
-          if (!id) return;
-
-          const startX = parseFloat(event.target.getAttribute('data-start-x'));
-          const startY = parseFloat(event.target.getAttribute('data-start-y'));
-          if (isNaN(startX) || isNaN(startY)) return;
-
-          const { zoom } = viewportRef.current;
-          const currentDx = parseFloat(event.target.getAttribute('data-drag-dx')) || 0;
-          const currentDy = parseFloat(event.target.getAttribute('data-drag-dy')) || 0;
-
-          const nextDx = currentDx + event.dx / zoom;
-          const nextDy = currentDy + event.dy / zoom;
-
-          event.target.setAttribute('data-drag-dx', nextDx.toString());
-          event.target.setAttribute('data-drag-dy', nextDy.toString());
-
-          const nextX = startX + nextDx;
-          const nextY = startY + nextDy;
-
-          const snappedX = Math.round(nextX / GRID_SIZE) * GRID_SIZE;
-          const snappedY = Math.round(nextY / GRID_SIZE) * GRID_SIZE;
-
-          const lastX = parseFloat(event.target.getAttribute('data-last-snapped-x')) || 0;
-          const lastY = parseFloat(event.target.getAttribute('data-last-snapped-y')) || 0;
-
-          if (snappedX !== lastX || snappedY !== lastY) {
-            event.target.setAttribute('data-last-snapped-x', snappedX.toString());
-            event.target.setAttribute('data-last-snapped-y', snappedY.toString());
-            onUpdateNodeDraggingRef.current?.(id, { x: snappedX, y: snappedY });
-            playClick(); // High-fidelity grid tactile micro-feedback!
-          }
-        },
-        end(event) {
-          const id = event.target.dataset.id;
-          if (!id) return;
-
-          const startX = parseFloat(event.target.getAttribute('data-start-x'));
-          const startY = parseFloat(event.target.getAttribute('data-start-y'));
-          const dx = parseFloat(event.target.getAttribute('data-drag-dx')) || 0;
-          const dy = parseFloat(event.target.getAttribute('data-drag-dy')) || 0;
-
-          if (isNaN(startX) || isNaN(startY)) return;
-
-          const rawEndX = startX + dx;
-          const rawEndY = startY + dy;
-          const snappedX = Math.round(rawEndX / GRID_SIZE) * GRID_SIZE;
-          const snappedY = Math.round(rawEndY / GRID_SIZE) * GRID_SIZE;
-
-          onUpdateNodeRef.current(id, { x: snappedX, y: snappedY });
-          playConnect(); // Positive chime on snapped lock-in
-        }
-      }
-    });
-
-    return () => {
-      interactable.unset();
-    };
-  }, []);
+  // Native React dragging used instead of interact.js
 
 
   // Panning logic - improved for reliability
@@ -1225,6 +1191,9 @@ export function LadderCanvas({
             editState={editState}
             setEditState={setEditState}
             onCommitEdit={commitEdit}
+            zoom={viewport.zoom}
+            onDragUpdate={(id, x, y) => onUpdateNodeDraggingRef.current?.(id, { x, y })}
+            onDragEnd={(id, x, y) => { onUpdateNodeRef.current(id, { x, y }); playConnect(); }}
           />
         ))}
 
