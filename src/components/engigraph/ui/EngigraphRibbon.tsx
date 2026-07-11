@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
     MousePointer2, Move, Type, PenTool, Circle, Square, Minus, ZoomIn, ZoomOut, Maximize,
     Waves, Bot, Activity, Terminal, Zap, Compass, Ruler, Sun, Moon,
@@ -28,6 +28,7 @@ export const EngigraphRibbon: React.FC = () => {
     } = useEngigraphStore();
     const [activeTab, setActiveTab] = useState('home');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const tabs = [
         { id: 'home', label: 'Home' },
@@ -105,6 +106,20 @@ export const EngigraphRibbon: React.FC = () => {
 
     return (
         <header className="flex flex-col bg-[#1f1f23] border-b border-slate-700 text-slate-200">
+            <input
+                type="file"
+                accept=".json"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={(e: any) => {
+                    const file = e.target?.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => importProject(ev.target?.result as string);
+                    reader.readAsText(file);
+                    e.target.value = '';
+                }}
+            />
             {/* Top Branding / Tabs Bar */}
             <div className="flex items-center justify-between h-8 bg-[#0e0e11]">
                 <div className="flex items-center gap-2 mr-4 px-4">
@@ -261,19 +276,7 @@ export const EngigraphRibbon: React.FC = () => {
                             </div>
                             <div
                                 className="flex flex-col items-center justify-center w-14 h-16 rounded cursor-pointer hover:bg-slate-800 transition-colors border border-transparent"
-                                onClick={() => {
-                                    const input = document.createElement('input');
-                                    input.type = 'file';
-                                    input.accept = '.json';
-                                    input.onchange = (e: any) => {
-                                        const file = e.target?.files?.[0];
-                                        if (!file) return;
-                                        const reader = new FileReader();
-                                        reader.onload = (ev) => importProject(ev.target?.result as string);
-                                        reader.readAsText(file);
-                                    };
-                                    input.click();
-                                }}
+                                onClick={() => fileInputRef.current?.click()}
                             >
                                 <FolderOpen size={24} className="mb-1 text-slate-300" />
                                 <span className="text-[10px] text-slate-300">Open</span>
@@ -695,19 +698,7 @@ export const EngigraphRibbon: React.FC = () => {
                             <div className="flex gap-1">
                             <RibbonButton icon={<Download size={20} />} label="SVG" onClick={() => exportProject('svg')} />
                             <RibbonButton icon={<FileDown size={20} />} label="Save JSON" onClick={saveProject} />
-                            <RibbonButton icon={<FolderOpen size={20} />} label="Import" onClick={() => {
-                                const input = document.createElement('input');
-                                input.type = 'file';
-                                input.accept = '.json';
-                                input.onchange = (e: any) => {
-                                    const file = e.target?.files?.[0];
-                                    if (!file) return;
-                                    const reader = new FileReader();
-                                    reader.onload = (ev) => importProject(ev.target?.result as string);
-                                    reader.readAsText(file);
-                                };
-                                input.click();
-                            }} />
+                            <RibbonButton icon={<FolderOpen size={20} />} label="Import" onClick={() => fileInputRef.current?.click()} />
                             <RibbonButton icon={<Printer size={20} />} label="Print" onClick={() => window.print()} />
                             <RibbonButton icon={<List size={20} />} label="BOM" onClick={() => generateBOM()} />
                         </div>

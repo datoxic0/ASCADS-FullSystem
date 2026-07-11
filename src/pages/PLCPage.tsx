@@ -1641,6 +1641,9 @@ export default function PLCPage({ project, onProjectChange }: { project?: Analog
                 }
                 onClear={handleClear}
                 onSave={handleExport}
+                onImport={() => fileInputRef.current?.click()}
+                onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+                onToggleInspector={() => setIsPropertyOpen((prev) => !prev)}
                 onSearch={handleSearch}
                 onImportBridge={() => {
                   try {

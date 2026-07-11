@@ -40,7 +40,8 @@ import {
   Code2,
   Minimize2,
   Globe,
-  Link
+  Link,
+  Square
 } from "lucide-react";
 
 import type { AnalogProject } from "@/lib/analog-types";
@@ -442,7 +443,7 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
               <ResizablePanelGroup direction="horizontal" className="h-full w-full">
                 {windows.visualizer.isOpen && (
                   <>
-                    <ResizablePanel minSize={20} className="relative bg-[#101014] flex flex-col">
+                    <ResizablePanel id="visualizer-panel" order={1} minSize={20} className="relative bg-[#101014] flex flex-col">
                       <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
                         <div className="flex items-center space-x-2 text-blue-400">
                           <Workflow className="w-3.5 h-3.5" />
@@ -454,18 +455,25 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
                               if (!simulationState.isRunning && simulationState.status !== "paused") {
                                 if (triggerRunRef.current) triggerRunRef.current();
                               } else {
-                                setSimulationState(prev => ({ ...prev, isRunning: !prev.isRunning }));
+                                setSimulationState(prev => ({ ...prev, isRunning: true }));
                               }
                             }}
-                            className={`flex items-center justify-center w-5 h-5 rounded transition-all border ${
-                              simulationState.isRunning 
-                                ? 'bg-red-900/40 text-red-400 border-red-500/30 hover:bg-red-800/60' 
-                                : 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/40'
-                            }`}
-                            title={simulationState.isRunning ? "Stop Simulation" : "Run Simulation"}
+                            className={`flex items-center justify-center w-5 h-5 rounded transition-all border bg-emerald-600/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/40`}
+                            title="Run Simulation"
                           >
-                            {simulationState.isRunning ? <div className="w-2 h-2 bg-red-400 rounded-sm" /> : <Play size={10} className="ml-0.5" />}
+                            <Play size={10} className="ml-0.5" />
                           </button>
+                          
+                          <button 
+                            onClick={() => {
+                               setSimulationState(prev => ({ ...prev, isRunning: false, status: "idle", currentLine: 0 }));
+                            }}
+                            className={`flex items-center justify-center w-5 h-5 rounded transition-all border bg-red-900/40 text-red-400 border-red-500/30 hover:bg-red-800/60`}
+                            title="Stop Simulation"
+                          >
+                            <Square size={10} fill="currentColor" />
+                          </button>
+                          
                           <button onClick={() => toggleWindow('visualizer')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
                         </div>
                       </div>
@@ -499,62 +507,65 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
                         />
                       </div>
                     </ResizablePanel>
-                    {(windows.ide.isOpen || windows.ai.isOpen) && <ResizableHandle withHandle className="bg-white/10 w-1" />}
                   </>
                 )}
                 
-                <>
-                  <ResizablePanel minSize={windows.ide.isOpen ? 20 : 0} className={`relative bg-[#0d0d11] flex flex-col ${windows.ide.isOpen ? '' : 'hidden'}`}>
-                    <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
-                      <div className="flex items-center space-x-2 text-purple-400">
-                        <Code2 className="w-3.5 h-3.5" />
-                        <span className="font-mono text-[10px] font-bold tracking-wider">CODE IDE</span>
+                {windows.ide.isOpen && (
+                  <>
+                    {(windows.visualizer.isOpen) && <ResizableHandle withHandle className="bg-white/10 w-1" />}
+                    <ResizablePanel id="ide-panel" order={2} minSize={20} className="relative bg-[#0d0d11] flex flex-col">
+                      <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
+                        <div className="flex items-center space-x-2 text-purple-400">
+                          <Code2 className="w-3.5 h-3.5" />
+                          <span className="font-mono text-[10px] font-bold tracking-wider">CODE IDE</span>
+                        </div>
+                        <button onClick={() => toggleWindow('ide')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
                       </div>
-                      <button onClick={() => toggleWindow('ide')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
-                    </div>
-                    <div className="flex-1 min-h-0 relative">
-                      <RobotWorkspaceIDE
-                        activeBoard={activeBoard}
-                        setActiveBoard={setActiveBoard}
-                        activeLanguage={activeLanguage}
-                        setActiveLanguage={setActiveLanguage}
-                        files={files}
-                        setFiles={setFiles}
-                        activeFileIndex={activeFileIndex}
-                        setActiveFileIndex={setActiveFileIndex}
-                        simulationState={simulationState}
-                        setSimulationState={setSimulationState}
-                        joints={joints}
-                        setJoints={setJoints}
-                        workpieces={workpieces}
-                        setWorkpieces={setWorkpieces}
-                        logs={logs}
-                        setLogs={setLogs}
-                        onFileChange={handleFileContentChange}
-                        sortingStats={sortingStats}
-                        setSortingStats={setSortingStats}
-                        feedMode={feedMode}
-                        robotType={robotType}
-                        conveyorSpeed={conveyorSpeed}
-                        obstacleHeight={obstacleHeight}
-                        sensorPositionX={sensorPositionX}
-                        onCollapse={() => toggleWindow('ide')}
-                        triggerRunRef={triggerRunRef}
-                      />
-                    </div>
-                  </ResizablePanel>
-                  {(windows.ide.isOpen && windows.ai.isOpen) && <ResizableHandle withHandle className="bg-white/10 w-1" />}
-                </>
+                      <div className="flex-1 min-h-0 relative">
+                        <RobotWorkspaceIDE
+                          activeBoard={activeBoard}
+                          setActiveBoard={setActiveBoard}
+                          activeLanguage={activeLanguage}
+                          setActiveLanguage={setActiveLanguage}
+                          files={files}
+                          setFiles={setFiles}
+                          activeFileIndex={activeFileIndex}
+                          setActiveFileIndex={setActiveFileIndex}
+                          simulationState={simulationState}
+                          setSimulationState={setSimulationState}
+                          joints={joints}
+                          setJoints={setJoints}
+                          workpieces={workpieces}
+                          setWorkpieces={setWorkpieces}
+                          logs={logs}
+                          setLogs={setLogs}
+                          onFileChange={handleFileContentChange}
+                          sortingStats={sortingStats}
+                          setSortingStats={setSortingStats}
+                          feedMode={feedMode}
+                          robotType={robotType}
+                          conveyorSpeed={conveyorSpeed}
+                          obstacleHeight={obstacleHeight}
+                          sensorPositionX={sensorPositionX}
+                          onCollapse={() => toggleWindow('ide')}
+                          triggerRunRef={triggerRunRef}
+                        />
+                      </div>
+                    </ResizablePanel>
+                  </>
+                )}
 
                 {windows.ai.isOpen && (
-                  <ResizablePanel minSize={20} className="relative bg-[#101014] flex flex-col">
-                    <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
-                        <div className="flex items-center space-x-2 text-cyan-400">
-                          <Cpu className="w-3.5 h-3.5" />
-                          <span className="font-mono text-[10px] font-bold tracking-wider">AI COPILOT</span>
-                        </div>
-                        <button onClick={() => toggleWindow('ai')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
-                    </div>
+                  <>
+                    {(windows.visualizer.isOpen || windows.ide.isOpen) && <ResizableHandle withHandle className="bg-white/10 w-1" />}
+                    <ResizablePanel id="ai-panel" order={3} minSize={20} className="relative bg-[#101014] flex flex-col">
+                      <div className="h-8 bg-[#1a1a1e] border-b border-emerald-300 dark:border-white/5 flex items-center px-3 justify-between shrink-0">
+                          <div className="flex items-center space-x-2 text-cyan-400">
+                            <Cpu className="w-3.5 h-3.5" />
+                            <span className="font-mono text-[10px] font-bold tracking-wider">AI COPILOT</span>
+                          </div>
+                          <button onClick={() => toggleWindow('ai')} className="text-slate-500 hover:text-white cursor-pointer"><Minimize2 className="w-3 h-3"/></button>
+                      </div>
                     <div className="flex-1 min-h-0 relative overflow-y-auto overflow-x-hidden">
                       <RightControlPanel
                         activeBoard={activeBoard}
@@ -583,6 +594,7 @@ export default function RobotPage({ project, onProjectChange }: { project?: Anal
                       />
                     </div>
                   </ResizablePanel>
+                  </>
                 )}
               </ResizablePanelGroup>
             )}

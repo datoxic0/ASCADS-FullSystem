@@ -540,8 +540,8 @@ function exportScene(objects: SceneObj[], format: 'stl' | 'stl-bin' | 'obj') {
 }
 
 /* ─── NumInput helper ─── */
-function Num({ label, value, onChange, unit = 'mm', step = 1, min = 0.01 }: {
-  label: string; value: number; onChange: (v: number) => void;
+function Num({ label, value, onChange, onCommit, unit = 'mm', step = 1, min = 0.01 }: {
+  label: string; value: number; onChange: (v: number) => void; onCommit?: () => void;
   unit?: string; step?: number; min?: number;
 }) {
   return (
@@ -550,6 +550,8 @@ function Num({ label, value, onChange, unit = 'mm', step = 1, min = 0.01 }: {
       <input
         type="number" step={step} min={min} value={+value.toFixed(3)}
         onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v) && v >= min) onChange(v); }}
+        onBlur={onCommit}
+        onKeyDown={e => { if (e.key === 'Enter' && onCommit) onCommit(); }}
         className="flex-1 min-w-0 px-1 py-0.5 text-[10px] font-mono text-right bg-black/50 border border-white/10 rounded focus:outline-none focus:border-blue-500/60 text-white"
       />
       <span className="text-[9px] text-slate-600 font-mono">{unit}</span>
@@ -583,10 +585,38 @@ export default function Engigraph3DSketch() {
   const [csgA, setCsgA]           = useState<string | null>(null);
   const [csgB, setCsgB]           = useState<string | null>(null);
   const [propOpen, setPropOpen]   = useState(true);
+  const [leftOpen, setLeftOpen]   = useState(true);
+  const [exportOpen, setExportOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const orbitRef = useRef<any>(null);
 
   const bedSize = bedName === 'Custom' ? customBed : BED_SIZES[bedName];
   const selectedObj = objects.find(o => o.id === selectedId) ?? null;
+
+  /* Save / Load Project */
+  function saveProject() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(objects, null, 2));
+    const a = document.createElement('a');
+    a.setAttribute("href", dataStr);
+    a.setAttribute("download", `Engigraph3D_Project_${Date.now()}.json`);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function importProject(jsonStr: string) {
+    try {
+      const parsed = JSON.parse(jsonStr) as SceneObj[];
+      if (!Array.isArray(parsed)) throw new Error('Invalid project file');
+      setObjects(parsed);
+      setHistory([parsed]);
+      setHistIdx(0);
+      setSelectedId(null);
+    } catch (e) {
+      console.error(e);
+      alert('Import failed: invalid file format');
+    }
+  }
 
   /* History helpers */
   function pushHistory(objs: SceneObj[]) {
@@ -655,6 +685,28 @@ export default function Engigraph3DSketch() {
     setSelectedId(copy.id);
   }
 
+  /* Keyboard Shortcuts */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        duplicateSelected();
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedId) deleteSelected();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [histIdx, history, selectedId, selectedObj, objects]);
+
   /* Transform sync from TransformControls */
   function onTransformEnd(id: string, p: [n,n,n], r: [n,n,n], s: [n,n,n]) {
     const newObjs = objects.map(o => o.id === id
@@ -722,30 +774,30 @@ export default function Engigraph3DSketch() {
     return (
       <div className="flex flex-col gap-1.5 mt-2">
         {(selectedObj.kind === 'box' || selectedObj.kind === 'wedge') && <>
-          <Num label="W" value={p.width ?? 20} onChange={v => up({ width: v })} />
-          <Num label="H" value={p.height ?? 20} onChange={v => up({ height: v })} />
-          <Num label="D" value={p.depth ?? 20} onChange={v => up({ depth: v })} />
+          <Num label="W" value={p.width ?? 20} onChange={v => up({ width: v })} onCommit={commitPatch} />
+          <Num label="H" value={p.height ?? 20} onChange={v => up({ height: v })} onCommit={commitPatch} />
+          <Num label="D" value={p.depth ?? 20} onChange={v => up({ depth: v })} onCommit={commitPatch} />
         </>}
         {(selectedObj.kind === 'cylinder' || selectedObj.kind === 'tube') && <>
-          <Num label="R↑" value={p.radiusTop ?? 10} onChange={v => up({ radiusTop: v })} />
-          <Num label="R↓" value={p.radiusBottom ?? 10} onChange={v => up({ radiusBottom: v })} />
-          <Num label="H"  value={p.height ?? 30} onChange={v => up({ height: v })} />
+          <Num label="R↑" value={p.radiusTop ?? 10} onChange={v => up({ radiusTop: v })} onCommit={commitPatch} />
+          <Num label="R↓" value={p.radiusBottom ?? 10} onChange={v => up({ radiusBottom: v })} onCommit={commitPatch} />
+          <Num label="H"  value={p.height ?? 30} onChange={v => up({ height: v })} onCommit={commitPatch} />
           {selectedObj.kind === 'tube' && (
-            <Num label="Ri" value={p.innerRadius ?? 7} onChange={v => up({ innerRadius: v, hollow: true })} />
+            <Num label="Ri" value={p.innerRadius ?? 7} onChange={v => up({ innerRadius: v, hollow: true })} onCommit={commitPatch} />
           )}
         </>}
         {selectedObj.kind === 'sphere' && (
-          <Num label="R" value={p.radius ?? 15} onChange={v => up({ radius: v })} />
+          <Num label="R" value={p.radius ?? 15} onChange={v => up({ radius: v })} onCommit={commitPatch} />
         )}
         {selectedObj.kind === 'cone' && <>
-          <Num label="R" value={p.radius ?? 10} onChange={v => up({ radius: v })} />
-          <Num label="H" value={p.height ?? 25} onChange={v => up({ height: v })} />
+          <Num label="R" value={p.radius ?? 10} onChange={v => up({ radius: v })} onCommit={commitPatch} />
+          <Num label="H" value={p.height ?? 25} onChange={v => up({ height: v })} onCommit={commitPatch} />
         </>}
         {selectedObj.kind === 'torus' && <>
-          <Num label="OR" value={p.outerRadius ?? 20} onChange={v => up({ outerRadius: v })} />
-          <Num label="TR" value={p.tubeRadius ?? 4} onChange={v => up({ tubeRadius: v })} />
+          <Num label="OR" value={p.outerRadius ?? 20} onChange={v => up({ outerRadius: v })} onCommit={commitPatch} />
+          <Num label="TR" value={p.tubeRadius ?? 4} onChange={v => up({ tubeRadius: v })} onCommit={commitPatch} />
         </>}
-        <Num label="Seg" value={p.segments ?? 32} onChange={v => up({ segments: Math.max(3, Math.round(v)) })} unit="" step={1} />
+        <Num label="Seg" value={p.segments ?? 32} onChange={v => up({ segments: Math.max(3, Math.round(v)) })} onCommit={commitPatch} unit="" step={1} />
         <button
           onClick={commitPatch}
           className="mt-1 w-full py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/25 transition-colors"
@@ -759,6 +811,7 @@ export default function Engigraph3DSketch() {
   return (
     <div className="w-full h-full flex bg-[#0a0c10] overflow-hidden select-none">
       {/* ─── Left: Object Library ─── */}
+      {leftOpen && (
       <div className="w-48 bg-[#0d1117] border-r border-white/5 flex flex-col shrink-0 overflow-hidden">
         <div className="px-3 py-2 border-b border-white/5 bg-[#111620]">
           <div className="text-[10px] font-black uppercase tracking-widest text-blue-400">Insert Object</div>
@@ -801,11 +854,12 @@ export default function Engigraph3DSketch() {
           {objects.length} obj · {objects.filter(o=>o.visible).length} visible
         </div>
       </div>
+      )}
 
       {/* ─── Center: Viewport ─── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Toolbar */}
-        <div className="flex items-center gap-1 px-2 py-1.5 bg-[#0d1117] border-b border-white/5 shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1 px-2 py-1.5 bg-[#0d1117] border-b border-white/5 shrink-0 overflow-visible z-50 flex-wrap relative">
           {/* Transform modes */}
           <div className="flex items-center bg-black/40 rounded border border-white/8 p-0.5">
             {([['translate','Move',Move],['rotate','Rot',RotateCcw],['scale','Scale',Scaling]] as const).map(([m, l, Ic]) => (
@@ -893,34 +947,75 @@ export default function Engigraph3DSketch() {
             <Printer size={10} /> Bed
           </button>
 
+          <div className="w-px h-4 bg-white/8" />
+
+          {/* Save / Open */}
+          <button onClick={saveProject} title="Save Project"
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-slate-800/40 hover:bg-slate-700 border border-slate-600 text-slate-300 transition-colors">
+            <Download size={10} /> Save
+          </button>
+          <input
+            type="file"
+            accept=".json"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={(e: any) => {
+              const file = e.target?.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (ev) => importProject(ev.target?.result as string);
+              reader.readAsText(file);
+              e.target.value = '';
+            }}
+          />
+          <button onClick={() => fileInputRef.current?.click()} title="Open Project"
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-slate-800/40 hover:bg-slate-700 border border-slate-600 text-slate-300 transition-colors">
+            <Copy size={10} /> Import
+          </button>
+
+          <div className="w-px h-4 bg-white/8" />
+
+          {/* Panel Toggles */}
+          <button onClick={() => setLeftOpen(s => !s)} title="Toggle Library Panel"
+            className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] border transition-colors ${leftOpen ? 'bg-slate-500/15 text-slate-300 border-slate-500/25' : 'text-slate-600 border-white/8 hover:text-slate-300'}`}>
+            <Layers size={10} /> Library
+          </button>
+          <button onClick={() => setPropOpen(s => !s)} title="Toggle Properties Panel"
+            className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] border transition-colors ${propOpen ? 'bg-slate-500/15 text-slate-300 border-slate-500/25' : 'text-slate-600 border-white/8 hover:text-slate-300'}`}>
+            <Box size={10} /> Props
+          </button>
+
           {/* Export */}
-          <div className="relative group">
+          <div className="relative">
             <button
+              onClick={() => setExportOpen(!exportOpen)}
               className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600/25 hover:bg-blue-600/40 text-blue-300 border border-blue-500/25 transition-colors">
-              <Download size={10} /> Export ▾
+              <Download size={10} /> Export {exportOpen ? '▴' : '▾'}
             </button>
-            <div className="absolute right-0 top-full mt-1 bg-[#111620] border border-white/10 rounded-lg shadow-2xl overflow-hidden z-50 hidden group-hover:flex flex-col w-44">
-              <div className="px-3 py-1.5 text-[9px] text-slate-500 font-bold uppercase border-b border-white/5">3D Print Ready</div>
-              <button onClick={() => exportScene(objects, 'stl')}
-                className="px-3 py-2 text-left text-[11px] text-white hover:bg-white/8 transition-colors flex items-center gap-2">
-                <span className="text-emerald-400 font-mono text-[9px]">STL</span> ASCII STL
-              </button>
-              <button onClick={() => exportScene(objects, 'stl-bin')}
-                className="px-3 py-2 text-left text-[11px] text-white hover:bg-white/8 transition-colors flex items-center gap-2">
-                <span className="text-emerald-400 font-mono text-[9px]">STL</span> Binary STL (smaller)
-              </button>
-              <button onClick={() => exportScene(objects, 'obj')}
-                className="px-3 py-2 text-left text-[11px] text-white hover:bg-white/8 transition-colors flex items-center gap-2">
-                <span className="text-blue-400 font-mono text-[9px]">OBJ</span> Wavefront OBJ
-              </button>
-            </div>
+            {exportOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-[#111620] border border-white/10 rounded-lg shadow-2xl overflow-hidden z-[100] flex flex-col w-44">
+                <div className="px-3 py-1.5 text-[9px] text-slate-500 font-bold uppercase border-b border-white/5">3D Print Ready</div>
+                <button onClick={() => { exportScene(objects, 'stl'); setExportOpen(false); }}
+                  className="px-3 py-2 text-left text-[11px] text-white hover:bg-white/8 transition-colors flex items-center gap-2">
+                  <span className="text-emerald-400 font-mono text-[9px]">STL</span> ASCII STL
+                </button>
+                <button onClick={() => { exportScene(objects, 'stl-bin'); setExportOpen(false); }}
+                  className="px-3 py-2 text-left text-[11px] text-white hover:bg-white/8 transition-colors flex items-center gap-2">
+                  <span className="text-emerald-400 font-mono text-[9px]">STL</span> Binary STL (smaller)
+                </button>
+                <button onClick={() => { exportScene(objects, 'obj'); setExportOpen(false); }}
+                  className="px-3 py-2 text-left text-[11px] text-white hover:bg-white/8 transition-colors flex items-center gap-2">
+                  <span className="text-blue-400 font-mono text-[9px]">OBJ</span> Wavefront OBJ
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* 3D Canvas */}
         <div className="flex-1 relative bg-[#080b0f]">
           <Canvas
-            shadows={{ type: THREE.PCFSoftShadowMap }}
+            shadows={{ type: THREE.PCFShadowMap }}
             dpr={[1, 2]}
             gl={{ antialias: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
           >
@@ -963,6 +1058,7 @@ export default function Engigraph3DSketch() {
       </div>
 
       {/* ─── Right: Properties + Scene + CSG ─── */}
+      {propOpen && (
       <div className="w-56 bg-[#0d1117] border-l border-white/5 flex flex-col shrink-0 overflow-y-auto">
         {/* Scene tree */}
         <div className="shrink-0">
@@ -1044,6 +1140,7 @@ export default function Engigraph3DSketch() {
                           const p = [...selectedObj.position] as [n,n,n]; p[i] = v;
                           patchSelected({ position: p });
                         }}
+                        onCommit={commitPatch}
                       />
                     ))}
                   </div>
@@ -1060,6 +1157,7 @@ export default function Engigraph3DSketch() {
                           const r = [...selectedObj.rotation] as [n,n,n]; r[i] = v;
                           patchSelected({ rotation: r });
                         }}
+                        onCommit={commitPatch}
                       />
                     ))}
                   </div>
@@ -1076,6 +1174,7 @@ export default function Engigraph3DSketch() {
                           const s = [...selectedObj.scale] as [n,n,n]; s[i] = v;
                           patchSelected({ scale: s });
                         }}
+                        onCommit={commitPatch}
                       />
                     ))}
                   </div>
@@ -1178,6 +1277,7 @@ export default function Engigraph3DSketch() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

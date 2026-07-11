@@ -3,7 +3,7 @@ import { usePCBStore, PCBLayer } from '../store/usePCBStore';
 import { Layers, Eye, EyeOff, Settings2, Info } from 'lucide-react';
 
 export const PCBSidebar: React.FC = () => {
-    const { activeLayer, setActiveLayer, visibleLayers, toggleLayerVisible, selectedIds, footprints, tracks, vias } = usePCBStore();
+    const { activeLayer, setActiveLayer, visibleLayers, toggleLayerVisible, selectedIds, footprints, tracks, vias, sidebarOpen, toggleSidebar } = usePCBStore();
 
     const layerDefs: { id: PCBLayer, name: string, color: string }[] = [
         { id: 'top_copper', name: 'F.Cu (Top Copper)', color: '#ef4444' },
@@ -33,14 +33,29 @@ export const PCBSidebar: React.FC = () => {
 
     const selectedInfo = getSelectedObjectInfo();
 
+    if (!sidebarOpen) {
+        return (
+            <div className="absolute top-14 bottom-6 right-0 w-10 bg-slate-900 border-l border-slate-800 flex flex-col items-center py-4 z-40">
+                <button onClick={toggleSidebar} className="p-2 hover:bg-slate-800 rounded text-slate-400" title="Expand Sidebar">
+                    <Layers size={18} />
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="absolute top-14 bottom-6 right-0 w-72 bg-slate-900 border-l border-slate-800 shadow-2xl z-40 flex flex-col">
             
             {/* Layer Manager */}
             <div className="flex-1 overflow-y-auto p-4 border-b border-slate-800">
-                <div className="flex items-center gap-2 text-slate-300 mb-4 pb-2 border-b border-slate-800">
-                    <Layers size={16} className="text-teal-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Layer Stack</span>
+                <div className="flex items-center justify-between text-slate-300 mb-4 pb-2 border-b border-slate-800">
+                    <div className="flex items-center gap-2">
+                        <Layers size={16} className="text-teal-400" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Layer Stack</span>
+                    </div>
+                    <button onClick={toggleSidebar} className="p-1 text-slate-500 hover:text-white transition-colors" title="Collapse Sidebar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
                 </div>
                 <div className="flex flex-col gap-1.5">
                     {layerDefs.map(layer => (
