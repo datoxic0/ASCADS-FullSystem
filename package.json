@@ -97,7 +97,8 @@
     ],
     "npmRebuild": false,
     "win": {
-      "target": "nsis"
+      "target": "portable",
+      "icon": "build/icon.png"
     }
   },
   "dependencies": {

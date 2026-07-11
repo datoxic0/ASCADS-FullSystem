@@ -11,8 +11,14 @@ if (fs.existsSync(pnpmWorkspace)) fs.renameSync(pnpmWorkspace, pnpmWorkspace + '
 if (fs.existsSync(pnpmLock)) fs.renameSync(pnpmLock, pnpmLock + '.bak');
 
 try {
-    console.log('Running electron-builder...');
-    execSync('npx electron-builder --win', { stdio: 'inherit' });
+    console.log('Running Vite build for Electron target...');
+    execSync('npx vite build --config vite.config.ts', { 
+        stdio: 'inherit',
+        env: { ...process.env, BUILD_TARGET: 'electron' }
+    });
+
+    console.log('Running electron-builder for Portable EXE...');
+    execSync('npx electron-builder --win portable', { stdio: 'inherit' });
     console.log('Electron build success!');
 } catch (error) {
     console.error('Electron build failed!', error.message);
