@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X, Workflow, Layers, Share2, FolderOpen, Zap, Binary, Factory, Bot, Wrench, Sigma, Box, CircuitBoard, BookOpen } from 'lucide-react';
+import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X, Workflow, Layers, Share2, FolderOpen, Zap, Binary, Factory, Bot, Wrench, Sigma, Box, CircuitBoard, BookOpen, LogOut } from 'lucide-react';
 import ProjectsView from '@/components/ProjectsView';
 import ProjectLandingScreen from '@/components/ProjectLandingScreen';
 import AIAssistant from '@/components/AIAssistant';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchCloudProjects, pushCloudProject, deleteCloudProject } from '@/lib/cloud-sync';
+import { toast } from 'sonner';
 
 /* Lazy-load heavy modes to reduce initial bundle */
 const Editor         = React.lazy(() => import('@/pages/Editor'));
@@ -63,6 +66,7 @@ export default function UnifiedShell() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const bridgeCircuitRef = useRef<Circuit | null>(null);
   const bridgeStatus = useBridgeStatus();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
@@ -72,6 +76,37 @@ export default function UnifiedShell() {
     saveProjects(projects);
   }, [projects]);
 
+  // Pull cloud projects on sign-in and merge with local cache
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cloud = await fetchCloudProjects(user.id);
+        if (cancelled) return;
+        setProjects(prev => {
+          const byId = new Map<string, AnalogProject>();
+          prev.forEach(p => byId.set(p.id, p));
+          cloud.forEach(p => {
+            const existing = byId.get(p.id);
+            if (!existing || (p.updatedAt ?? 0) >= (existing.updatedAt ?? 0)) {
+              byId.set(p.id, p);
+            }
+          });
+          return Array.from(byId.values());
+        });
+      } catch (e: any) {
+        console.warn('Cloud sync failed:', e?.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const syncPush = useCallback((p: AnalogProject) => {
+    if (!user) return;
+    pushCloudProject(user.id, p).catch(err => console.warn('push failed', err));
+  }, [user]);
+
   const handleNewProject = (name: string, type?: 'analog' | 'plc' | 'digital' | 'robot' | 'pcb' | 'engigraph', data?: any) => {
     const p = createProject(name, type, data);
     const updated = upsertProject(projects, p);
@@ -79,6 +114,7 @@ export default function UnifiedShell() {
     setActiveProjectState(p);
     setMode(p.type || 'analog');
     setActiveProject(p.id);
+    syncPush(p);
   };
 
   const handleOpenProject = (id: string) => {
@@ -95,6 +131,7 @@ export default function UnifiedShell() {
     setActiveProjectState(p);
     setMode(p.type || 'analog');
     setActiveProject(p.id);
+    syncPush(p);
   };
 
   const handleDeleteProject = (id: string) => {
@@ -103,12 +140,14 @@ export default function UnifiedShell() {
       setActiveProjectState(null);
       setMode('projects');
     }
+    if (user) deleteCloudProject(user.id, id).catch(err => console.warn('cloud delete failed', err));
   };
 
   const handleProjectChange = useCallback((p: AnalogProject) => {
     setActiveProjectState(p);
     setProjects(prev => upsertProject(prev, p));
-  }, []);
+    syncPush(p);
+  }, [syncPush]);
 
   const modeLabel =
     mode === 'projects' ? 'Projects'
@@ -240,9 +279,20 @@ export default function UnifiedShell() {
           </button>
 
 
-          <div className="hidden md:flex w-7 h-7 rounded-lg bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-600/50 items-center justify-center text-[9px] font-black text-slate-200 shadow-sm">
-            SP
+          <div
+            className="hidden md:flex w-7 h-7 rounded-lg bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-600/50 items-center justify-center text-[9px] font-black text-slate-200 shadow-sm uppercase"
+            title={user?.email ?? ''}
+          >
+            {(user?.email ?? 'U').slice(0, 2)}
           </div>
+
+          <button
+            onClick={() => { signOut(); toast.success('Signed out'); }}
+            title="Sign out"
+            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-rose-400 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
