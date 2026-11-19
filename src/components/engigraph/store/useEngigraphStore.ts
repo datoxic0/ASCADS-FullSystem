@@ -292,26 +292,28 @@ export const useEngigraphStore = create<EngigraphState>((set, get) => ({
     selectedIds: [],
     setSelectedIds: (ids) => set({ selectedIds: ids }),
     pushHistory: (newElements) => set((state) => ({
-        undoStack: [...state.undoStack, state.elements],
+        undoStack: [...(state.undoStack || []), state.elements],
         redoStack: [],
         elements: newElements
     })),
     undo: () => set((state) => {
-        if (state.undoStack.length === 0) return state;
-        const previous = state.undoStack[state.undoStack.length - 1];
+        const uStack = state.undoStack || [];
+        if (uStack.length === 0) return state;
+        const previous = uStack[uStack.length - 1];
         return {
-            undoStack: state.undoStack.slice(0, -1),
-            redoStack: [...state.redoStack, state.elements],
+            undoStack: uStack.slice(0, -1),
+            redoStack: [...(state.redoStack || []), state.elements],
             elements: previous,
             selectedIds: []
         };
     }),
     redo: () => set((state) => {
-        if (state.redoStack.length === 0) return state;
-        const next = state.redoStack[state.redoStack.length - 1];
+        const rStack = state.redoStack || [];
+        if (rStack.length === 0) return state;
+        const next = rStack[rStack.length - 1];
         return {
-            redoStack: state.redoStack.slice(0, -1),
-            undoStack: [...state.undoStack, state.elements],
+            redoStack: rStack.slice(0, -1),
+            undoStack: [...(state.undoStack || []), state.elements],
             elements: next,
             selectedIds: []
         };
@@ -324,7 +326,7 @@ export const useEngigraphStore = create<EngigraphState>((set, get) => ({
         if (state.selectedIds.length === 0) return state;
         const newElements = state.elements.filter(el => !state.selectedIds.includes(el.id));
         return {
-            undoStack: [...state.undoStack, state.elements],
+            undoStack: [...(state.undoStack || []), state.elements],
             redoStack: [],
             elements: newElements,
             selectedIds: []
@@ -333,7 +335,7 @@ export const useEngigraphStore = create<EngigraphState>((set, get) => ({
 
     clearWorkspace: () => set((state) => ({
         elements: [],
-        undoStack: [...state.undoStack, state.elements],
+        undoStack: [...(state.undoStack || []), state.elements],
         redoStack: []
     })),
 

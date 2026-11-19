@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PCBCanvas } from '../components/pcb/canvas/PCBCanvas';
 import { PCBRibbon } from '../components/pcb/ui/PCBRibbon';
 import { PCBSidebar } from '../components/pcb/ui/PCBSidebar';
@@ -6,7 +6,26 @@ import { PCB3DViewer } from '../components/pcb/canvas/PCB3DViewer';
 import { usePCBStore } from '../components/pcb/store/usePCBStore';
 
 export default function PCBLabPage() {
-    const viewMode = usePCBStore(state => state.viewMode);
+    const { viewMode, sidebarOpen, undo, redo, removeSelected } = usePCBStore();
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            
+            if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                undo();
+            } else if (e.key === 'y' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                redo();
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                removeSelected();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [undo, redo, removeSelected]);
 
     return (
         <div className="relative w-full h-[calc(100vh-4rem)] bg-[#0e0e11] overflow-hidden text-slate-300">
@@ -17,7 +36,7 @@ export default function PCBLabPage() {
             <PCBSidebar />
             
             {/* Interactive Canvas */}
-            <div className="absolute inset-0 pt-14 pr-72">
+            <div className={`absolute inset-0 pt-14 ${sidebarOpen ? 'pr-72' : 'pr-10'}`}>
                 {viewMode === '3d' ? <PCB3DViewer /> : <PCBCanvas />}
             </div>
             

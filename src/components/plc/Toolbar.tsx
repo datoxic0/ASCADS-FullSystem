@@ -13,7 +13,10 @@ import {
   Filter,
   Search,
   Sliders,
-  Settings
+  Settings,
+  Upload,
+  PanelLeft,
+  PanelRight
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -26,8 +29,11 @@ interface ToolbarProps {
   onClear: () => void;
   onSave: () => void;
   onSearch: (term: string) => void;
+  onToggleSidebar?: () => void;
+  onToggleInspector?: () => void;
   onImportBridge?: () => void;
   onExportBridge?: () => void;
+  onImport?: () => void;
 }
 
 export function Toolbar({ 
@@ -39,8 +45,11 @@ export function Toolbar({
   onClear, 
   onSave, 
   onSearch,
+  onToggleSidebar,
+  onToggleInspector,
   onImportBridge,
   onExportBridge,
+  onImport,
 }: ToolbarProps) {
   const [searchTerm, setSearchTerm] = useState('');
   return (
@@ -131,6 +140,24 @@ export function Toolbar({
 
         <div className="w-px h-5 bg-white/10 mx-1" />
 
+        <button 
+          onClick={onToggleSidebar} 
+          className="p-1 px-[7px] h-7 w-7 flex items-center justify-center hover:bg-white/5 text-slate-300 hover:text-slate-100 border border-[#21252e] hover:border-slate-500/30 rounded-lg transition-all active:scale-90" 
+          title="Toggle Left Sidebar"
+        >
+          <PanelLeft size={12} />
+        </button>
+
+        <button 
+          onClick={onToggleInspector} 
+          className="p-1 px-[7px] h-7 w-7 flex items-center justify-center hover:bg-white/5 text-slate-300 hover:text-slate-100 border border-[#21252e] hover:border-slate-500/30 rounded-lg transition-all active:scale-90" 
+          title="Toggle Right Inspector"
+        >
+          <PanelRight size={12} />
+        </button>
+
+        <div className="w-px h-5 bg-white/10 mx-1" />
+
         {/* Action triggers */}
         <button 
           onClick={onImportBridge} 
@@ -146,6 +173,14 @@ export function Toolbar({
           title="Export Logic to Bridge (Digital Lab)"
         >
           <Cpu size={12} />
+        </button>
+
+        <button 
+          onClick={onImport} 
+          className="p-1 px-[7px] h-7 w-7 flex items-center justify-center hover:bg-white/5 text-slate-300 hover:text-emerald-400 border border-[#21252e] hover:border-emerald-500/30 rounded-lg transition-all active:scale-90" 
+          title="Import Logic File (.vlp)"
+        >
+          <Upload size={12} />
         </button>
 
         <button 

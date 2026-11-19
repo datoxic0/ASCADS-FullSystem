@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useEngigraphStore } from '../store/useEngigraphStore';
-import { X, GripHorizontal } from 'lucide-react';
+import { X, GripHorizontal, Play, Square } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const MicrocontrollerIDE: React.FC = () => {
-    const { elements, selectedIds, updateElement } = useEngigraphStore();
+    const { elements, selectedIds, updateElement, isSimulationRunning, toggleSimulation } = useEngigraphStore();
     
     // Only show if exactly one element is selected and it's an MCU
     const activeElement = selectedIds.length === 1 ? elements.find(el => el.id === selectedIds[0]) : null;
@@ -90,6 +91,17 @@ export const MicrocontrollerIDE: React.FC = () => {
                 >
                     Open VS Code IDE
                 </button>
+                <div className="flex items-center gap-2 mt-1">
+                    {!isSimulationRunning ? (
+                        <button onClick={() => { toggleSimulation(); toast.success('Simulation started'); }} className="flex-1 flex justify-center items-center gap-1 bg-green-700 hover:bg-green-600 text-white text-xs py-2 rounded transition-colors font-semibold shadow">
+                            <Play size={14} /> Play Simulation
+                        </button>
+                    ) : (
+                        <button onClick={() => { toggleSimulation(); toast.info('Simulation stopped'); }} className="flex-1 flex justify-center items-center gap-1 bg-rose-700 hover:bg-rose-600 text-white text-xs py-2 rounded transition-colors font-semibold shadow">
+                            <Square size={14} fill="currentColor" /> Stop Simulation
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

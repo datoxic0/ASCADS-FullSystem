@@ -34,12 +34,14 @@ import {
   ChevronUp,
   Pause,
   Minimize2,
-  Share2
+  Share2,
+  Square
 } from "lucide-react";
 import { useHardwareBus } from "../../lib/hardware-bus";
 import { EcosystemTranslator } from "../../lib/EcosystemTranslator";
 import { safeEvalMath, safeEvalCondition } from "../../lib/safe-eval";
 import { compilePython, compileArduino, compilePIC, InterpreterGen, StepResult } from "../../lib/code-interpreters";
+import Editor from '@monaco-editor/react';
 
 interface RobotWorkspaceIDEProps {
   activeBoard: BoardConfig;
@@ -408,9 +410,8 @@ export default function RobotWorkspaceIDE({
         const res = gen.next();
         if (res.done) {
           clearInterval(intervalId);
-          setSimulationState(prev => ({ ...prev, isRunning: false, status: "stopped" }));
+          setSimulationState(prev => ({ ...prev, isRunning: false, status: "idle", conveyorRunning: false }));
           addLog("success", "Program execution completed.");
-          setConveyorRunning(false);
           return;
         }
 
@@ -423,9 +424,9 @@ export default function RobotWorkspaceIDE({
             break;
           case 'move':
             setJoints(prev => {
-              // Quick Inverse Kinematics wrapper
-              const { angles } = solveInverseKinematics(baseX + step.x, baseY + step.y, step.z, prev);
-              return prev.map((j, i) => ({ ...j, targetAngle: angles[i] }));
+              const res = solveInverseKinematics(baseX, baseY, prev, { x: baseX + step.x, y: baseY + step.y });
+              if (!res) return prev;
+              return res;
             });
             break;
           case 'joint':
@@ -443,27 +444,26 @@ export default function RobotWorkspaceIDE({
             addLog("info", `[Hardware IO] Pin ${step.pin} set to ${step.value} (${step.mode})`);
             break;
           case 'gripper':
-            setGripperClosed(step.active);
+            // No-op for now since gripper state is not visualized independently
             break;
           case 'conveyor':
-            setConveyorRunning(step.running);
+            setSimulationState(prev => ({...prev, conveyorRunning: step.running}));
             break;
           case 'error':
             addLog("error", `Runtime Exception: ${step.message}`);
             clearInterval(intervalId);
-            setSimulationState(prev => ({ ...prev, isRunning: false, status: "stopped" }));
+            setSimulationState(prev => ({ ...prev, isRunning: false, status: "idle" }));
             break;
           case 'done':
             clearInterval(intervalId);
-            setSimulationState(prev => ({ ...prev, isRunning: false, status: "stopped" }));
+            setSimulationState(prev => ({ ...prev, isRunning: false, status: "idle", conveyorRunning: false }));
             addLog("success", "Execution sequence terminated.");
-            setConveyorRunning(false);
             break;
         }
       } catch (err: any) {
         addLog("error", `Fatal Exception: ${err.message}`);
         clearInterval(intervalId);
-        setSimulationState(prev => ({ ...prev, isRunning: false, status: "stopped" }));
+        setSimulationState(prev => ({ ...prev, isRunning: false, status: "idle" }));
       }
     }, 50) as any;
     
@@ -517,12 +517,12 @@ export default function RobotWorkspaceIDE({
     if (activeFile.language !== "gcode") {
       let result;
       if (activeFile.language === "python") result = compilePython(activeFile.content);
-      else if (activeFile.language === "pic") result = compilePIC(activeFile.content);
+      else if (activeFile.language === "pic" as any) result = compilePIC(activeFile.content);
       else result = compileArduino(activeFile.content);
 
       if (result.error) {
         addLog("error", result.error);
-        setSimulationState((prev) => ({ ...prev, status: "stopped" }));
+        setSimulationState((prev) => ({ ...prev, status: "idle" }));
         return;
       }
       genFn = result.gen;
@@ -1533,6 +1533,36 @@ export default function RobotWorkspaceIDE({
               <span className="hidden sm:inline-block text-[10px] font-black uppercase text-purple-400 tracking-wider">HIDE DECK</span>
             </button>
           )}
+
+          <div className="w-px h-4 bg-slate-700 mx-1" />
+
+          {/* IDE Top Level Play/Stop Buttons */}
+          <button
+            onClick={() => {
+              if (simulationState.isCompiled && simulationState.status === "paused") {
+                // Resume logic
+                if (triggerRunRef?.current) triggerRunRef.current();
+              } else {
+                if (triggerRunRef?.current) triggerRunRef.current();
+              }
+            }}
+            title="Run Simulation"
+            className="px-2 py-1 bg-green-700/80 border border-green-500/50 rounded text-[9px] font-mono text-white hover:bg-green-600 flex items-center space-x-1 cursor-pointer transition-colors"
+          >
+            <Play className="w-3 h-3" />
+            <span>PLAY</span>
+          </button>
+          
+          <button
+            onClick={() => {
+               setSimulationState(prev => ({ ...prev, isRunning: false, status: "idle", currentLine: 0 }));
+            }}
+            title="Stop Simulation"
+            className="px-2 py-1 bg-rose-700/80 border border-rose-500/50 rounded text-[9px] font-mono text-white hover:bg-rose-600 flex items-center space-x-1 cursor-pointer transition-colors"
+          >
+            <Square className="w-3 h-3" fill="currentColor" />
+            <span>STOP</span>
+          </button>
         </div>
 
       </div>
@@ -1698,6 +1728,32 @@ export default function RobotWorkspaceIDE({
               main_code // {activeFile.name}
             </span>
             <div className="flex items-center space-x-1.5">
+              {simulationStateStatus !== "running" ? (
+                <button
+                  onClick={() => {
+                    if (simulationStateIsCompiled && simulationStateStatus === "paused") {
+                      resumeSimulation();
+                    } else {
+                      handleCompileAndRun();
+                    }
+                  }}
+                  title="Run Simulation"
+                  className="px-2 py-0.5 bg-green-700/80 border border-green-500/50 rounded text-[9px] font-mono text-white hover:bg-green-600 inline-flex items-center space-x-1 cursor-pointer transition-colors"
+                >
+                  <Play className="w-3 h-3" />
+                  <span>Play</span>
+                </button>
+              ) : (
+                <button
+                  onClick={stopSimulation}
+                  title="Stop Simulation"
+                  className="px-2 py-0.5 bg-rose-700/80 border border-rose-500/50 rounded text-[9px] font-mono text-white hover:bg-rose-600 inline-flex items-center space-x-1 cursor-pointer transition-colors"
+                >
+                  <Square className="w-3 h-3" fill="currentColor" />
+                  <span>Stop</span>
+                </button>
+              )}
+              
               <button
                 onClick={handleDownloadCode}
                 title="Download current file"
@@ -1725,52 +1781,31 @@ export default function RobotWorkspaceIDE({
             </div>
           </div>
 
-          <div className="flex-1 flex overflow-hidden font-mono text-xs relative">
-            {/* Visual Editor line-numbers gutter */}
-            <div className="bg-[#141417] px-2 py-4 border-r border-[#1e1e23] text-right text-slate-600 select-none space-y-0.5 leading-5 w-8 text-[10px] items-stretch">
-              {activeFile.content.split("\n").map((_, lineIdx) => {
-                const isActive = (simulationState.isRunning || simulationState.status === "paused") && simulationState.currentLine === lineIdx + 1;
-                const highlightClass = isActive
-                  ? (simulationState.status === "paused" ? "text-amber-400 font-bold" : "text-blue-400 font-bold")
-                  : "";
-                return (
-                  <div
-                    key={lineIdx}
-                    className={`transition-colors ${highlightClass}`}
-                  >
-                    {lineIdx + 1}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Main Interactive text editor input */}
-            <div className="flex-1 h-full relative">
-              <textarea
-                value={activeFile.content}
-                onChange={(e) => onFileChange(e.target.value)}
-                className="w-full h-full bg-[#1e1e23] text-emerald-900 dark:text-slate-200 p-3 leading-5 font-mono focus:outline-none resize-none overflow-y-auto selection:bg-blue-500/20 text-[12px] lg:text-[13px]"
-                style={{ tabSize: 2 }}
-                placeholder="// Enter code here..."
-              />
-
-              {/* Line spotlight highlights for active execution coordinates */}
-              {(simulationState.isRunning || simulationState.status === "paused") && activeFile.language === "gcode" && (
-                <div 
-                  className={`absolute left-0 right-0 h-5 border-l-2 pointer-events-none transition-all duration-300 max-w-full ${
-                    simulationState.status === "paused" 
-                      ? "bg-amber-500/10 border-amber-500" 
-                      : "bg-blue-500/10 border-blue-500"
-                  }`}
-                  style={{ 
-                    top: `${13 + (simulationState.currentLine - 1) * 20}px` 
-                  }}
-                />
-              )}
-            </div>
-          </div>
+          <div className="flex-1 flex overflow-hidden font-mono text-xs relative bg-[#0a0b0e]">
+            <Editor
+              height="100%"
+              theme="vs-dark"
+              language={
+                activeFile.language === 'arduino' || activeFile.language === 'cpp' ? 'cpp' :
+                activeFile.language === 'python' ? 'python' :
+                'plaintext'
+              }
+              value={activeFile.content}
+              onChange={(value) => onFileChange(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 12,
+                fontFamily: '"JetBrains Mono", monospace',
+                wordWrap: "on",
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                padding: { top: 12 }
+              }}
+            />
         </div>
       </div>
+    </div>
 
       {/* Compiler logs Console & Output (Bottom bar) */}
       <div 

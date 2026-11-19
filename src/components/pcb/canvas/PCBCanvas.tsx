@@ -201,51 +201,47 @@ export const PCBCanvas: React.FC = () => {
                 ref={stageRef}
                 draggable={activeTool === 'select' && !isDrawingTrack}
             >
-                {/* Background Grid Layer */}
+                {/* Layer 1: Background & Board Outline */}
                 <Layer>
-                    {gridDots}
-                </Layer>
-
-                {/* Board Outline Layer (Bottom-most) */}
-                <Layer>
+                    <Group name="grid">{gridDots}</Group>
                     {visibleLayers.board_outline && boardOutline.length >= 4 && (
                         <Line
                             points={boardOutline.map(p => p * MM_TO_PX)}
-                            stroke="#fbbf24" // Yellow for Edge Cuts
+                            stroke="#fbbf24"
                             strokeWidth={2 / view.scale}
                             closed
                         />
                     )}
                 </Layer>
 
-                {/* Bottom Copper & Silk */}
+                {/* Layer 2: Main Copper, Silkscreen & Vias */}
                 <Layer>
-                    {tracks.filter(t => t.layer === 'bottom_copper').map(t => (
-                        <PCBTrackView key={t.id} track={t} isSelected={selectedIds.includes(t.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, t.id)} />
-                    ))}
-                    {footprints.filter(f => f.layer === 'bottom').map(f => (
-                        <PCBFootprint key={f.id} instance={f} isSelected={selectedIds.includes(f.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, f.id)} onDragEnd={handleFootprintDragEnd} />
-                    ))}
+                    <Group name="bottom_layer">
+                        {tracks.filter(t => t.layer === 'bottom_copper').map(t => (
+                            <PCBTrackView key={t.id} track={t} isSelected={selectedIds.includes(t.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, t.id)} />
+                        ))}
+                        {footprints.filter(f => f.layer === 'bottom').map(f => (
+                            <PCBFootprint key={f.id} instance={f} isSelected={selectedIds.includes(f.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, f.id)} onDragEnd={handleFootprintDragEnd} />
+                        ))}
+                    </Group>
+                    
+                    <Group name="vias">
+                        {vias.map(v => (
+                            <PCBViaView key={v.id} via={v} isSelected={selectedIds.includes(v.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, v.id)} />
+                        ))}
+                    </Group>
+
+                    <Group name="top_layer">
+                        {tracks.filter(t => t.layer === 'top_copper').map(t => (
+                            <PCBTrackView key={t.id} track={t} isSelected={selectedIds.includes(t.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, t.id)} />
+                        ))}
+                        {footprints.filter(f => f.layer === 'top').map(f => (
+                            <PCBFootprint key={f.id} instance={f} isSelected={selectedIds.includes(f.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, f.id)} onDragEnd={handleFootprintDragEnd} />
+                        ))}
+                    </Group>
                 </Layer>
 
-                {/* Vias (Through all layers) */}
-                <Layer>
-                    {vias.map(v => (
-                        <PCBViaView key={v.id} via={v} isSelected={selectedIds.includes(v.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, v.id)} />
-                    ))}
-                </Layer>
-
-                {/* Top Copper & Silk */}
-                <Layer>
-                    {tracks.filter(t => t.layer === 'top_copper').map(t => (
-                        <PCBTrackView key={t.id} track={t} isSelected={selectedIds.includes(t.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, t.id)} />
-                    ))}
-                    {footprints.filter(f => f.layer === 'top').map(f => (
-                        <PCBFootprint key={f.id} instance={f} isSelected={selectedIds.includes(f.id)} visibleLayers={visibleLayers} onClick={(e) => handleElementClick(e, f.id)} onDragEnd={handleFootprintDragEnd} />
-                    ))}
-                </Layer>
-
-                {/* Active Tool Interaction Layer */}
+                {/* Layer 3: Interactive UI (Drawing) */}
                 <Layer>
                     {isDrawingTrack && currentTrackPoints.length >= 2 && (
                         <Line

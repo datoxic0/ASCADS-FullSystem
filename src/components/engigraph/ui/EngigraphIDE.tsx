@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useEngigraphStore } from '../store/useEngigraphStore';
-import { X, Play, Save, Box, Terminal } from 'lucide-react';
+import { X, Play, Square, Save, Box, Terminal } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const EngigraphIDE: React.FC = () => {
-    const { isIdeOpen, activeMcuId, closeIde, elements, updateElement } = useEngigraphStore();
+    const { isIdeOpen, activeMcuId, closeIde, elements, updateElement, isSimulationRunning, toggleSimulation } = useEngigraphStore();
     const [code, setCode] = useState('');
 
     const mcu = elements.find(el => el.id === activeMcuId);
@@ -37,10 +37,19 @@ export const EngigraphIDE: React.FC = () => {
                     <span className="px-2 py-0.5 bg-blue-900/40 text-blue-400 text-[10px] rounded">main.cpp</span>
                 </div>
                 <div className="flex items-center gap-2">
+                    {!isSimulationRunning ? (
+                        <button onClick={() => { toggleSimulation(); toast.success('Simulation started'); }} className="flex items-center gap-1 px-3 py-1 bg-green-700 hover:bg-green-600 text-white text-xs rounded transition-colors mr-2">
+                            <Play size={14} /> Play
+                        </button>
+                    ) : (
+                        <button onClick={() => { toggleSimulation(); toast.info('Simulation stopped'); }} className="flex items-center gap-1 px-3 py-1 bg-rose-700 hover:bg-rose-600 text-white text-xs rounded transition-colors mr-2">
+                            <Square size={14} fill="currentColor" /> Stop
+                        </button>
+                    )}
                     <button onClick={handleSave} className="flex items-center gap-1 px-3 py-1 bg-cyan-700 hover:bg-cyan-600 text-white text-xs rounded transition-colors">
                         <Save size={14} /> Flash
                     </button>
-                    <button onClick={closeIde} className="p-1 hover:bg-[#3e3e42] rounded text-slate-400 transition-colors">
+                    <button onClick={closeIde} className="p-1 hover:bg-[#3e3e42] rounded text-slate-400 transition-colors ml-2">
                         <X size={16} />
                     </button>
                 </div>

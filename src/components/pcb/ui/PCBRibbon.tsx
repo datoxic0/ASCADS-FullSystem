@@ -1,15 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { usePCBStore } from '../store/usePCBStore';
-import { MousePointer2, GitCommit, Search, PlusSquare, Trash2, Crosshair, Map, Download, Zap, Archive, Cpu, Box, LayoutGrid } from 'lucide-react';
+import { MousePointer2, GitCommit, Search, PlusSquare, Trash2, Crosshair, Map, Download, Zap, Archive, Cpu, Box, LayoutGrid, RotateCcw, RotateCw, PanelRight, Upload } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { FootprintLibrary } from '../lib/FootprintLibrary';
 import { useEngigraphStore } from '../../engigraph/store/useEngigraphStore';
 import { PCBAutorouter } from '../solvers/PCBAutorouter';
 import { loadProjects, getActiveProjectId } from '../../../lib/analog-storage';
 import { PCBGerberCompiler } from '../services/PCBGerberCompiler';
+import { PCBState } from '../store/usePCBStore';
 
 export const PCBRibbon: React.FC = () => {
-    const { activeTool, setTool, addFootprint, removeSelected, selectedIds, clearBoard, viewMode, setViewMode } = usePCBStore();
+    const { activeTool, setTool, addFootprint, removeSelected, selectedIds, clearBoard, viewMode, setViewMode, sidebarOpen, toggleSidebar, undo, redo, history, future } = usePCBStore();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const raw = localStorage.getItem('ascads_bridge_analog_pcb');
@@ -79,7 +81,43 @@ export const PCBRibbon: React.FC = () => {
         setTool('select');
     };
 
-    // Engigraph import removed as Engigraph uses elements, not nets directly
+    const handleSaveProject = () => {
+        const state = usePCBStore.getState();
+        const payload = {
+            footprints: state.footprints,
+            tracks: state.tracks,
+            vias: state.vias,
+            nets: state.nets,
+            boardOutline: state.boardOutline
+        };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+        const a = document.createElement('a');
+        a.setAttribute("href", dataStr);
+        a.setAttribute("download", `PCBLab_Project_${Date.now()}.json`);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    };
+
+    const handleImportProject = (jsonStr: string) => {
+        try {
+            const parsed = JSON.parse(jsonStr);
+            if (!parsed.footprints) throw new Error('Invalid project file');
+            usePCBStore.setState({
+                footprints: parsed.footprints || [],
+                tracks: parsed.tracks || [],
+                vias: parsed.vias || [],
+                nets: parsed.nets || [],
+                boardOutline: parsed.boardOutline || [0, 0, 100, 0, 100, 80, 0, 80, 0, 0],
+                history: [parsed],
+                future: [],
+                selectedIds: []
+            });
+        } catch (e) {
+            console.error(e);
+            alert('Import failed: invalid file format');
+        }
+    };
 
     const handleAutoroute = () => {
         const state = usePCBStore.getState();
@@ -214,6 +252,28 @@ export const PCBRibbon: React.FC = () => {
 
                 <div className="w-px h-6 bg-slate-700 mx-2" />
 
+                {/* Undo / Redo */}
+                <div className="flex bg-slate-800 rounded-md p-1 gap-1">
+                    <button 
+                        onClick={undo}
+                        disabled={!history || history.length === 0}
+                        className="p-1.5 rounded flex items-center justify-center transition-colors text-slate-300 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent"
+                        title="Undo (Ctrl+Z)"
+                    >
+                        <RotateCcw size={16} />
+                    </button>
+                    <button 
+                        onClick={redo}
+                        disabled={!future || future.length === 0}
+                        className="p-1.5 rounded flex items-center justify-center transition-colors text-slate-300 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent"
+                        title="Redo (Ctrl+Y)"
+                    >
+                        <RotateCw size={16} />
+                    </button>
+                </div>
+
+                <div className="w-px h-6 bg-slate-700 mx-2" />
+
                 {/* Add Footprints Select */}
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Library:</span>
@@ -255,14 +315,46 @@ export const PCBRibbon: React.FC = () => {
 
                 {/* System Actions */}
                 <div className="flex items-center gap-1.5 pr-4 border-r border-slate-700">
-                    {/* Removed Engigraph Netlist Import */}
+                    <button 
+                        onClick={handleSaveProject}
+                        className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-sky-500/10 text-sky-400 hover:bg-sky-500/30 hover:scale-105"
+                        title="Save PCB Project"
+                        aria-label="Save PCB Project"
+                    >
+                        <Download size={16} />
+                    </button>
+                    <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-sky-500/10 text-sky-400 hover:bg-sky-500/30 hover:scale-105"
+                        title="Import PCB Project"
+                        aria-label="Import PCB Project"
+                    >
+                        <Upload size={16} />
+                    </button>
+                    <input
+                        type="file"
+                        accept=".json"
+                        ref={fileInputRef}
+                        className="hidden"
+                        onChange={(e: any) => {
+                            const file = e.target?.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (ev) => handleImportProject(ev.target?.result as string);
+                            reader.readAsText(file);
+                            e.target.value = '';
+                        }}
+                    />
+                    
+                    <div className="w-px h-4 bg-slate-700 mx-1" />
+
                     <button 
                         onClick={handleImportAnalogNetlist}
                         className="p-1.5 rounded-lg flex items-center justify-center transition-all bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/30 hover:scale-105"
                         title="Import from Active Analog Project"
                         aria-label="Import from Analog Project"
                     >
-                        <Download size={16} />
+                        <Map size={16} />
                     </button>
                     <div className="w-px h-4 bg-slate-700 mx-1" />
                     <button 
@@ -289,6 +381,16 @@ export const PCBRibbon: React.FC = () => {
                         aria-label="Export G-Code"
                     >
                         <Cpu size={16} />
+                    </button>
+                    
+                    <div className="w-px h-4 bg-slate-700 mx-1" />
+
+                    <button 
+                        onClick={toggleSidebar}
+                        className={`p-1.5 rounded-lg flex items-center justify-center transition-all ${sidebarOpen ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        title="Toggle Right Sidebar"
+                    >
+                        <PanelRight size={16} />
                     </button>
                 </div>
 

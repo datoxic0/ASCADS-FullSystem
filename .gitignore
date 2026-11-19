@@ -3,3 +3,8 @@ node_modules/
 .env
 .gemini/
 .env.local
+/dist_electron/
+# Tauri v2 build artifacts (Rust target dir + generated schema)
+/src-tauri/target/
+/src-tauri/gen/
+

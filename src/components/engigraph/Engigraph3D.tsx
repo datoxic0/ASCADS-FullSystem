@@ -596,7 +596,7 @@ export default function Engigraph3D() {
           shadows
           onCreated={({ gl }) => {
             gl.shadowMap.enabled = true;
-            gl.shadowMap.type = THREE.PCFSoftShadowMap;
+            gl.shadowMap.type = THREE.PCFShadowMap;
           }}
         >
           <color attach="background" args={['#0d1117']} />

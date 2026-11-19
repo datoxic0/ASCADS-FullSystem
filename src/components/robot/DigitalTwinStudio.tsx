@@ -769,7 +769,7 @@ export default function DigitalTwinStudio({ robotDesign, setRobotDesign, joints 
               <tr>
                 <td>CIM-PLC-IEC61131</td>
                 <td>32-Point PLC Embedded DIN-Rail logical microprocessor</td>
-                <td>Siemens Industrial</td>
+                <td>Industrial Automation</td>
                 <td>1</td>
                 <td>1.5 kg</td>
                 <td>$560.00</td>

@@ -1000,7 +1000,7 @@ export function BlockView({ state, onNodeClick, onToggleAddress, onForceIO }: Bl
               </div>
             </div>
 
-            {/* LOGOSOFT LIGHT INDICATORS BOARD */}
+            {/* LIGHT INDICATORS BOARD */}
             <div className="space-y-3 p-4 bg-[#0d121f] border border-white/5 rounded-xl">
               <h4 className="text-[10px] font-black tracking-widest text-[#a3b3cc] flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -1008,7 +1008,7 @@ export function BlockView({ state, onNodeClick, onToggleAddress, onForceIO }: Bl
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
-                  PILOT LAMPS & LIGHT INDICATORS (LogoSoft Style)
+                  PILOT LAMPS & LIGHT INDICATORS
                 </span>
                 <span className="text-[7.5px] font-mono text-zinc-500">I_O TEST DECK</span>
               </h4>

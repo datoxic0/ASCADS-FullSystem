@@ -165,7 +165,7 @@ export const DocumentationContent = {
         <div class="tutorial-card" style="margin-top: 20px;">
             <h2>1. PLC / Function Block Diagram Interpretation</h2>
             <p><strong>Environment:</strong> Digital Logic Lab > Sequential Presets</p>
-            <p>This demonstrates simplifying physical switching arrangements using Siemens LOGO! logic principles. The FBD drawing uses main variables, interpreting inversion bubbles correctly rather than treating them as separate switches.</p>
+            <p>This demonstrates simplifying physical switching arrangements using function-block logic principles. The FBD drawing uses main variables, interpreting inversion bubbles correctly rather than treating them as separate switches.</p>
             <div style="margin: 15px 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; background: #fff;">
                 <img src="/case-studies/image3.png" alt="FBD Drawing and Explanation" style="width: 100%; height: auto; object-fit: contain; opacity: 1;" />
             </div>

@@ -10,7 +10,7 @@ This documentation provides practical assessments and industrial blueprints for 
 
 ## 1. PLC & Function Block Diagram Interpretation
 
-This module focuses on simplifying physical switching arrangements using standard PLC function block architectures (such as Siemens LOGO!). 
+This module focuses on simplifying physical switching arrangements using standard PLC function block architectures (such as function-block diagrams). 
 
 ![Intro](/case-studies/image4.png)
 

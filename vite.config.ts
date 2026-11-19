@@ -13,7 +13,10 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH || "/";
+// Tauri v2 sets TAURI_ENV_PLATFORM during beforeBuildCommand, so the web bundle gets
+// a relative base and no PWA in both the Electron and the Tauri targets.
+const isElectron = process.env.BUILD_TARGET === 'electron' || process.env.TAURI_ENV_PLATFORM !== undefined;
+const basePath = isElectron ? "./" : (process.env.BASE_PATH || "/");
 
 export default defineConfig({
   base: basePath,
@@ -21,7 +24,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
-    VitePWA({
+    ...(isElectron ? [] : [VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
       // Disable in dev so the runtime overlay & cartographer keep working cleanly.
@@ -52,7 +55,7 @@ export default defineConfig({
           },
         ],
       },
-    }),
+    })]),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
@@ -71,7 +74,8 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
       "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
-      "react-style-singleton": path.resolve(import.meta.dirname, "node_modules/react-style-singleton/dist/es5/index.js")
+      "react-style-singleton": path.resolve(import.meta.dirname, "node_modules/react-style-singleton/dist/es5/index.js"),
+      "@lovable.dev/cloud-auth-js": path.resolve(import.meta.dirname, "src/mocks/cloud-auth.ts")
     },
     dedupe: ["react", "react-dom"],
   },
@@ -88,6 +92,9 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    watch: {
+      ignored: ['**/.git/**', '**/node_modules/**', '**/dist/**', '**/.pnpm/**', '**/pnpm-store/**']
+    }
   },
   preview: {
     port,

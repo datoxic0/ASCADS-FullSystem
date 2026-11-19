@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X, Workflow, Layers, Share2, FolderOpen, Zap, Binary, Factory, Bot, Wrench, Sigma, Box, CircuitBoard, BookOpen } from 'lucide-react';
+import { Cpu, ChevronRight, Sun, Moon, Activity, Sparkles, Menu, X, Workflow, Layers, Share2, FolderOpen, Zap, Binary, Factory, Bot, Wrench, Sigma, Box, CircuitBoard, BookOpen, LogOut, Blocks } from 'lucide-react';
 import ProjectsView from '@/components/ProjectsView';
 import ProjectLandingScreen from '@/components/ProjectLandingScreen';
 import AIAssistant from '@/components/AIAssistant';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchCloudProjects, pushCloudProject, deleteCloudProject } from '@/lib/cloud-sync';
+import { toast } from 'sonner';
 
 /* Lazy-load heavy modes to reduce initial bundle */
 const Editor         = React.lazy(() => import('@/pages/Editor'));
 const AnalogEditor   = React.lazy(() => import('@/pages/AnalogEditor'));
 const ComputeTools   = React.lazy(() => import('@/pages/ComputeTools'));
 const PLCPage        = React.lazy(() => import('@/pages/PLCPage'));
+const FbdBlocksPage  = React.lazy(() => import('@/pages/FbdBlocksPage'));
 const RobotPage      = React.lazy(() => import('@/components/robot/RobotPage'));
 const MathsTools     = React.lazy(() => import('@/pages/MathsTools'));
 const EngigraphPage  = React.lazy(() => import('@/pages/EngigraphPage'));
@@ -25,7 +29,7 @@ import {
 } from '@/lib/analog-storage';
 import type { AnalogProject } from '@/lib/analog-types';
 
-type TopMode = 'projects' | 'analog' | 'digital' | 'compute' | 'plc' | 'robot' | 'maths' | 'engigraph' | 'pcb' | 'docs';
+type TopMode = 'projects' | 'analog' | 'digital' | 'compute' | 'plc' | 'robot' | 'maths' | 'engigraph' | 'pcb' | 'fbd' | 'docs';
 
 const BRIDGE_KEYS = [
   { key: 'ascads_bridge_analog_plc',   label: 'A→P', color: '#a78bfa', title: 'Analog→PLC' },
@@ -63,6 +67,7 @@ export default function UnifiedShell() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const bridgeCircuitRef = useRef<Circuit | null>(null);
   const bridgeStatus = useBridgeStatus();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
@@ -72,6 +77,37 @@ export default function UnifiedShell() {
     saveProjects(projects);
   }, [projects]);
 
+  // Pull cloud projects on sign-in and merge with local cache
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cloud = await fetchCloudProjects(user.id);
+        if (cancelled) return;
+        setProjects(prev => {
+          const byId = new Map<string, AnalogProject>();
+          prev.forEach(p => byId.set(p.id, p));
+          cloud.forEach(p => {
+            const existing = byId.get(p.id);
+            if (!existing || (p.updatedAt ?? 0) >= (existing.updatedAt ?? 0)) {
+              byId.set(p.id, p);
+            }
+          });
+          return Array.from(byId.values());
+        });
+      } catch (e: any) {
+        console.warn('Cloud sync failed:', e?.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const syncPush = useCallback((p: AnalogProject) => {
+    if (!user) return;
+    pushCloudProject(user.id, p).catch(err => console.warn('push failed', err));
+  }, [user]);
+
   const handleNewProject = (name: string, type?: 'analog' | 'plc' | 'digital' | 'robot' | 'pcb' | 'engigraph', data?: any) => {
     const p = createProject(name, type, data);
     const updated = upsertProject(projects, p);
@@ -79,6 +115,7 @@ export default function UnifiedShell() {
     setActiveProjectState(p);
     setMode(p.type || 'analog');
     setActiveProject(p.id);
+    syncPush(p);
   };
 
   const handleOpenProject = (id: string) => {
@@ -95,6 +132,7 @@ export default function UnifiedShell() {
     setActiveProjectState(p);
     setMode(p.type || 'analog');
     setActiveProject(p.id);
+    syncPush(p);
   };
 
   const handleDeleteProject = (id: string) => {
@@ -103,12 +141,14 @@ export default function UnifiedShell() {
       setActiveProjectState(null);
       setMode('projects');
     }
+    if (user) deleteCloudProject(user.id, id).catch(err => console.warn('cloud delete failed', err));
   };
 
   const handleProjectChange = useCallback((p: AnalogProject) => {
     setActiveProjectState(p);
     setProjects(prev => upsertProject(prev, p));
-  }, []);
+    syncPush(p);
+  }, [syncPush]);
 
   const modeLabel =
     mode === 'projects' ? 'Projects'
@@ -122,6 +162,7 @@ export default function UnifiedShell() {
     : mode === 'engigraph'? 'EngiGraph Pro'
     : mode === 'pcb' && activeProject?.type === 'pcb' ? `PCB Lab · ${activeProject.name}`
     : mode === 'pcb'      ? 'PCB Lab'
+    : mode === 'fbd'      ? 'FBD Blocks'
     : mode === 'docs'     ? 'System Documentation'
     : 'Digital Logic Lab';
 
@@ -135,6 +176,7 @@ export default function UnifiedShell() {
     maths:    'text-rose-400',
     engigraph:'text-orange-400',
     pcb:      'text-teal-400',
+    fbd:      'text-purple-400',
     docs:     'text-pink-500',
   };
 
@@ -184,6 +226,7 @@ export default function UnifiedShell() {
             { id: 'maths',    label: 'Maths System',   icon: <Sigma className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#fb7185' },
             { id: 'engigraph',label: 'EngiGraph Pro',  icon: <Box className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#fb923c' },
             { id: 'pcb',      label: 'PCB Lab',        icon: <CircuitBoard className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#14b8a6' },
+            { id: 'fbd',      label: 'FBD Blocks',    icon: <Blocks className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#a855f7' },
             { id: 'docs',     label: 'System Docs',    icon: <BookOpen className="w-3 h-3 md:w-3.5 md:h-3.5" />, dot: '#ec4899' },
           ] as { id: TopMode; label: string; dot: string; icon?: React.ReactNode }[]).map(tab => (
             <button
@@ -240,9 +283,20 @@ export default function UnifiedShell() {
           </button>
 
 
-          <div className="hidden md:flex w-7 h-7 rounded-lg bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-600/50 items-center justify-center text-[9px] font-black text-slate-200 shadow-sm">
-            SP
+          <div
+            className="hidden md:flex w-7 h-7 rounded-lg bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-600/50 items-center justify-center text-[9px] font-black text-slate-200 shadow-sm uppercase"
+            title={user?.email ?? ''}
+          >
+            {(user?.email ?? 'U').slice(0, 2)}
           </div>
+
+          <button
+            onClick={() => { signOut(); toast.success('Signed out'); }}
+            title="Sign out"
+            className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-rose-400 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -266,6 +320,7 @@ export default function UnifiedShell() {
             { id: 'maths',    label: 'Maths System',   dot: '#fb7185' },
             { id: 'engigraph',label: 'EngiGraph Pro',  dot: '#fb923c' },
             { id: 'pcb',      label: 'PCB Lab',        dot: '#14b8a6' },
+            { id: 'fbd',      label: 'FBD Blocks',    dot: '#a855f7' },
             { id: 'docs',     label: 'System Docs',    dot: '#ec4899' },
           ] as { id: TopMode; label: string; dot: string }[]).map(tab => (
             <button
@@ -410,6 +465,11 @@ export default function UnifiedShell() {
               <PCBLabPage />
             </div>
           )}
+          {mode === 'fbd' && (
+            <div className="h-full">
+              <FbdBlocksPage />
+            </div>
+          )}
         </Suspense>
       </div>
 
@@ -427,6 +487,7 @@ export default function UnifiedShell() {
               : mode === 'maths'   ? 'Beyond CAS — Scientific Engine'
               : mode === 'engigraph'? 'EngiGraph Pro — Visual Engineering'
               : mode === 'pcb'     ? 'PCB Lab — Layout & Routing'
+              : mode === 'fbd'     ? 'FBD Blocks — Clean-Room Function Blocks'
               : mode === 'docs'    ? 'ASCADS Knowledge Base & Legal Docs'
               : 'Project Browser'}
           </span>
