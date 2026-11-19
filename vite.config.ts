@@ -13,8 +13,8 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-// Tauri v2 sets TAURI_ENV_PLATFORM during beforeBuildCommand, so the web bundle gets
-// a relative base and no PWA in both the Electron and the Tauri targets.
+// Tauri v2 sets TAURI_ENV_PLATFORM during beforeBuildCommand; BUILD_TARGET=electron covers the Electron portable.
+// Both desktop targets get a relative base and no PWA.
 const isElectron = process.env.BUILD_TARGET === 'electron' || process.env.TAURI_ENV_PLATFORM !== undefined;
 const basePath = isElectron ? "./" : (process.env.BASE_PATH || "/");
 
