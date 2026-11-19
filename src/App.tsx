@@ -2,32 +2,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import UnifiedShell from "@/pages/UnifiedShell";
-import AuthPage from "@/pages/Auth";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { Loader2 } from "lucide-react";
 
-function Gate() {
-  // Production auth gate: sign in via Supabase, otherwise show the Auth page.
-  const { session, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen w-screen flex items-center justify-center bg-slate-950 text-slate-500">
-        <Loader2 className="w-6 h-6 animate-spin" />
-      </div>
-    );
-  }
-  return session ? <UnifiedShell /> : <AuthPage />;
-}
-
+// Offline local boot — no auth gate.
+// The Lovable/Supabase auth scaffolding (src/pages/Auth.tsx, src/hooks/useAuth.tsx,
+// src/integrations/supabase/) remains in-tree but is disconnected from boot:
+// it is a mock sign-in that cannot complete here and blocked this app.
+// UnifiedShell's cloud sync stays inert because useAuth() has no session.
 function App() {
   return (
-    <AuthProvider>
-      <TooltipProvider>
-        <Gate />
-        <Toaster />
-        <SonnerToaster theme="dark" position="bottom-right" />
-      </TooltipProvider>
-    </AuthProvider>
+    <TooltipProvider>
+      <UnifiedShell />
+      <Toaster />
+      <SonnerToaster theme="dark" position="bottom-right" />
+    </TooltipProvider>
   );
 }
 
